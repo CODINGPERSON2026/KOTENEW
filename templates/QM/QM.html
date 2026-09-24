@@ -1,0 +1,948 @@
+{% extends "base.html" %}
+
+{% block title %}QM Dashboard — 15 CESR Ordnance Platform{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ─── MODAL BACKDROP ─── */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* ─── MODAL BOX ─── */
+    .modal-box {
+        background: #ffffff;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateX(-140px) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: visible;
+        position: relative;
+    }
+
+    .modal-backdrop.active .modal-box {
+        transform: scale(1) translateX(-140px) translateY(0);
+    }
+
+    .modal-header {
+        padding: 18px 24px 14px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-header__title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-header__close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .modal-header__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .modal-body {
+        padding: 20px 24px 24px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Form Fields */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: relative;
+    }
+
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        font-size: 0.88rem;
+        pointer-events: none;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 9px 14px 9px 36px;
+        border-radius: 9px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.88rem;
+        font-family: inherit;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    .form-input.is-invalid {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+    }
+
+    .form-input.is-valid {
+        border-color: #10b981 !important;
+    }
+
+    .input-error-msg {
+        font-size: 0.78rem;
+        color: #ef4444;
+        margin-top: 4px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* ─── CUSTOM SELECT DROPDOWN WITH LIVE HOVER PREVIEW ─── */
+    .custom-select-container {
+        position: relative;
+    }
+
+    .custom-select-trigger {
+        width: 100%;
+        padding: 9px 14px;
+        border-radius: 9px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-size: 0.88rem;
+        color: #64748b;
+        font-weight: 400;
+        transition: all 0.2s ease;
+    }
+
+    .custom-select-trigger:hover,
+    .custom-select-container.open .custom-select-trigger {
+        border-color: #1e3a8a;
+    }
+
+    .custom-select-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        padding: 5px;
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .custom-select-container.open .custom-select-menu {
+        display: flex;
+    }
+
+    .custom-option {
+        padding: 9px 12px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.86rem;
+        color: #334155;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .custom-option:hover,
+    .custom-option.selected {
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-weight: 600;
+    }
+
+    /* ─── HOVER PREVIEW CARD (ENLARGED) ─── */
+    .weapon-preview-card {
+        position: absolute;
+        top: -12px;
+        left: calc(100% + 18px);
+        width: 350px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #cbd5e1;
+        box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.22);
+        padding: 16px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        z-index: 1010;
+        pointer-events: none;
+        animation: fadeInPreview 0.2s ease;
+    }
+
+    @keyframes fadeInPreview {
+        from { opacity: 0; transform: translateX(-8px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .weapon-preview-card__img-container {
+        width: 100%;
+        height: 200px;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .weapon-preview-card__img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    .weapon-preview-card__name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        line-height: 1.3;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+        padding: 14px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: #f8fafc;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .btn-submit-weapon {
+        background: #0f172a;
+        color: #ffffff;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ─── QM STAT CARDS ROW ─── */
+    .qm-stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .qm-stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .qm-stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .qm-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+    }
+
+    .qm-stat-card__info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .qm-stat-card__val {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+
+    .qm-stat-card__label {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .qm-stat-card__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* ─── QM CHARTS SECTION ─── */
+    .qm-charts-row {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+        margin-top: 24px;
+    }
+
+    @media (max-width: 960px) {
+        .qm-charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .qm-chart-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .qm-chart-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .qm-chart-card__title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qm-chart-card__body {
+        position: relative;
+        flex: 1;
+        min-height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ─── ISSUED WEAPONS TABLE MODAL ─── */
+    .modal-box-xlarge {
+        background: #ffffff;
+        width: 95%;
+        max-width: 1100px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-backdrop.active .modal-box-xlarge {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-table-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        flex: 1;
+        max-height: 55vh;
+    }
+
+    .issued-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        text-align: left;
+    }
+
+    .issued-table th {
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 12px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .issued-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .issued-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge--issued {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .status-badge--returned {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .qm-stat-card--clickable {
+        cursor: pointer;
+    }
+
+    .qm-stat-card--clickable:hover {
+        border-color: #b45309 !important;
+        box-shadow: 0 8px 20px -4px rgba(180, 83, 9, 0.15) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="qm-actions" style="margin-top: 0; margin-bottom: 20px;">
+    <button type="button" class="qm-btn qm-btn--primary" id="openAddWeaponBtn">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Weapon</span>
+    </button>
+
+    <a href="#" class="qm-btn qm-btn--secondary">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>View Stock</span>
+    </a>
+</div>
+
+<!-- Stat Cards Row (4 Live Stat Cards) -->
+<div class="qm-stats-row">
+    <!-- Card 1: Total Stock -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statTotalWeapons">{{ stats.total_weapons if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Total Weapons in Stock</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--blue">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+    </div>
+
+    <!-- Card 2: Available -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statAvailableWeapons">{{ stats.available_weapons if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Available in Armory</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--green">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+    </div>
+
+    <!-- Card 3: Issued -->
+    <div class="qm-stat-card qm-stat-card--clickable" id="qmIssuedCard" title="Click to view Issued Weapons Table">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statIssuedWeapons">{{ stats.issued_weapons if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Issued / Active</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--amber">
+            <i class="fa-solid fa-hand-holding-hand"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: Registered Models -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val">{{ stats.total_types if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Registered Models</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--purple">
+            <i class="fa-solid fa-layer-group"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section (Bar Chart & Donut Chart) -->
+<div class="qm-charts-row">
+    <!-- Bar Chart: Weapon Count by Type -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-column" style="color: #1e3a8a;"></i>
+                Stock Count by Weapon Type
+            </div>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="weaponBarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Donut Chart: Available vs Issued -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #059669;"></i>
+                Available vs Issued Ratio
+            </div>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="statusDonutChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Popup -->
+<div class="modal-backdrop" id="addWeaponModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-header__title">
+                <i class="fa-solid fa-shield-halved" style="color: #1e3a8a;"></i>
+                Add Weapon
+            </div>
+            <button type="button" class="modal-header__close" id="closeAddWeaponBtn">&times;</button>
+        </div>
+
+        <form id="addWeaponForm">
+            <div class="modal-body">
+                
+                <!-- Choose Weapon Type (Custom Dropdown with Live Hover Preview) -->
+                <div class="form-group">
+                    <label class="form-label">Choose Weapon Type</label>
+                    <div class="custom-select-container" id="weaponSelectContainer">
+                        <div class="custom-select-trigger" id="weaponSelectTrigger">
+                            <span id="selectedWeaponText">Select Weapon Type...</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size: 0.78rem; color: #94a3b8;"></i>
+                        </div>
+                        <input type="hidden" name="weapon_type" id="weaponTypeInput" required>
+
+                        <!-- Options List -->
+                        <div class="custom-select-menu" id="weaponSelectMenu">
+                            {% for w in weapons %}
+                            <div class="custom-option" 
+                                 data-value="{{ w.name }}" 
+                                 data-name="{{ w.name }}"
+                                 data-img="{{ url_for('static', filename='weapons/' + w.filename) }}">
+                                <i class="fa-solid fa-crosshairs" style="color: #64748b; font-size: 0.8rem;"></i>
+                                <span>{{ w.name }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Hover Image Preview Card -->
+                        <div class="weapon-preview-card" id="weaponHoverCard">
+                            <div class="weapon-preview-card__img-container">
+                                <img src="" alt="Weapon Preview" class="weapon-preview-card__img" id="weaponHoverImg">
+                            </div>
+                            <span class="weapon-preview-card__name" id="weaponHoverTitle"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Butt Number Input -->
+                <div class="form-group">
+                    <label class="form-label">Butt Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-hashtag input-icon"></i>
+                        <input type="text" class="form-input" name="butt_number" placeholder="e.g. BT-104" required>
+                    </div>
+                </div>
+
+                <!-- Register Number Input -->
+                <div class="form-group">
+                    <label class="form-label">Register Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-barcode input-icon"></i>
+                        <input type="text" class="form-input" name="register_number" id="registerNumberInput" placeholder="e.g. REG-88492" autocomplete="off" required>
+                    </div>
+                    <div id="registerNumError" class="input-error-msg" style="display: none;"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="qm-btn qm-btn--secondary" id="cancelAddWeaponBtn">Cancel</button>
+                <button type="submit" class="btn-submit-weapon">
+                    <i class="fa-solid fa-plus"></i> Add Weapon
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+<script>
+    /* Chart.js Setup */
+    const barLabels = {{ (chart_data.bar_labels if chart_data else []) | tojson }};
+    const barFullNames = {{ (chart_data.bar_full_names if chart_data else []) | tojson }};
+    const barCounts = {{ (chart_data.bar_counts if chart_data else []) | tojson }};
+    const donutCounts = {{ (chart_data.donut_counts if chart_data else [0,0]) | tojson }};
+
+    // 1. Bar Chart: Stock Count by Weapon Type (Short Labels)
+    const ctxBar = document.getElementById('weaponBarChart').getContext('2d');
+    const weaponBarChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: 'Stock Count',
+                data: barCounts,
+                backgroundColor: '#1e3a8a',
+                hoverBackgroundColor: '#2563eb',
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 36
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return barFullNames[index] || context[0].label;
+                        },
+                        label: function(context) {
+                            return ` ${context.raw} units in stock`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, font: { family: 'Inter' } },
+                    grid: { color: '#f1f5f9' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Inter', size: 10, weight: '500' } }
+                }
+            }
+        }
+    });
+
+    // 2. Donut Chart: Available vs Issued Ratio
+    const ctxDonut = document.getElementById('statusDonutChart').getContext('2d');
+    const statusDonutChart = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available in Armory', 'Issued / Active'],
+            datasets: [{
+                data: donutCounts,
+                backgroundColor: ['#059669', '#b45309'],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 16,
+                        font: { family: 'Inter', size: 12, weight: '500' }
+                    }
+                }
+            }
+        }
+    });
+
+    const modal = document.getElementById('addWeaponModal');
+    const openBtn = document.getElementById('openAddWeaponBtn');
+    const closeBtn = document.getElementById('closeAddWeaponBtn');
+    const cancelBtn = document.getElementById('cancelAddWeaponBtn');
+    const addWeaponForm = document.getElementById('addWeaponForm');
+    const regInput = document.getElementById('registerNumberInput');
+    const regError = document.getElementById('registerNumError');
+    const submitBtn = document.querySelector('.btn-submit-weapon');
+
+    let regCheckTimeout = null;
+    let isRegisterNumberValid = true;
+
+    function openModal() {
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        const container = document.getElementById('weaponSelectContainer');
+        container.classList.remove('open');
+        document.getElementById('weaponHoverCard').style.display = 'none';
+        
+        // Reset validation state
+        regInput.classList.remove('is-invalid', 'is-valid');
+        regError.style.display = 'none';
+        isRegisterNumberValid = true;
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+
+    /* Realtime Register Number Uniqueness Check */
+    regInput.addEventListener('input', () => {
+        const val = regInput.value.trim();
+        clearTimeout(regCheckTimeout);
+
+        if (!val) {
+            regInput.classList.remove('is-invalid', 'is-valid');
+            regError.style.display = 'none';
+            isRegisterNumberValid = true;
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+            return;
+        }
+
+        regCheckTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`{{ url_for('qm.check_register_number_route') }}?num=${encodeURIComponent(val)}`);
+                const data = await res.json();
+
+                if (data.exists) {
+                    regInput.classList.add('is-invalid');
+                    regInput.classList.remove('is-valid');
+                    regError.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Register Number already exists in stock!';
+                    regError.style.display = 'flex';
+                    isRegisterNumberValid = false;
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                } else {
+                    regInput.classList.remove('is-invalid');
+                    regInput.classList.add('is-valid');
+                    regError.style.display = 'none';
+                    isRegisterNumberValid = true;
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
+            } catch (err) {
+                console.error('Validation error:', err);
+            }
+        }, 220);
+    });
+
+    /* Custom Dropdown & Live Hover Preview Logic */
+    const container = document.getElementById('weaponSelectContainer');
+    const trigger = document.getElementById('weaponSelectTrigger');
+    const options = document.querySelectorAll('.custom-option');
+    const hoverCard = document.getElementById('weaponHoverCard');
+    const hoverImg = document.getElementById('weaponHoverImg');
+    const hoverTitle = document.getElementById('weaponHoverTitle');
+    const hiddenInput = document.getElementById('weaponTypeInput');
+    const selectedText = document.getElementById('selectedWeaponText');
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        container.classList.toggle('open');
+        if (!container.classList.contains('open')) {
+            hoverCard.style.display = 'none';
+        }
+    });
+
+    options.forEach(option => {
+        option.addEventListener('mouseenter', () => {
+            const imgSrc = option.getAttribute('data-img');
+            const name = option.getAttribute('data-name');
+            hoverImg.src = imgSrc;
+            hoverTitle.textContent = name;
+            hoverCard.style.display = 'flex';
+        });
+
+        option.addEventListener('mouseleave', () => {
+            hoverCard.style.display = 'none';
+        });
+
+        option.addEventListener('click', () => {
+            const value = option.getAttribute('data-value');
+            const name = option.getAttribute('data-name');
+            hiddenInput.value = value;
+            selectedText.textContent = name;
+            selectedText.style.color = '#0f172a';
+            selectedText.style.fontWeight = '600';
+            
+            options.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+
+            container.classList.remove('open');
+            hoverCard.style.display = 'none';
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+            container.classList.remove('open');
+            hoverCard.style.display = 'none';
+        }
+    });
+
+    /* Form Submit Handling to save in QM_stock DB */
+    addWeaponForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!hiddenInput.value) {
+            alert('Please select a weapon type!');
+            return;
+        }
+
+        if (!isRegisterNumberValid) {
+            alert('Register Number already exists in stock!');
+            return;
+        }
+
+        const formData = new FormData(addWeaponForm);
+        try {
+            const res = await fetch("{{ url_for('qm.add_weapon_route') }}", {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+
+                // Increment live dashboard counters
+                const totalEl = document.getElementById('statTotalWeapons');
+                const availEl = document.getElementById('statAvailableWeapons');
+                if (totalEl) totalEl.textContent = parseInt(totalEl.textContent || 0) + 1;
+                if (availEl) availEl.textContent = parseInt(availEl.textContent || 0) + 1;
+
+                addWeaponForm.reset();
+                hiddenInput.value = '';
+                selectedText.textContent = 'Select Weapon Type...';
+                selectedText.style.color = '#64748b';
+                selectedText.style.fontWeight = '400';
+                closeModal();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (err) {
+            alert('An unexpected error occurred: ' + err);
+        }
+    });
+
+</script>
+{% endblock %}

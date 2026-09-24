@@ -1,0 +1,880 @@
+{% extends "base.html" %}
+
+{% block title %}{{ coy_name }} Dashboard — 15 CESR Ordnance Platform{% endblock %}
+
+{% block page_title %}Welcome, {{ coy_name }}!{% endblock %}
+{% block page_subtitle %}15 CESR {{ coy_name }} Ordnance Control & Armory Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ─── COY STAT CARDS ROW ─── */
+    .coy-stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .coy-stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .coy-stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .coy-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+    }
+
+    .coy-stat-card__info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coy-stat-card__val {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+
+    .coy-stat-card__label {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .coy-stat-card__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .coy-stat-card__icon--blue { background: #eff6ff; color: #1e3a8a; }
+    .coy-stat-card__icon--green { background: #ecfdf5; color: #059669; }
+    .coy-stat-card__icon--amber { background: #fffbeb; color: #b45309; }
+    .coy-stat-card__icon--purple { background: #f3e8ff; color: #7e22ce; }
+
+    /* ─── COY CHARTS SECTION ─── */
+    .coy-charts-row {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+        margin-top: 24px;
+    }
+
+    @media (max-width: 960px) {
+        .coy-charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .coy-chart-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coy-chart-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .coy-chart-card__title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .coy-chart-card__body {
+        position: relative;
+        flex: 1;
+        min-height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ─── COY MODAL STYLES ─── */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-box-large {
+        background: #ffffff;
+        width: 100%;
+        max-width: 640px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+
+    .modal-backdrop.active .modal-box-large {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-header__title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-header__close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .modal-header__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .modal-body-grid {
+        padding: 20px 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 18px;
+    }
+
+    .form-group-full {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        font-size: 0.88rem;
+        pointer-events: none;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 8px 12px 8px 34px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.86rem;
+        font-family: inherit;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    .modal-footer {
+        padding: 14px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: #f8fafc;
+    }
+
+    /* ─── ISSUED WEAPONS TABLE MODAL ─── */
+    .modal-box-xlarge {
+        background: #ffffff;
+        width: 95%;
+        max-width: 1100px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-backdrop.active .modal-box-xlarge {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-table-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        flex: 1;
+        max-height: 55vh;
+    }
+
+    .issued-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        text-align: left;
+    }
+
+    .issued-table th {
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 12px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .issued-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .issued-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge--issued {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .status-badge--returned {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .btn-return-action {
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #eff6ff;
+        color: #1e3a8a;
+        border: 1px solid #bfdbfe;
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-return-action:hover {
+        background: #1e3a8a;
+        color: #ffffff;
+    }
+
+    /* Suggestions Dropdown for Troops Auto-fill */
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+        z-index: 99;
+        max-height: 220px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 4px;
+    }
+
+    .suggestion-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .suggestion-item:hover, .suggestion-item.active {
+        background: #eff6ff;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-army {
+        font-weight: 700;
+        color: #1e3a8a;
+        font-size: 0.88rem;
+    }
+
+    .suggestion-meta {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Action Buttons -->
+<div class="qm-actions" style="margin-top: 0; margin-bottom: 20px;">
+    <button type="button" class="qm-btn qm-btn--primary" id="openAllotWeaponBtn" style="background-color: #1e3a8a; border-color: #1e3a8a;">
+        <i class="fa-solid fa-hand-holding-hand"></i>
+        <span>Allot Weapon</span>
+    </button>
+
+    <a href="#" class="qm-btn qm-btn--secondary">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>View Stock</span>
+    </a>
+</div>
+
+<!-- Stat Cards Row (4 Live Stat Cards) -->
+<div class="coy-stats-row">
+    <!-- Card 1: Total Stock -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyTotalStock">{{ stats.total_weapons if stats else 0 }}</span>
+            <span class="coy-stat-card__label">Company Ordnance Stock</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--blue">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+    </div>
+
+    <!-- Card 2: Available -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyAvailableStock">{{ stats.available_weapons if stats else 0 }}</span>
+            <span class="coy-stat-card__label">Available in KOTE</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--green">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+    </div>
+
+    <!-- Card 3: Allotted Weapons -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyIssuedStock">{{ stats.issued_weapons if stats else 0 }}</span>
+            <span class="coy-stat-card__label">Allotted Weapon</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--amber">
+            <i class="fa-solid fa-person-military-rifle"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: Registered Models -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val">{{ stats.total_types if stats else 0 }}</span>
+            <span class="coy-stat-card__label">Weapon Models</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--purple">
+            <i class="fa-solid fa-layer-group"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section (Bar Chart & Donut Chart) -->
+<div class="coy-charts-row">
+    <!-- Bar Chart: Weapon Count by Type -->
+    <div class="coy-chart-card">
+        <div class="coy-chart-card__header">
+            <div class="coy-chart-card__title">
+                <i class="fa-solid fa-chart-column" style="color: #1e3a8a;"></i>
+                Available Weapons in KOTE
+            </div>
+        </div>
+        <div class="coy-chart-card__body">
+            <canvas id="coyWeaponBarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Donut Chart: Available vs Allotted -->
+    <div class="coy-chart-card">
+        <div class="coy-chart-card__header">
+            <div class="coy-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #059669;"></i>
+                Status Ratio (Available vs Allotted)
+            </div>
+        </div>
+        <div class="coy-chart-card__body">
+            <canvas id="coyStatusDonutChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Allot Weapon Modal Popup -->
+<div class="modal-backdrop" id="allotWeaponModal">
+    <div class="modal-box-large">
+        <div class="modal-header">
+            <div class="modal-header__title">
+                <i class="fa-solid fa-hand-holding-hand" style="color: #1e3a8a;"></i>
+                Allot Weapon — {{ coy_name }}
+            </div>
+            <button type="button" class="modal-header__close" id="closeAllotModalBtn">&times;</button>
+        </div>
+
+        <form id="allotWeaponForm">
+            <div class="modal-body-grid">
+                <!-- 1. Army Number Search Field -->
+                <div class="form-group form-group-full" style="position: relative;">
+                    <label class="form-label">Army Number <span style="color: #ef4444;">*</span> <span style="font-weight: 400; color: #64748b; font-size: 0.78rem;">(Type to search troops table)</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-id-card input-icon"></i>
+                        <input type="text" class="form-input" name="army_number" id="allotArmyNumber" placeholder="Type Army Number (e.g. 1548...)" required autocomplete="off">
+                    </div>
+                    <div id="troopsSuggestions" class="suggestions-dropdown"></div>
+                </div>
+
+                <!-- 2. Rank Field -->
+                <div class="form-group">
+                    <label class="form-label">Rank</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-award input-icon"></i>
+                        <input type="text" class="form-input" name="rank" id="allotRank" placeholder="Auto-filled on search" required autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- 3. Personnel Name Field -->
+                <div class="form-group">
+                    <label class="form-label">Personnel Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <input type="text" class="form-input" name="name" id="allotName" placeholder="Auto-filled on search" required autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- 4. Company Field -->
+                <div class="form-group">
+                    <label class="form-label">Company</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-building-flag input-icon"></i>
+                        <input type="text" class="form-input" name="company" id="allotCompany" placeholder="Auto-filled on search" required autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- 5. Section Field -->
+                <div class="form-group">
+                    <label class="form-label">Section</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-users-viewfinder input-icon"></i>
+                        <input type="text" class="form-input" name="section" id="allotSection" placeholder="Auto-filled on search" required autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- 6. Weapon Register Number Field -->
+                <div class="form-group form-group-full">
+                    <label class="form-label">Weapon Register Number <span style="color: #ef4444;">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-barcode input-icon"></i>
+                        <select class="form-select" name="register_number" id="allotRegisterNumber" required style="font-weight: 600; color: #1e3a8a;">
+                            <option value="">-- Choose Registered Weapon --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="qm-btn qm-btn--secondary" id="cancelAllotModalBtn">Cancel</button>
+                <button type="submit" class="qm-btn qm-btn--primary" style="background-color: #1e3a8a; border-color: #1e3a8a;">
+                    <i class="fa-solid fa-check"></i> Allot Weapon
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+<script>
+    /* Chart.js Setup for COY Dashboard */
+    const barLabels = {{ (chart_data.bar_labels if chart_data else []) | tojson }};
+    const barFullNames = {{ (chart_data.bar_full_names if chart_data else []) | tojson }};
+    const barCounts = {{ (chart_data.bar_counts if chart_data else []) | tojson }};
+    const donutCounts = {{ (chart_data.donut_counts if chart_data else [0,0]) | tojson }};
+
+    // Custom Chart.js Plugin to render count values on top of each bar
+    const topBarValuesPlugin = {
+        id: 'topBarValuesPlugin',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                meta.data.forEach((bar, index) => {
+                    const value = dataset.data[index];
+                    if (value !== undefined && value !== null) {
+                        ctx.save();
+                        ctx.fillStyle = '#1e3a8a';
+                        ctx.font = '700 12px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(value, bar.x, bar.y - 4);
+                        ctx.restore();
+                    }
+                });
+            });
+        }
+    };
+
+    // 1. Bar Chart: Stock Count by Weapon Type (Short Labels)
+    const ctxBar = document.getElementById('coyWeaponBarChart').getContext('2d');
+    const coyWeaponBarChart = new Chart(ctxBar, {
+        type: 'bar',
+        plugins: [topBarValuesPlugin],
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: 'Stock Count',
+                data: barCounts,
+                backgroundColor: '#1e3a8a',
+                hoverBackgroundColor: '#2563eb',
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 36
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 22
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return barFullNames[index] || context[0].label;
+                        },
+                        label: function(context) {
+                            return ` ${context.raw} units available in KOTE`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, font: { family: 'Inter' } },
+                    grid: { color: '#f1f5f9' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Inter', size: 10, weight: '500' } }
+                }
+            }
+        }
+    });
+
+    // 2. Donut Chart: Available vs Allotted Ratio
+    const ctxDonut = document.getElementById('coyStatusDonutChart').getContext('2d');
+    const coyStatusDonutChart = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available in KOTE', 'Allotted Weapon'],
+            datasets: [{
+                data: donutCounts,
+                backgroundColor: ['#059669', '#b45309'],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 16,
+                        font: { family: 'Inter', size: 12, weight: '500' }
+                    }
+                }
+            }
+        }
+    });
+
+    /* Allot Weapon Modal & Troops Auto-fill Logic */
+    const allotModal = document.getElementById('allotWeaponModal');
+    const openAllotBtn = document.getElementById('openAllotWeaponBtn');
+    const closeAllotBtn = document.getElementById('closeAllotModalBtn');
+    const cancelAllotBtn = document.getElementById('cancelAllotModalBtn');
+    const allotForm = document.getElementById('allotWeaponForm');
+
+    const armySearchInput = document.getElementById('allotArmyNumber');
+    const suggestionsBox = document.getElementById('troopsSuggestions');
+    const rankInput = document.getElementById('allotRank');
+    const nameInput = document.getElementById('allotName');
+    const companyInput = document.getElementById('allotCompany');
+    const sectionInput = document.getElementById('allotSection');
+    const registerSelect = document.getElementById('allotRegisterNumber');
+
+    async function loadAvailableWeapons() {
+        if (!registerSelect) return;
+        registerSelect.innerHTML = '<option value="">Loading available weapons...</option>';
+        try {
+            const res = await fetch("{{ url_for('coy.available_weapons_route') }}");
+            const data = await res.json();
+            if (data.success && data.stock.length > 0) {
+                registerSelect.innerHTML = '<option value="">-- Choose Registered Weapon --</option>';
+                data.stock.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.register_number;
+                    opt.textContent = `${item.register_number} (Butt #${item.butt_number} - ${item.type})`;
+                    registerSelect.appendChild(opt);
+                });
+            } else {
+                registerSelect.innerHTML = '<option value="">No available weapons in stock</option>';
+            }
+        } catch (err) {
+            console.error('Error loading weapons stock:', err);
+            registerSelect.innerHTML = '<option value="">Error loading weapons stock</option>';
+        }
+    }
+
+    function openAllotModal() {
+        if (allotModal) {
+            allotModal.classList.add('active');
+            loadAvailableWeapons();
+            if (armySearchInput) armySearchInput.focus();
+        }
+    }
+
+    function closeAllotModal() {
+        if (allotModal) {
+            allotModal.classList.remove('active');
+            if (allotForm) allotForm.reset();
+            if (suggestionsBox) suggestionsBox.style.display = 'none';
+        }
+    }
+
+    if (openAllotBtn) openAllotBtn.addEventListener('click', openAllotModal);
+    if (closeAllotBtn) closeAllotBtn.addEventListener('click', closeAllotModal);
+    if (cancelAllotBtn) cancelAllotBtn.addEventListener('click', closeAllotModal);
+
+    if (allotModal) {
+        allotModal.addEventListener('click', (e) => {
+            if (e.target === allotModal) closeAllotModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && allotModal && allotModal.classList.contains('active')) closeAllotModal();
+    });
+
+    /* Live Troops Autocomplete Search on Keypress/Input */
+    let searchDebounce = null;
+
+    if (armySearchInput) {
+        armySearchInput.addEventListener('input', function() {
+            const q = this.value.trim();
+            clearTimeout(searchDebounce);
+
+            if (q.length === 0) {
+                suggestionsBox.style.display = 'none';
+                suggestionsBox.innerHTML = '';
+                return;
+            }
+
+            searchDebounce = setTimeout(async () => {
+                try {
+                    const res = await fetch(`{{ url_for('coy.search_troops_route') }}?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+
+                    if (data.success && data.troops.length > 0) {
+                        renderSuggestions(data.troops);
+                    } else {
+                        suggestionsBox.innerHTML = '<div class="suggestion-item" style="color: #94a3b8; cursor: default;">No matching troops found</div>';
+                        suggestionsBox.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error('Error searching troops:', err);
+                }
+            }, 180);
+        });
+    }
+
+    function renderSuggestions(troops) {
+        suggestionsBox.innerHTML = '';
+        troops.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.innerHTML = `
+                <div>
+                    <div class="suggestion-army">${item.army_number}</div>
+                    <div class="suggestion-meta">${item.rank} ${item.name} (${item.company})</div>
+                </div>
+                <div class="suggestion-meta" style="font-weight: 600; color: #1e3a8a;">${item.section}</div>
+            `;
+            div.addEventListener('click', () => {
+                selectTroop(item);
+            });
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    }
+
+    function selectTroop(item) {
+        armySearchInput.value = item.army_number;
+        nameInput.value = item.name;
+        rankInput.value = item.rank;
+        companyInput.value = item.company;
+        sectionInput.value = item.section;
+        suggestionsBox.style.display = 'none';
+    }
+
+    // Close suggestions dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (suggestionsBox && !suggestionsBox.contains(e.target) && e.target !== armySearchInput) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    /* Form Submit - Allot Weapon API Call */
+    if (allotForm) {
+        allotForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const regNum = registerSelect ? registerSelect.value : '';
+            const armyNum = armySearchInput ? armySearchInput.value : '';
+
+            if (!regNum) {
+                alert('Please select a Register Number for the weapon.');
+                return;
+            }
+            if (!armyNum) {
+                alert('Please enter or search an Army Number.');
+                return;
+            }
+
+            const formData = new FormData(allotForm);
+
+            try {
+                const res = await fetch("{{ url_for('coy.allot_weapon_route') }}", {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+
+                    // Update live dashboard counters
+                    const availEl = document.getElementById('coyAvailableStock');
+                    const issuedEl = document.getElementById('coyIssuedStock');
+                    if (availEl && parseInt(availEl.textContent) > 0) {
+                        availEl.textContent = parseInt(availEl.textContent) - 1;
+                    }
+                    if (issuedEl) {
+                        issuedEl.textContent = parseInt(issuedEl.textContent) + 1;
+                    }
+
+                    closeAllotModal();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('An unexpected error occurred: ' + err);
+            }
+        });
+    }
+</script>
+{% endblock %}
