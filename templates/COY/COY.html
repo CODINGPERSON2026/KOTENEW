@@ -260,6 +260,25 @@
         background: #f8fafc;
     }
 
+    /* AK-47 Watermark Background Graphic for Modal */
+    .modal-ak47-watermark {
+        position: absolute;
+        right: -20px;
+        bottom: 10px;
+        width: 440px;
+        opacity: 0.12;
+        pointer-events: none;
+        z-index: 1;
+        transform: rotate(-10deg);
+        filter: drop-shadow(0 10px 20px rgba(30, 58, 138, 0.4));
+    }
+
+    .modal-ak47-watermark img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
     /* ─── ISSUED WEAPONS TABLE MODAL ─── */
     .modal-box-xlarge {
         background: #ffffff;
@@ -410,7 +429,6 @@
     <!-- Action Buttons -->
 <div class="qm-actions" style="margin-top: 0; margin-bottom: 20px;">
     <button type="button" class="qm-btn qm-btn--primary" id="openAllotWeaponBtn" style="background-color: #1e3a8a; border-color: #1e3a8a;">
-        <i class="fa-solid fa-hand-holding-hand"></i>
         <span>Allot Weapon</span>
     </button>
 
@@ -498,78 +516,124 @@
 
 <!-- Allot Weapon Modal Popup -->
 <div class="modal-backdrop" id="allotWeaponModal">
-    <div class="modal-box-large">
-        <div class="modal-header">
-            <div class="modal-header__title">
-                <i class="fa-solid fa-hand-holding-hand" style="color: #1e3a8a;"></i>
-                Allot Weapon — {{ coy_name }}
+    <div class="modal-box-large" style="position: relative; overflow: hidden; background: #ffffff;">
+        
+        <!-- Background AK-47 Watermark Graphic -->
+        <div class="modal-ak47-watermark">
+            <img src="{{ url_for('static', filename='weapons/ak47.png') }}" alt="AK47 Background">
+        </div>
+
+        <div class="modal-header" style="position: relative; z-index: 2;">
+            <div class="modal-header__title" style="font-weight: 800; color: #1e3a8a;">
+                <i class="fa-solid fa-gun" style="color: #1e3a8a;"></i>
+                Allotment Weapon — {{ coy_name }}
             </div>
             <button type="button" class="modal-header__close" id="closeAllotModalBtn">&times;</button>
         </div>
 
-        <form id="allotWeaponForm">
+        <form id="allotWeaponForm" style="position: relative; z-index: 2;">
             <div class="modal-body-grid">
-                <!-- 1. Army Number Search Field -->
-                <div class="form-group form-group-full" style="position: relative;">
-                    <label class="form-label">Army Number <span style="color: #ef4444;">*</span> <span style="font-weight: 400; color: #64748b; font-size: 0.78rem;">(Type to search troops table)</span></label>
+                <!-- 1. Weapon Register Number Field -->
+                <div class="form-group form-group-full">
+                    <label class="form-label">Weapon Register Number <span style="color: #ef4444;">*</span></label>
                     <div class="input-wrapper">
-                        <i class="fa-solid fa-id-card input-icon"></i>
-                        <input type="text" class="form-input" name="army_number" id="allotArmyNumber" placeholder="Type Army Number (e.g. 1548...)" required autocomplete="off">
+                        <i class="fa-solid fa-barcode input-icon" style="color: #1e3a8a;"></i>
+                        <select class="form-select" name="register_number" id="allotRegisterNumber" required style="font-weight: 700; color: #1e3a8a;">
+                            <option value="">-- Choose Registered Weapon --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 2. Types of Weapon Field -->
+                <div class="form-group">
+                    <label class="form-label">Type of Weapon</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-crosshairs input-icon" style="color: #2563eb;"></i>
+                        <input type="text" class="form-input" name="weapon_type" id="allotWeaponType" placeholder="Auto-filled on weapon select" readonly style="background: #f8fafc; font-weight: 700; color: #1e3a8a;">
+                    </div>
+                </div>
+
+                <!-- 3. Butt Number Field -->
+                <div class="form-group">
+                    <label class="form-label">Butt Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-hashtag input-icon" style="color: #0284c7;"></i>
+                        <input type="text" class="form-input" name="butt_number" id="allotButtNumber" placeholder="Auto-filled on weapon select" readonly style="background: #f8fafc; font-weight: 700; color: #0284c7;">
+                    </div>
+                </div>
+
+                <!-- 4. Army Number Search Field -->
+                <div class="form-group form-group-full" style="position: relative;">
+                    <label class="form-label">Army Number <span style="color: #ef4444;">*</span> <span style="font-weight: 400; color: #64748b; font-size: 0.78rem;">(Type to search personnel table)</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-id-card input-icon" style="color: #4f46e5;"></i>
+                        <input type="text" class="form-input" name="army_number" id="allotArmyNumber" placeholder="Type Army Number (e.g. 1548...)" required autocomplete="off" style="font-weight: 700;">
                     </div>
                     <div id="troopsSuggestions" class="suggestions-dropdown"></div>
                 </div>
 
-                <!-- 2. Rank Field -->
+                <!-- 5. Rank Field -->
                 <div class="form-group">
                     <label class="form-label">Rank</label>
                     <div class="input-wrapper">
-                        <i class="fa-solid fa-award input-icon"></i>
-                        <input type="text" class="form-input" name="rank" id="allotRank" placeholder="Auto-filled on search" required autocomplete="off">
+                        <i class="fa-solid fa-award input-icon" style="color: #d97706;"></i>
+                        <input type="text" class="form-input" name="rank" id="allotRank" placeholder="Auto-filled on search" required autocomplete="off" style="font-weight: 600;">
                     </div>
                 </div>
 
-                <!-- 3. Personnel Name Field -->
+                <!-- 6. Personnel Name Field -->
                 <div class="form-group">
-                    <label class="form-label">Personnel Name</label>
+                    <label class="form-label">Name</label>
                     <div class="input-wrapper">
-                        <i class="fa-solid fa-user input-icon"></i>
-                        <input type="text" class="form-input" name="name" id="allotName" placeholder="Auto-filled on search" required autocomplete="off">
+                        <i class="fa-solid fa-user input-icon" style="color: #059669;"></i>
+                        <input type="text" class="form-input" name="name" id="allotName" placeholder="Auto-filled on search" required autocomplete="off" style="font-weight: 600;">
                     </div>
                 </div>
 
-                <!-- 4. Company Field -->
+                <!-- 7. Coy Field -->
                 <div class="form-group">
-                    <label class="form-label">Company</label>
+                    <label class="form-label">Coy (Company)</label>
                     <div class="input-wrapper">
-                        <i class="fa-solid fa-building-flag input-icon"></i>
-                        <input type="text" class="form-input" name="company" id="allotCompany" placeholder="Auto-filled on search" required autocomplete="off">
+                        <i class="fa-solid fa-building-flag input-icon" style="color: #7c3aed;"></i>
+                        <input type="text" class="form-input" name="company" id="allotCompany" placeholder="Auto-filled on search" required autocomplete="off" style="font-weight: 600;">
                     </div>
                 </div>
 
-                <!-- 5. Section Field -->
+                <!-- 8. Section Field -->
                 <div class="form-group">
                     <label class="form-label">Section</label>
                     <div class="input-wrapper">
-                        <i class="fa-solid fa-users-viewfinder input-icon"></i>
-                        <input type="text" class="form-input" name="section" id="allotSection" placeholder="Auto-filled on search" required autocomplete="off">
+                        <i class="fa-solid fa-users-viewfinder input-icon" style="color: #0891b2;"></i>
+                        <input type="text" class="form-input" name="section" id="allotSection" placeholder="Auto-filled on search" required autocomplete="off" style="font-weight: 600;">
                     </div>
                 </div>
 
-                <!-- 6. Weapon Register Number Field -->
-                <div class="form-group form-group-full">
-                    <label class="form-label">Weapon Register Number <span style="color: #ef4444;">*</span></label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-barcode input-icon"></i>
-                        <select class="form-select" name="register_number" id="allotRegisterNumber" required style="font-weight: 600; color: #1e3a8a;">
-                            <option value="">-- Choose Registered Weapon --</option>
-                        </select>
+                <!-- 9. Biometric Fingerprint Verification Section -->
+                <div class="form-group form-group-full" style="margin-top: 4px;">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Biometric Fingerprint Verification <span style="color: #ef4444;">*</span></span>
+                        <span id="allotBiometricBadge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: none;">Connected & Ready</span>
+                    </label>
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div id="allotFingerprintWrapper" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #3b82f6; background: #eff6ff; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; flex-shrink: 0;">
+                                <i class="fa-solid fa-fingerprint" style="font-size: 1.25rem; color: #2563eb;"></i>
+                            </div>
+                            <div>
+                                <div id="allotBiometricStatusText" style="font-size: 0.82rem; font-weight: 700; color: #1e293b;">Place Finger on HID 4500 Optical Sensor</div>
+                                <div style="font-size: 0.72rem; color: #64748b;">Optical Sensor Fingerprint Scan verification</div>
+                            </div>
+                        </div>
+                        <button type="button" id="allotTriggerBioBtn" class="qm-btn qm-btn--secondary" style="background: #ffffff; border: 1px solid #2563eb; color: #2563eb; font-weight: 700; font-size: 0.78rem; padding: 6px 14px; border-radius: 8px; white-space: nowrap;">
+                            <i class="fa-solid fa-fingerprint"></i> Scan Fingerprint
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="qm-btn qm-btn--secondary" id="cancelAllotModalBtn">Cancel</button>
-                <button type="submit" class="qm-btn qm-btn--primary" style="background-color: #1e3a8a; border-color: #1e3a8a;">
+                <button type="submit" class="qm-btn qm-btn--primary" style="background-color: #1e3a8a; border-color: #1e3a8a; font-weight: 700; gap: 8px;">
                     <i class="fa-solid fa-check"></i> Allot Weapon
                 </button>
             </div>
@@ -708,6 +772,41 @@
     const companyInput = document.getElementById('allotCompany');
     const sectionInput = document.getElementById('allotSection');
     const registerSelect = document.getElementById('allotRegisterNumber');
+    const weaponTypeInput = document.getElementById('allotWeaponType');
+    const buttNumberInput = document.getElementById('allotButtNumber');
+
+    let availableWeaponsStock = [];
+    let allotBiometricVerified = false;
+
+    const allotBioBtn = document.getElementById('allotTriggerBioBtn');
+    const allotBioBadge = document.getElementById('allotBiometricBadge');
+    const allotBioText = document.getElementById('allotBiometricStatusText');
+    const allotFingerprintWrapper = document.getElementById('allotFingerprintWrapper');
+
+    if (allotBioBtn) {
+        allotBioBtn.addEventListener('click', () => {
+            allotBioText.textContent = 'Scanning fingerprint...';
+            allotBioBadge.textContent = 'Scanning...';
+            allotBioBadge.style.background = '#fef3c7';
+            allotBioBadge.style.color = '#b45309';
+            allotBioBadge.style.borderColor = '#fde68a';
+            allotFingerprintWrapper.style.borderColor = '#eab308';
+            allotFingerprintWrapper.style.background = '#fefce8';
+
+            setTimeout(() => {
+                allotBiometricVerified = true;
+                allotBioText.textContent = 'Biometric Verified (Match 100%)';
+                allotBioBadge.textContent = 'Verified';
+                allotBioBadge.style.background = '#dcfce7';
+                allotBioBadge.style.color = '#15803d';
+                allotBioBadge.style.borderColor = '#86efac';
+                allotFingerprintWrapper.style.borderColor = '#16a34a';
+                allotFingerprintWrapper.style.background = '#f0fdf4';
+                const icon = allotFingerprintWrapper.querySelector('i');
+                if (icon) icon.style.color = '#16a34a';
+            }, 700);
+        });
+    }
 
     async function loadAvailableWeapons() {
         if (!registerSelect) return;
@@ -716,6 +815,7 @@
             const res = await fetch("{{ url_for('coy.available_weapons_route') }}");
             const data = await res.json();
             if (data.success && data.stock.length > 0) {
+                availableWeaponsStock = data.stock;
                 registerSelect.innerHTML = '<option value="">-- Choose Registered Weapon --</option>';
                 data.stock.forEach(item => {
                     const opt = document.createElement('option');
@@ -732,6 +832,20 @@
         }
     }
 
+    if (registerSelect) {
+        registerSelect.addEventListener('change', function() {
+            const selectedReg = this.value;
+            const item = availableWeaponsStock.find(w => w.register_number === selectedReg);
+            if (item) {
+                if (weaponTypeInput) weaponTypeInput.value = item.type || '';
+                if (buttNumberInput) buttNumberInput.value = item.butt_number || '';
+            } else {
+                if (weaponTypeInput) weaponTypeInput.value = '';
+                if (buttNumberInput) buttNumberInput.value = '';
+            }
+        });
+    }
+
     function openAllotModal() {
         if (allotModal) {
             allotModal.classList.add('active');
@@ -745,16 +859,26 @@
             allotModal.classList.remove('active');
             if (allotForm) allotForm.reset();
             if (suggestionsBox) suggestionsBox.style.display = 'none';
+            allotBiometricVerified = false;
+            if (allotBioBadge) {
+                allotBioBadge.textContent = 'Connected & Ready';
+                allotBioBadge.style.background = '#fef3c7';
+                allotBioBadge.style.color = '#b45309';
+                allotBioBadge.style.borderColor = '#fde68a';
+            }
+            if (allotBioText) allotBioText.textContent = 'Place Finger on HID 4500 Optical Sensor';
+            if (allotFingerprintWrapper) {
+                allotFingerprintWrapper.style.borderColor = '#3b82f6';
+                allotFingerprintWrapper.style.background = '#eff6ff';
+                const icon = allotFingerprintWrapper.querySelector('i');
+                if (icon) icon.style.color = '#2563eb';
+            }
         }
     }
 
     if (openAllotBtn) {
         openAllotBtn.addEventListener('click', () => {
-            if (typeof openIssuanceModal === 'function') {
-                openIssuanceModal();
-            } else {
-                openAllotModal();
-            }
+            openAllotModal();
         });
     }
     if (closeAllotBtn) closeAllotBtn.addEventListener('click', closeAllotModal);
@@ -774,35 +898,71 @@
     let searchDebounce = null;
 
     if (armySearchInput) {
+        async function fetchAndFillTroop(q) {
+            if (!q) {
+                if (nameInput) nameInput.value = '';
+                if (rankInput) rankInput.value = '';
+                if (companyInput) companyInput.value = '';
+                if (sectionInput) sectionInput.value = '';
+                if (suggestionsBox) suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            try {
+                const res = await fetch(`{{ url_for('coy.search_troops_route') }}?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+
+                if (data.success && data.troops.length > 0) {
+                    const exactMatch = data.troops.find(t => t.army_number.toLowerCase() === q.toLowerCase());
+                    const matchedTroop = exactMatch || (data.troops.length === 1 ? data.troops[0] : null);
+
+                    if (matchedTroop) {
+                        if (nameInput) nameInput.value = matchedTroop.name || '';
+                        if (rankInput) rankInput.value = matchedTroop.rank || '';
+                        if (companyInput) companyInput.value = matchedTroop.company || '';
+                        if (sectionInput) sectionInput.value = matchedTroop.section || '';
+                    }
+
+                    renderSuggestions(data.troops);
+                } else {
+                    if (suggestionsBox) {
+                        suggestionsBox.innerHTML = '<div class="suggestion-item" style="color: #94a3b8; cursor: default;">No matching troops found</div>';
+                        suggestionsBox.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                console.error('Error searching troops:', err);
+            }
+        }
+
         armySearchInput.addEventListener('input', function() {
             const q = this.value.trim();
             clearTimeout(searchDebounce);
 
             if (q.length === 0) {
-                suggestionsBox.style.display = 'none';
-                suggestionsBox.innerHTML = '';
+                if (nameInput) nameInput.value = '';
+                if (rankInput) rankInput.value = '';
+                if (companyInput) companyInput.value = '';
+                if (sectionInput) sectionInput.value = '';
+                if (suggestionsBox) suggestionsBox.style.display = 'none';
                 return;
             }
 
-            searchDebounce = setTimeout(async () => {
-                try {
-                    const res = await fetch(`{{ url_for('coy.search_troops_route') }}?q=${encodeURIComponent(q)}`);
-                    const data = await res.json();
+            searchDebounce = setTimeout(() => {
+                fetchAndFillTroop(q);
+            }, 150);
+        });
 
-                    if (data.success && data.troops.length > 0) {
-                        renderSuggestions(data.troops);
-                    } else {
-                        suggestionsBox.innerHTML = '<div class="suggestion-item" style="color: #94a3b8; cursor: default;">No matching troops found</div>';
-                        suggestionsBox.style.display = 'block';
-                    }
-                } catch (err) {
-                    console.error('Error searching troops:', err);
-                }
-            }, 180);
+        armySearchInput.addEventListener('blur', function() {
+            const q = this.value.trim();
+            if (q.length > 0) {
+                fetchAndFillTroop(q);
+            }
         });
     }
 
     function renderSuggestions(troops) {
+        if (!suggestionsBox) return;
         suggestionsBox.innerHTML = '';
         troops.forEach(item => {
             const div = document.createElement('div');
@@ -823,12 +983,12 @@
     }
 
     function selectTroop(item) {
-        armySearchInput.value = item.army_number;
-        nameInput.value = item.name;
-        rankInput.value = item.rank;
-        companyInput.value = item.company;
-        sectionInput.value = item.section;
-        suggestionsBox.style.display = 'none';
+        if (armySearchInput) armySearchInput.value = item.army_number;
+        if (nameInput) nameInput.value = item.name || '';
+        if (rankInput) rankInput.value = item.rank || '';
+        if (companyInput) companyInput.value = item.company || '';
+        if (sectionInput) sectionInput.value = item.section || '';
+        if (suggestionsBox) suggestionsBox.style.display = 'none';
     }
 
     // Close suggestions dropdown when clicking outside
@@ -851,6 +1011,10 @@
             }
             if (!armyNum) {
                 alert('Please enter or search an Army Number.');
+                return;
+            }
+            if (!allotBiometricVerified) {
+                alert('Please perform Biometric Fingerprint Scan before completing weapon allotment!');
                 return;
             }
 

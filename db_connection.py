@@ -331,6 +331,8 @@ def create_issuance_logs_table():
             company VARCHAR(100) DEFAULT NULL,
             action_type VARCHAR(20) NOT NULL,
             barcode VARCHAR(100) DEFAULT NULL,
+            purpose VARCHAR(100) DEFAULT 'DUTY',
+            duty_location VARCHAR(150) DEFAULT 'RP',
             biometric_status VARCHAR(50) DEFAULT 'Verified',
             action_time DATETIME NOT NULL,
             operator_username VARCHAR(100) DEFAULT NULL,
@@ -339,6 +341,21 @@ def create_issuance_logs_table():
         """
         cursor.execute(create_table_sql)
         conn.commit()
+
+        # Check/add purpose and duty_location columns to issuance_logs table if missing
+        try:
+            cursor.execute("SHOW COLUMNS FROM issuance_logs LIKE 'purpose';")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE issuance_logs ADD COLUMN purpose VARCHAR(100) DEFAULT 'DUTY';")
+                conn.commit()
+                print("Added 'purpose' column to issuance_logs table.")
+            cursor.execute("SHOW COLUMNS FROM issuance_logs LIKE 'duty_location';")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE issuance_logs ADD COLUMN duty_location VARCHAR(150) DEFAULT 'RP';")
+                conn.commit()
+                print("Added 'duty_location' column to issuance_logs table.")
+        except Exception as ex:
+            print("Notice verifying purpose/duty_location columns in issuance_logs:", ex)
 
         # Check/add barcode column to QM_stock table if missing
         try:

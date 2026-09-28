@@ -520,6 +520,53 @@
                             <div id="issuanceTroopSuggestions" class="suggestions-dropdown"></div>
                         </div>
 
+                        <!-- PURPOSE & DUTY SELECTION (Under Purpose -> Duty -> RP/NIGHT PQT) -->
+                        <div class="form-group" id="purposeDutyGroup" style="margin-bottom: 8px;">
+                            <label class="form-label" style="font-size: 0.74rem; font-weight: 700;">Issuance Purpose & Duty <span style="color: #ef4444;">*</span></label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div>
+                                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">1. Purpose</span>
+                                    <div class="input-wrapper" style="margin-top: 2px;">
+                                        <i class="fa-solid fa-bullseye input-icon" style="color: #1e3a8a;"></i>
+                                        <select class="form-input" id="issuancePurposeSelect" style="padding-left: 30px; font-weight: 700; font-size: 0.8rem; height: 34px;">
+                                            <option value="DUTY" selected>DUTY</option>
+                                            <option value="RP">RP</option>
+                                            <option value="POST">POST</option>
+                                            <option value="DET">DET</option>
+                                            <option value="TD">TD</option>
+                                            <option value="TRAINING">TRAINING</option>
+                                            <option value="FIRING RANGE">FIRING RANGE</option>
+                                            <option value="MAINTENANCE">MAINTENANCE</option>
+                                            <option value="OPERATION">OPERATION / MOVEMENT</option>
+                                            <option value="INSPECTION">INSPECTION</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">2. Duty / Detail</span>
+                                    <div class="input-wrapper" style="margin-top: 2px;">
+                                        <i class="fa-solid fa-user-shield input-icon" style="color: #059669;"></i>
+                                        <select class="form-input" id="issuanceDutySelect" style="padding-left: 30px; font-weight: 700; font-size: 0.8rem; height: 34px;">
+                                            
+                                            <option value="SIGNAL CENT">SIGNAL CENT</option>
+                                            <option value="JCO MESS GATE">JCO MESS GATE</option>
+                                            <option value="MAIN GATE">MAIN GATE</option>
+                                            <option value="QUATER GUARD">QUATER GUARD</option>
+                                            <option value="KOTE PQT">KOTE PQT</option>
+                                            <option value="QRT">QRT (QUICK REACTION TEAM)</option>
+                                            <option value="PATROL">PATROL / NIGHT WATCH</option>
+                                            <option value="ESCORT">CONVOY / ESCORT DUTY</option>
+                                            <option value="GENERAL DUTY">GENERAL DUTY</option>
+                                            <option value="OTHER">OTHER (Specify...)</option>
+                                        </select>
+                                    </div>
+                                    <div id="issuanceDutyCustomWrapper" style="display: none; margin-top: 4px;">
+                                        <input type="text" class="form-input" id="issuanceDutyCustomInput" placeholder="Specify custom Duty / Detail..." style="font-weight: 700; font-size: 0.8rem; height: 32px; border: 1px solid #059669; background: #f0fdf4;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Troop Auto-populated Info -->
                         <div class="details-box">
                             <div class="details-item">
@@ -601,12 +648,13 @@
                                 <th>Butt No</th>
                                 <th>Weapon Type</th>
                                 <th>Army No / Troop</th>
+                                <th>Purpose & Duty</th>
                                 <th>Biometric Status</th>
                             </tr>
                         </thead>
                         <tbody id="logsTableBody">
                             <tr>
-                                <td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Loading transaction history...</td>
+                                <td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Loading transaction history...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -838,6 +886,130 @@
         const bioText = document.getElementById('biometricStatusText');
         bioText.textContent = 'Place Finger on HID 4500 Optical Sensor';
         bioText.classList.remove('verified');
+
+        const customWrapper = document.getElementById('issuanceDutyCustomWrapper');
+        const customInput = document.getElementById('issuanceDutyCustomInput');
+        if (customInput) customInput.value = '';
+        if (customWrapper) customWrapper.style.display = 'none';
+    }
+
+    // Purpose to Duty mapping options
+    const purposeDutyMapping = {
+        'DUTY': [
+            { value: 'RP', text: 'RP' },
+            { value: 'SIGNAL CENT', text: 'SIGNAL CENT' },
+            { value: 'JCO MESS GATE', text: 'JCO MESS GATE' },
+            { value: 'MAIN GATE', text: 'MAIN GATE' },
+            { value: 'QUATER GUARD', text: 'QUATER GUARD' },
+            { value: 'KOTE PQT', text: 'KOTE PQT' },
+            { value: 'QRT', text: 'QRT (QUICK REACTION TEAM)' },
+            { value: 'PATROL', text: 'PATROL / NIGHT WATCH' },
+            { value: 'ESCORT', text: 'CONVOY / ESCORT DUTY' },
+            { value: 'GENERAL DUTY', text: 'GENERAL DUTY' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'RP': [
+            { value: 'MAIN GATE', text: 'MAIN GATE' },
+            { value: 'SIGNAL CENTER', text: 'SIGNAL CENTER' },
+            { value: 'JCO MESS GATE', text: 'JCO MESS GATE' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'POST': [
+            { value: 'POST NO-13', text: 'POST NO-13' },
+            { value: 'POST NO-39', text: 'POST NO-39' },
+            { value: 'POST NO-40', text: 'POST NO-40' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'DET': [
+            { value: 'SONAMARG', text: 'SONAMARG' },
+            { value: 'SINGHPURA', text: 'SINGHPURA' },
+            { value: 'TREHGAM', text: 'TREHGAM' },
+            { value: 'ROSHAN', text: 'ROSHAN' },
+            { value: 'KHREW', text: 'KHREW' },
+            { value: 'SONARWEIN', text: 'SONARWEIN' },
+            { value: 'UPLONA', text: 'UPLONA' },
+            { value: 'MANASBAL', text: 'MANASBAL' },
+            { value: 'KHUNMDH', text: 'KHUNMDH' },
+            { value: 'LYNGET', text: 'LYNGET' },
+            { value: 'TRAGBAL', text: 'TRAGBAL' },
+            { value: 'WUSAN', text: 'WUSAN' },
+            { value: 'BEHIBAG', text: 'BEHIBAG' },
+            { value: 'KHUKHARI BTS', text: 'KHUKHARI BTS' },
+            { value: 'KHUNDRU', text: 'KHUNDRU' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'TD': [
+            { value: 'CIPHER COURIER', text: 'CIPHER COURIER' },
+            { value: 'Co-Dvr', text: 'Co-Dvr' },
+            { value: 'TD', text: 'TD' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'TRAINING': [
+            { value: 'BPET TEST', text: 'BPET TEST' },
+            { value: 'Agniveer Firing ASST Test', text: 'Agniveer Firing ASST Test' },
+            { value: 'DRILL TRAINING', text: 'DRILL TRAINING' },
+            { value: 'TACTICAL EXERCISE', text: 'TACTICAL EXERCISE / FIELD' },
+            { value: 'WEAPON HANDLING', text: 'WEAPON HANDLING' },
+            { value: 'PHYSICAL PROFICIENCY', text: 'PQT / PHYSICAL FIT' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'FIRING RANGE': [
+            { value: 'ANNUAL FIRING', text: 'ANNUAL FIRING PRACTICE' },
+            { value: 'ZEROING', text: 'ZEROING / TEST FIRING' },
+            { value: 'CLASSIFICATION', text: 'CLASSIFICATION FIRING' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'MAINTENANCE': [
+            { value: 'ARMOR CLEANING', text: 'ARMOR CLEANING & INSPECTION' },
+            { value: 'REPAIR & SERVICE', text: 'REPAIR & SERVICING' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'OPERATION': [
+            { value: 'OPERATIONAL DEPLOYMENT', text: 'OPERATIONAL DEPLOYMENT' },
+            { value: 'VIP SECURITY', text: 'VIP SECURITY' },
+            { value: 'CONVOY ESCORT', text: 'CONVOY ESCORT' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ],
+        'INSPECTION': [
+            { value: 'ANNUAL INSPECTION', text: 'ANNUAL INSPECTION' },
+            { value: 'STOCK AUDIT', text: 'STOCK AUDIT' },
+            { value: 'OTHER', text: 'OTHER (Specify...)' }
+        ]
+    };
+
+    function toggleCustomDutyInput() {
+        const dutySelect = document.getElementById('issuanceDutySelect');
+        const customWrapper = document.getElementById('issuanceDutyCustomWrapper');
+        const customInput = document.getElementById('issuanceDutyCustomInput');
+        if (!dutySelect || !customWrapper) return;
+
+        if (dutySelect.value === 'OTHER') {
+            customWrapper.style.display = 'block';
+            if (customInput) customInput.focus();
+        } else {
+            customWrapper.style.display = 'none';
+            if (customInput) customInput.value = '';
+        }
+    }
+
+    function updateDutyOptions() {
+        const purposeSelect = document.getElementById('issuancePurposeSelect');
+        const dutySelect = document.getElementById('issuanceDutySelect');
+        if (!purposeSelect || !dutySelect) return;
+
+        const selPurpose = purposeSelect.value;
+        const options = purposeDutyMapping[selPurpose] || purposeDutyMapping['DUTY'];
+
+        dutySelect.innerHTML = '';
+        options.forEach((opt, idx) => {
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.textContent = opt.text;
+            if (idx === 0) o.selected = true;
+            dutySelect.appendChild(o);
+        });
+
+        toggleCustomDutyInput();
     }
 
     // Switch Tabs
@@ -851,6 +1023,7 @@
         const modeLabel = document.getElementById('operationModeLabel');
         const execBtn = document.getElementById('executeIssuanceBtn');
         const troopGroup = document.getElementById('troopSearchGroup');
+        const purposeDutyGroup = document.getElementById('purposeDutyGroup');
 
         btnOut.className = 'tab-btn' + (mode === 'OUT' ? ' active-tab--out' : '');
         btnReturn.className = 'tab-btn' + (mode === 'RETURN' ? ' active-tab--return' : '');
@@ -871,12 +1044,14 @@
                 execBtn.className = 'btn-action-out';
                 execBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> <span>WEAPON OUT FROM KOTE</span>';
                 if (troopGroup) troopGroup.style.display = 'block';
+                if (purposeDutyGroup) purposeDutyGroup.style.display = 'block';
             } else {
                 modeLabel.textContent = 'WEAPON RETURN MODE';
                 modeLabel.style.color = '#059669';
                 execBtn.className = 'btn-action-return';
                 execBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>RETURN WEAPON TO KOTE</span>';
                 if (troopGroup) troopGroup.style.display = 'none';
+                if (purposeDutyGroup) purposeDutyGroup.style.display = 'none';
             }
         }
     }
@@ -1060,10 +1235,19 @@
         const armyNum = selectedTroopData ? selectedTroopData.army_number : armyInput.value.trim();
         const endpoint = currentMode === 'OUT' ? '/api/issue_weapon' : '/api/return_weapon';
 
+        const purposeVal = document.getElementById('issuancePurposeSelect') ? document.getElementById('issuancePurposeSelect').value : 'DUTY';
+        let dutyVal = document.getElementById('issuanceDutySelect') ? document.getElementById('issuanceDutySelect').value : 'RP';
+        if (dutyVal === 'OTHER') {
+            const customInput = document.getElementById('issuanceDutyCustomInput');
+            dutyVal = (customInput && customInput.value.trim()) ? customInput.value.trim() : 'OTHER';
+        }
+
         const formData = new FormData();
         formData.append('register_number', scannedWeaponData.register_number);
         formData.append('army_number', armyNum);
         formData.append('barcode', scannedWeaponData.barcode || scannedWeaponData.register_number);
+        formData.append('purpose', purposeVal);
+        formData.append('duty_location', dutyVal);
         formData.append('scan_timestamp', fixedScanTimestamp || '');
         formData.append('biometric_status', 'Verified (Match 100%)');
 
@@ -1103,7 +1287,7 @@
         const tbody = document.getElementById('logsTableBody');
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Loading transaction history...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">Loading transaction history...</td></tr>';
 
         try {
             const res = await fetch('/api/issuance_logs');
@@ -1117,6 +1301,8 @@
                         '<span class="badge-out"><i class="fa-solid fa-arrow-right-from-bracket"></i> OUT</span>' :
                         '<span class="badge-return"><i class="fa-solid fa-arrow-right-to-bracket"></i> RETURN</span>';
 
+                    const purposeBadge = `<span style="background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-bullseye" style="color:#2563eb;"></i> ${log.purpose || 'DUTY'}: <strong>${log.duty_location || 'RP'}</strong></span>`;
+
                     tr.innerHTML = `
                         <td style="font-size: 0.78rem; font-weight: 600;">${log.action_time}</td>
                         <td>${actionBadge}</td>
@@ -1124,16 +1310,17 @@
                         <td>${log.butt_number}</td>
                         <td>${log.weapon_type}</td>
                         <td><strong>${log.army_number}</strong> (${log.troop_name})</td>
+                        <td>${purposeBadge}</td>
                         <td><span style="color: #059669; font-weight: 600;"><i class="fa-solid fa-fingerprint"></i> ${log.biometric_status}</span></td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">No transaction logs found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 20px;">No transaction logs found</td></tr>';
             }
         } catch (err) {
             console.error('Error loading logs:', err);
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px;">Error loading logs</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Error loading logs</td></tr>';
         }
     }
 
@@ -1146,6 +1333,15 @@
         const triggerBioBtn = document.getElementById('triggerBiometricBtn');
         const execBtn = document.getElementById('executeIssuanceBtn');
         const refreshLogsBtn = document.getElementById('refreshLogsBtn');
+        const purposeSel = document.getElementById('issuancePurposeSelect');
+        const dutySel = document.getElementById('issuanceDutySelect');
+
+        if (purposeSel) {
+            purposeSel.addEventListener('change', updateDutyOptions);
+        }
+        if (dutySel) {
+            dutySel.addEventListener('change', toggleCustomDutyInput);
+        }
 
         if (closeBtn) closeBtn.addEventListener('click', closeIssuanceModal);
         if (modal) {

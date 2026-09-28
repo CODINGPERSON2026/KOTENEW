@@ -91,6 +91,13 @@ def api_issue_weapon():
     register_number = request.form.get('register_number', '').strip() or request.json.get('register_number', '').strip() if request.is_json else request.form.get('register_number', '').strip()
     army_number = request.form.get('army_number', '').strip() or request.json.get('army_number', '').strip() if request.is_json else request.form.get('army_number', '').strip()
     barcode = request.form.get('barcode', '').strip() or register_number
+    purpose = request.form.get('purpose', '').strip() or (request.json.get('purpose', '').strip() if request.is_json else 'DUTY')
+    duty_location = request.form.get('duty_location', '').strip() or (request.json.get('duty_location', '').strip() if request.is_json else 'RP')
+    if not purpose:
+        purpose = 'DUTY'
+    if not duty_location:
+        duty_location = 'RP'
+
     scan_timestamp = request.form.get('scan_timestamp', '').strip() or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     biometric_status = request.form.get('biometric_status', 'Verified (Match 100%)').strip()
 
@@ -117,12 +124,12 @@ def api_issue_weapon():
             rank_name = troop['rank_name'] if troop else ''
             company_name = troop['company'] if troop else ''
 
-            # 3. Update QM_stock weapon_status to 'Issued'
+            # 3. Update QM_stock weapon_status to 'Issued' & record duty location
             cursor.execute("""
                 UPDATE QM_stock 
-                SET weapon_status = 'Issued', alloted_to_army_number = %s 
+                SET weapon_status = 'Issued', alloted_to_army_number = %s, duty_location = %s 
                 WHERE id = %s;
-            """, (army_number, weapon['id']))
+            """, (army_number, f"{purpose}: {duty_location}", weapon['id']))
 
             # 4. Insert into issuance_logs
             try:
@@ -132,8 +139,8 @@ def api_issue_weapon():
 
             log_sql = """
                 INSERT INTO issuance_logs 
-                (register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, biometric_status, action_time, operator_username)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'OUT', %s, %s, %s, %s);
+                (register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, purpose, duty_location, biometric_status, action_time, operator_username)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'OUT', %s, %s, %s, %s, %s, %s);
             """
             cursor.execute(log_sql, (
                 weapon['register_number'],
@@ -144,6 +151,8 @@ def api_issue_weapon():
                 rank_name,
                 company_name,
                 barcode,
+                purpose,
+                duty_location,
                 biometric_status,
                 dt_obj,
                 session.get('username', 'KOTE Operator')
@@ -163,7 +172,7 @@ def api_issue_weapon():
 
             return jsonify({
                 'success': True,
-                'message': f'Weapon {weapon["register_number"]} (Butt #{weapon["butt_number"]}) successfully ISSUED OUT to Army No: {army_number} ({troop_name})!',
+                'message': f'Weapon {weapon["register_number"]} (Butt #{weapon["butt_number"]}) successfully ISSUED OUT to Army No: {army_number} ({troop_name}) for Purpose: {purpose} ({duty_location})!',
                 'counts': {
                     'total': total_cnt,
                     'available': avail_cnt,
@@ -175,6 +184,8 @@ def api_issue_weapon():
                     'weapon_type': weapon['type'],
                     'army_number': army_number,
                     'troop_name': troop_name,
+                    'purpose': purpose,
+                    'duty_location': duty_location,
                     'timestamp': dt_obj.strftime('%d %b %Y, %I:%M:%S %p'),
                     'action': 'OUT'
                 }
@@ -211,7 +222,7 @@ def api_return_weapon():
             cursor = conn.cursor(dictionary=True)
 
             # 1. Fetch weapon details
-            cursor.execute("SELECT id, type, butt_number, register_number, weapon_status, alloted_to_army_number FROM QM_stock WHERE LOWER(register_number) = LOWER(%s);", (register_number,))
+            cursor.execute("SELECT id, type, butt_number, register_number, weapon_status, alloted_to_army_number, duty_location FROM QM_stock WHERE LOWER(register_number) = LOWER(%s);", (register_number,))
             weapon = cursor.fetchone()
             if not weapon:
                 cursor.close()
@@ -222,6 +233,7 @@ def api_return_weapon():
             troop_name = 'Personnel'
             rank_name = ''
             company_name = ''
+            prev_duty = weapon.get('duty_location') or 'RP/NIGHT PQT'
 
             if army_number and army_number != 'N/A':
                 cursor.execute("SELECT army_number, name, rank_name, company FROM troops WHERE LOWER(army_number) = LOWER(%s);", (army_number,))
@@ -231,10 +243,10 @@ def api_return_weapon():
                     rank_name = t_row['rank_name']
                     company_name = t_row['company']
 
-            # 2. Update QM_stock weapon_status to 'Available' and clear alloted_to_army_number
+            # 2. Update QM_stock weapon_status to 'Available' and clear alloted_to_army_number & duty_location
             cursor.execute("""
                 UPDATE QM_stock 
-                SET weapon_status = 'Available', alloted_to_army_number = NULL 
+                SET weapon_status = 'Available', alloted_to_army_number = NULL, duty_location = NULL 
                 WHERE id = %s;
             """, (weapon['id'],))
 
@@ -246,8 +258,8 @@ def api_return_weapon():
 
             log_sql = """
                 INSERT INTO issuance_logs 
-                (register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, biometric_status, action_time, operator_username)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'RETURN', %s, %s, %s, %s);
+                (register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, purpose, duty_location, biometric_status, action_time, operator_username)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'RETURN', %s, %s, %s, %s, %s, %s);
             """
             cursor.execute(log_sql, (
                 weapon['register_number'],
@@ -258,6 +270,8 @@ def api_return_weapon():
                 rank_name,
                 company_name,
                 barcode,
+                'RETURN',
+                prev_duty,
                 biometric_status,
                 dt_obj,
                 session.get('username', 'KOTE Operator')
@@ -316,7 +330,7 @@ def api_issuance_logs():
         try:
             cursor = conn.cursor(dictionary=True)
             cursor.execute("""
-                SELECT id, register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, biometric_status, action_time, operator_username
+                SELECT id, register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, purpose, duty_location, biometric_status, action_time, operator_username
                 FROM issuance_logs
                 ORDER BY id DESC LIMIT 50;
             """)
@@ -335,6 +349,8 @@ def api_issuance_logs():
                     'company': r['company'] or '',
                     'action_type': r['action_type'],
                     'barcode': r['barcode'] or r['register_number'],
+                    'purpose': r.get('purpose') or 'DUTY',
+                    'duty_location': r.get('duty_location') or 'RP/NIGHT PQT',
                     'biometric_status': r['biometric_status'] or 'Verified',
                     'action_time': dt_str,
                     'operator': r['operator_username'] or 'KOTE Operator'
