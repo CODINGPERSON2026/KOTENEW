@@ -312,5 +312,56 @@ def create_troops_table():
             conn.close()
 
 
+def create_issuance_logs_table():
+    """Creates issuance_logs table for tracking weapon out & return transactions with barcode & biometric data."""
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        cursor = conn.cursor()
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS issuance_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            register_number VARCHAR(50) NOT NULL,
+            butt_number VARCHAR(50) NOT NULL,
+            weapon_type VARCHAR(100) NOT NULL,
+            army_number VARCHAR(100) DEFAULT NULL,
+            troop_name VARCHAR(150) DEFAULT NULL,
+            rank_name VARCHAR(100) DEFAULT NULL,
+            company VARCHAR(100) DEFAULT NULL,
+            action_type VARCHAR(20) NOT NULL,
+            barcode VARCHAR(100) DEFAULT NULL,
+            biometric_status VARCHAR(50) DEFAULT 'Verified',
+            action_time DATETIME NOT NULL,
+            operator_username VARCHAR(100) DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        cursor.execute(create_table_sql)
+        conn.commit()
+
+        # Check/add barcode column to QM_stock table if missing
+        try:
+            cursor.execute("SHOW COLUMNS FROM QM_stock LIKE 'barcode';")
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE QM_stock ADD COLUMN barcode VARCHAR(100) DEFAULT NULL;")
+                cursor.execute("UPDATE QM_stock SET barcode = register_number WHERE barcode IS NULL;")
+                conn.commit()
+                print("Added 'barcode' column to QM_stock table.")
+        except Exception as ex:
+            print("Notice verifying barcode column in QM_stock:", ex)
+
+        print("Table 'issuance_logs' verified/created successfully.")
+        return True
+    except Exception as e:
+        print("Error creating issuance_logs table:", e)
+        return False
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+
 
 

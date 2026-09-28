@@ -944,5 +944,15 @@
         }
     });
 
+    /* Open Issuance & Return Modal when clicking Issued stat card */
+    const qmIssuedCard = document.getElementById('qmIssuedCard');
+    if (qmIssuedCard) {
+        qmIssuedCard.addEventListener('click', () => {
+            if (typeof openIssuanceModal === 'function') {
+                openIssuanceModal();
+            }
+        });
+    }
+
 </script>
 {% endblock %}

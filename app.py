@@ -1,6 +1,7 @@
 from imports import *
 from qm import qm_bp
 from coy import coy_bp
+from issuance import issuance_bp
 
 app = Flask(__name__)
 app.secret_key = 'wms_secret_session_key_2026'  # Secret key for Flask sessions
@@ -8,6 +9,7 @@ app.secret_key = 'wms_secret_session_key_2026'  # Secret key for Flask sessions
 # Register Blueprints
 app.register_blueprint(qm_bp)
 app.register_blueprint(coy_bp)
+app.register_blueprint(issuance_bp)
 
 # Automatically ensure CDN assets (FontAwesome CSS & webfonts) are saved locally for offline use
 try:
@@ -23,6 +25,7 @@ try:
     create_core_weapons_table()
     create_qm_stock_table()
     create_troops_table()
+    create_issuance_logs_table()
     try:
         from db_connection import drop_coy_issuance_table, update_user_roles
         drop_coy_issuance_table()
@@ -92,4 +95,4 @@ def logout_route():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=1000)
+    app.run(debug=True, port=1000)

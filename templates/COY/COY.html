@@ -748,7 +748,15 @@
         }
     }
 
-    if (openAllotBtn) openAllotBtn.addEventListener('click', openAllotModal);
+    if (openAllotBtn) {
+        openAllotBtn.addEventListener('click', () => {
+            if (typeof openIssuanceModal === 'function') {
+                openIssuanceModal();
+            } else {
+                openAllotModal();
+            }
+        });
+    }
     if (closeAllotBtn) closeAllotBtn.addEventListener('click', closeAllotModal);
     if (cancelAllotBtn) cancelAllotBtn.addEventListener('click', closeAllotModal);
 
