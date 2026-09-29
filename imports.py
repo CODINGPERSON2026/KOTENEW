@@ -31,7 +31,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from decimal import Decimal
-from db_connection import get_db_connection, create_core_weapons_table, create_qm_stock_table, drop_coy_issuance_table, create_troops_table, create_issuance_logs_table
+from db_connection import get_db_connection, create_core_weapons_table, create_qm_stock_table, drop_coy_issuance_table, create_troops_table, create_issuance_logs_table, create_weapon_history_sheets_table, create_weapon_incharge_history_table
 from flask import flash
 # from middleware import require_login, jwt, JWT_ALGO, JWT_SECRET
 

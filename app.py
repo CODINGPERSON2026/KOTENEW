@@ -26,6 +26,8 @@ try:
     create_qm_stock_table()
     create_troops_table()
     create_issuance_logs_table()
+    create_weapon_history_sheets_table()
+    create_weapon_incharge_history_table()
     try:
         from db_connection import drop_coy_issuance_table, update_user_roles
         drop_coy_issuance_table()
@@ -76,6 +78,7 @@ def login_route():
                 if user:
                     session['username'] = user['username']
                     session['role'] = user.get('role', 'user')
+                    session['company'] = user.get('company') or user.get('role', '')
                     return redirect(url_for('home_route'))
                 else:
                     flash('Invalid username or password')

@@ -540,6 +540,17 @@
         </div>
     </div>
 
+    <!-- Card 2b: Assigned to Company -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statAssignedWeapons">{{ stats.assigned_to_company if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Assigned to Company</span>
+        </div>
+        <div class="qm-stat-card__icon" style="background: #e0f2fe; color: #0369a1;">
+            <i class="fa-solid fa-building"></i>
+        </div>
+    </div>
+
     <!-- Card 3: Issued -->
     <div class="qm-stat-card qm-stat-card--clickable" id="qmIssuedCard" title="Click to view Issued Weapons Table">
         <div class="qm-stat-card__info">
@@ -551,16 +562,7 @@
         </div>
     </div>
 
-    <!-- Card 4: Registered Models -->
-    <div class="qm-stat-card">
-        <div class="qm-stat-card__info">
-            <span class="qm-stat-card__val">{{ stats.total_types if stats else 0 }}</span>
-            <span class="qm-stat-card__label">Registered Models</span>
-        </div>
-        <div class="qm-stat-card__icon qm-stat-card__icon--purple">
-            <i class="fa-solid fa-layer-group"></i>
-        </div>
-    </div>
+
 </div>
 
 <!-- Charts Section (Bar Chart & Donut Chart) -->
@@ -570,7 +572,7 @@
         <div class="qm-chart-card__header">
             <div class="qm-chart-card__title">
                 <i class="fa-solid fa-chart-column" style="color: #1e3a8a;"></i>
-                Stock Count by Weapon Type
+                Available in Armory by Type
             </div>
         </div>
         <div class="qm-chart-card__body">
@@ -578,16 +580,36 @@
         </div>
     </div>
 
-    <!-- Donut Chart: Available vs Issued -->
+    <!-- Donut Chart: Company-wise Distribution -->
     <div class="qm-chart-card">
-        <div class="qm-chart-card__header">
+        <div class="qm-chart-card__header" style="flex-wrap: wrap; gap: 8px;">
             <div class="qm-chart-card__title">
                 <i class="fa-solid fa-chart-pie" style="color: #059669;"></i>
-                Available vs Issued Ratio
+                Company Distribution
             </div>
+            <select id="companyDistWeaponFilter" style="
+                font-family: 'Inter', sans-serif;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 5px 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                background: #f8fafc;
+                color: #334155;
+                cursor: pointer;
+                outline: none;
+                transition: border-color 0.15s;
+                min-width: 140px;
+            ">
+                <option value="">All Weapons</option>
+            </select>
         </div>
-        <div class="qm-chart-card__body">
-            <canvas id="statusDonutChart"></canvas>
+        <div class="qm-chart-card__body" style="position: relative;">
+            <canvas id="companyDistChart"></canvas>
+            <div id="companyDistEmpty" style="display:none; text-align:center; padding:40px 10px; color:#94a3b8; font-size:0.88rem; font-weight:500;">
+                <i class="fa-solid fa-box-open" style="font-size:1.4rem; margin-bottom:8px; display:block;"></i>
+                No data available
+            </div>
         </div>
     </div>
 </div>
@@ -639,6 +661,8 @@
                     </div>
                 </div>
 
+
+
                 <!-- Butt Number Input -->
                 <div class="form-group">
                     <label class="form-label">Butt Number</label>
@@ -670,7 +694,11 @@
     </div>
 </div>
 
+{% include 'QM/modals/qm_stats_modals.html' %}
+
 {% endblock %}
+
+
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
@@ -679,85 +707,182 @@
     const barLabels = {{ (chart_data.bar_labels if chart_data else []) | tojson }};
     const barFullNames = {{ (chart_data.bar_full_names if chart_data else []) | tojson }};
     const barCounts = {{ (chart_data.bar_counts if chart_data else []) | tojson }};
-    const donutCounts = {{ (chart_data.donut_counts if chart_data else [0,0]) | tojson }};
 
-    // 1. Bar Chart: Stock Count by Weapon Type (Short Labels)
-    const ctxBar = document.getElementById('weaponBarChart').getContext('2d');
-    const weaponBarChart = new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: barLabels,
-            datasets: [{
-                label: 'Stock Count',
-                data: barCounts,
-                backgroundColor: '#1e3a8a',
-                hoverBackgroundColor: '#2563eb',
-                borderRadius: 6,
-                borderSkipped: false,
-                maxBarThickness: 36
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        title: function(context) {
-                            const index = context[0].dataIndex;
-                            return barFullNames[index] || context[0].label;
-                        },
-                        label: function(context) {
-                            return ` ${context.raw} units in stock`;
+    // 1. Available in Armory Bar Chart
+    const barCtx = document.getElementById('weaponBarChart');
+    if (barCtx) {
+        new Chart(barCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Available in Armory',
+                    data: barCounts,
+                    backgroundColor: 'rgba(30, 58, 138, 0.85)',
+                    borderColor: '#1e3a8a',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    maxBarThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(ctx) {
+                                const idx = ctx[0].dataIndex;
+                                return barFullNames[idx] || ctx[0].label;
+                            },
+                            label: function(ctx) {
+                                return ` Available in Armory: ${ctx.raw}`;
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0, font: { family: 'Inter' } },
-                    grid: { color: '#f1f5f9' }
                 },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { family: 'Inter', size: 10, weight: '500' } }
-                }
-            }
-        }
-    });
-
-    // 2. Donut Chart: Available vs Issued Ratio
-    const ctxDonut = document.getElementById('statusDonutChart').getContext('2d');
-    const statusDonutChart = new Chart(ctxDonut, {
-        type: 'doughnut',
-        data: {
-            labels: ['Available in Armory', 'Issued / Active'],
-            datasets: [{
-                data: donutCounts,
-                backgroundColor: ['#059669', '#b45309'],
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 16,
-                        font: { family: 'Inter', size: 12, weight: '500' }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0, font: { family: 'Inter', size: 11 } },
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Inter', size: 11, weight: '600' } },
+                        grid: { display: false }
                     }
                 }
             }
+        });
+    }
+
+    // 2. Company Distribution Pie Chart
+    const companyDistColors = [
+        '#059669', '#0369a1', '#b45309', '#7c3aed',
+        '#dc2626', '#0891b2', '#ca8a04', '#4f46e5',
+        '#be185d', '#64748b'
+    ];
+    const compDistFilter = document.getElementById('companyDistWeaponFilter');
+    const compDistCanvas = document.getElementById('companyDistChart');
+    const compDistEmpty  = document.getElementById('companyDistEmpty');
+    let compDistChart = null;
+
+    async function loadCompanyDist(weaponType) {
+        const url = weaponType
+            ? `/api/qm/company_distribution?weapon_type=${encodeURIComponent(weaponType)}`
+            : '/api/qm/company_distribution';
+
+        try {
+            const res  = await fetch(url);
+            const data = await res.json();
+
+            // Populate dropdown once (on first load)
+            if (compDistFilter.options.length <= 1 && data.weapon_types) {
+                data.weapon_types.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    compDistFilter.appendChild(opt);
+                });
+            }
+
+            if (!data.success || !data.rows || !data.rows.length) {
+                compDistCanvas.style.display = 'none';
+                compDistEmpty.style.display  = 'block';
+                compDistEmpty.innerHTML = '<i class="fa-solid fa-box-open" style="font-size:1.4rem; margin-bottom:8px; display:block;"></i>No weapons assigned to any company';
+                if (compDistChart) { compDistChart.destroy(); compDistChart = null; }
+                return;
+            }
+
+            compDistCanvas.style.display = 'block';
+            compDistEmpty.style.display  = 'none';
+
+            const labels = data.rows.map(r => r.label);
+            const counts = data.rows.map(r => r.count);
+            const colors = labels.map((_, i) => companyDistColors[i % companyDistColors.length]);
+
+            // Plugin to draw counts on pie chart slices
+            const pieSliceCountPlugin = {
+                id: 'pieSliceCount',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        if (!meta.hidden) {
+                            meta.data.forEach((element, index) => {
+                                const val = dataset.data[index];
+                                if (!val) return;
+                                const pos = element.tooltipPosition();
+                                ctx.save();
+                                ctx.fillStyle = '#ffffff';
+                                ctx.font = 'bold 12px Inter, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                                ctx.shadowBlur = 4;
+                                ctx.fillText(val.toString(), pos.x, pos.y);
+                                ctx.restore();
+                            });
+                        }
+                    });
+                }
+            };
+
+            if (compDistChart) {
+                compDistChart.data.labels = labels;
+                compDistChart.data.datasets[0].data = counts;
+                compDistChart.data.datasets[0].backgroundColor = colors;
+                compDistChart.update();
+            } else {
+                compDistChart = new Chart(compDistCanvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    plugins: [pieSliceCountPlugin],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 12,
+                                    font: { family: 'Inter', size: 11, weight: '500' },
+                                    boxWidth: 10
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+                                        const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                        return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Company distribution load error:', err);
+            compDistCanvas.style.display = 'none';
+            compDistEmpty.style.display  = 'block';
         }
-    });
+    }
+
+    compDistFilter.addEventListener('change', () => loadCompanyDist(compDistFilter.value));
+    loadCompanyDist('');  // initial load — all weapons
 
     const modal = document.getElementById('addWeaponModal');
     const openBtn = document.getElementById('openAddWeaponBtn');
@@ -922,20 +1047,8 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert(data.message);
-
-                // Increment live dashboard counters
-                const totalEl = document.getElementById('statTotalWeapons');
-                const availEl = document.getElementById('statAvailableWeapons');
-                if (totalEl) totalEl.textContent = parseInt(totalEl.textContent || 0) + 1;
-                if (availEl) availEl.textContent = parseInt(availEl.textContent || 0) + 1;
-
-                addWeaponForm.reset();
-                hiddenInput.value = '';
-                selectedText.textContent = 'Select Weapon Type...';
-                selectedText.style.color = '#64748b';
-                selectedText.style.fontWeight = '400';
                 closeModal();
+                location.reload();   // Reload to fetch fresh stats and charts from DB
             } else {
                 alert('Error: ' + data.message);
             }
@@ -944,12 +1057,14 @@
         }
     });
 
-    /* Open Issuance & Return Modal when clicking Issued stat card */
+    /* Open Allotted Weapons & Duty Location Hub Modal when clicking Issued stat card */
     const qmIssuedCard = document.getElementById('qmIssuedCard');
     if (qmIssuedCard) {
         qmIssuedCard.addEventListener('click', () => {
-            if (typeof openIssuanceModal === 'function') {
-                openIssuanceModal();
+            if (typeof openAllottedWeaponsHubModal === 'function') {
+                openAllottedWeaponsHubModal();
+            } else if (typeof openInventoryStockModal === 'function') {
+                openInventoryStockModal('Issued');
             }
         });
     }

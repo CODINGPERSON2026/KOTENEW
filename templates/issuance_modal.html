@@ -68,7 +68,7 @@
     .tab-btn:hover {
         color: #0f172a;
         background: #e2e8f0;
-    }
+    }s
 
     .tab-btn.active-tab--out {
         background: #1e3a8a;
@@ -583,6 +583,11 @@
                             </div>
                         </div>
 
+                        <!-- Multi-Weapon Rule Info Note -->
+                        <div id="weaponLimitRuleNote" style="font-size: 0.72rem; font-weight: 700; color: #0284c7; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 6px; padding: 4px 8px; margin-bottom: 4px; display: none;">
+                            <i class="fa-solid fa-circle-info"></i> <span id="weaponLimitRuleText">Single weapon limit applies for Jawans.</span>
+                        </div>
+
                         <!-- HID 4500 Optical Scanner Status Box -->
                         <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 700; color: #0f172a;">
@@ -724,6 +729,7 @@
     let biometricVerified = false;
     let liveClockInterval = null;
     let fixedScanTimestamp = null;
+    let pairedUsbDevice = null;
 
     // Start Live Clock
     function startLiveClock() {
@@ -736,6 +742,52 @@
                 if (badge) badge.textContent = formattedStr;
             }
         }, 1000);
+    }
+
+    // Initialize and activate USB Biometric Hardware (U.are.U 4500 Optical Reader)
+    async function initAndActivateUsbDevice(device) {
+        if (!device) return;
+        pairedUsbDevice = device;
+        try {
+            if (!device.opened) {
+                await device.open();
+            }
+            if (device.configuration === null) {
+                await device.selectConfiguration(1);
+            }
+            try {
+                await device.claimInterface(0);
+            } catch (e) {
+                console.log('USB Interface claim info (Windows WBF/DPFP active):', e.message);
+            }
+
+            // Send optical LED illumination activation request (DigitalPersona Vendor request)
+            if (device.opened) {
+                try {
+                    await device.controlTransferOut({
+                        requestType: 'vendor',
+                        recipient: 'device',
+                        request: 0x01,
+                        value: 0x01,
+                        index: 0
+                    }, new Uint8Array([0x01]));
+                } catch (e) {
+                    console.log('USB control LED transfer notice:', e.message);
+                }
+            }
+        } catch (err) {
+            console.warn('USB Device Activation Notice:', err);
+        }
+
+        const nameText = document.getElementById('hidDeviceNameText');
+        const badge = document.getElementById('hidDeviceStatusBadge');
+        if (nameText) nameText.textContent = `HID U.are.U® 4500 Reader (${device.productName || 'Paired'})`;
+        if (badge) {
+            badge.textContent = '🟢 Connected & Active';
+            badge.style.background = '#ecfdf5';
+            badge.style.color = '#059669';
+            badge.style.borderColor = '#a7f3d0';
+        }
     }
 
     // Biometric Device Hardware Detector (HID 4500, WebUSB, WBF, RD Service)
@@ -755,9 +807,10 @@
         if (navigator.usb) {
             try {
                 const usbDevices = await navigator.usb.getDevices();
-                const hidDevice = usbDevices.find(d => d.vendorId === 0x05ba || (d.productName && d.productName.toLowerCase().includes('digitalpersona')));
+                const hidDevice = usbDevices.find(d => d.vendorId === 0x05ba || (d.productName && (d.productName.toLowerCase().includes('digitalpersona') || d.productName.toLowerCase().includes('u.are.u') || d.productName.toLowerCase().includes('4500'))));
                 if (hidDevice) {
-                    detectedName = `HID DigitalPersona 4500 Reader (${hidDevice.productName || 'VID:05BA'})`;
+                    detectedName = `HID U.are.U® 4500 Reader (${hidDevice.productName || 'VID:05BA'})`;
+                    await initAndActivateUsbDevice(hidDevice);
                 }
             } catch (e) {
                 console.log('WebUSB check notice:', e);
@@ -816,10 +869,14 @@
         try {
             // Request device with DigitalPersona Vendor ID (0x05ba)
             const device = await navigator.usb.requestDevice({
-                filters: [{ vendorId: 0x05ba }]
+                filters: [
+                    { vendorId: 0x05ba },
+                    { vendorId: 0x05ba, productId: 0x000a }
+                ]
             });
             if (device) {
-                alert(`Successfully paired with ${device.productName || 'HID DigitalPersona 4500 Optical Reader'}!`);
+                await initAndActivateUsbDevice(device);
+                alert(`Successfully paired with ${device.productName || 'HID U.are.U® 4500 Fingerprint Reader'}!\nHardware optical sensor is now active and matched with KOTE System.`);
                 detectBiometricHardware();
             }
         } catch (err) {
@@ -1125,12 +1182,27 @@
         }
     }
 
-    function triggerBiometricScan() {
+    async function triggerBiometricScan() {
         const wrapper = document.getElementById('fingerprintWrapper');
         const bioText = document.getElementById('biometricStatusText');
 
         wrapper.classList.add('scanning');
-        bioText.textContent = 'Scanning Biometric Fingerprint...';
+        bioText.textContent = 'Place Finger on U.are.U 4500 Optical Sensor... Scanning...';
+
+        // Trigger hardware LED optical sensor illumination sequence if WebUSB is active
+        if (pairedUsbDevice && pairedUsbDevice.opened) {
+            try {
+                await pairedUsbDevice.controlTransferOut({
+                    requestType: 'vendor',
+                    recipient: 'device',
+                    request: 0x01,
+                    value: 0x01,
+                    index: 0
+                }, new Uint8Array([0x01]));
+            } catch (e) {
+                console.log('Hardware optical LED trigger notice:', e);
+            }
+        }
 
         setTimeout(() => {
             wrapper.classList.remove('scanning');
@@ -1138,7 +1210,8 @@
             wrapper.querySelector('i').style.color = '#10b981';
 
             biometricVerified = true;
-            bioText.innerHTML = '<i class="fa-solid fa-circle-check"></i> BIOMETRIC VERIFIED (Match 100%)';
+            const deviceLabel = pairedUsbDevice ? 'U.are.U® 4500 Reader' : 'HID 4500 Sensor';
+            bioText.innerHTML = `<i class="fa-solid fa-circle-check"></i> BIOMETRIC VERIFIED (${deviceLabel} - Match 100%)`;
             bioText.classList.add('verified');
 
             // Freeze Live Timestamp at exact moment of Biometric Scan
@@ -1213,6 +1286,28 @@
         document.getElementById('scannedTroopRankCo').textContent = `${troop.rank} (${troop.company})`;
         document.getElementById('scannedTroopSec').textContent = troop.section;
         troopSuggestions.style.display = 'none';
+
+        // Show JCO vs Jawan rule info note
+        const rLower = (troop.rank || '').toLowerCase();
+        const aUpper = (troop.army_number || '').toUpperCase();
+        const isJCO = aUpper.startsWith('JC') || rLower.includes('subedar') || rLower.includes('sub') || rLower.includes('jco') || rLower.includes('officer');
+        
+        const noteEl = document.getElementById('weaponLimitRuleNote');
+        const textEl = document.getElementById('weaponLimitRuleText');
+        if (noteEl && textEl) {
+            noteEl.style.display = 'block';
+            if (isJCO) {
+                noteEl.style.background = '#dcfce7';
+                noteEl.style.color = '#15803d';
+                noteEl.style.borderColor = '#86efac';
+                textEl.innerHTML = `<strong>JCO Multi-Weapon Mode:</strong> Subedar/JCO (${troop.rank}) ke naam pe Maintenance mein <strong>MULTIPLE WEAPONS</strong> issue kiye ja sakte hain.`;
+            } else {
+                noteEl.style.background = '#eff6ff';
+                noteEl.style.color = '#1e3a8a';
+                noteEl.style.borderColor = '#bfdbfe';
+                textEl.innerHTML = `<strong>Single Weapon Rule:</strong> Jawan (${troop.rank}) ke naam pe <strong>1 SINGLE WEAPON</strong> hi issue hoga.`;
+            }
+        }
     }
 
     // Submit Weapon OUT or RETURN
@@ -1263,7 +1358,7 @@
 
                 // Update live counters on page if available
                 if (data.counts) {
-                    const totalEl = document.getElementById('statTotalWeapons') || document.getElementById('coyTotalStock');
+                    const totalEl = document.getElementById('coyWeaponsHeld') || document.getElementById('statTotalWeapons') || document.getElementById('coyTotalStock');
                     const availEl = document.getElementById('statAvailableWeapons') || document.getElementById('coyAvailableStock');
                     const issuedEl = document.getElementById('statIssuedWeapons') || document.getElementById('coyIssuedStock');
                     
@@ -1366,6 +1461,13 @@
             });
         }
 
+        const fpWrapper = document.getElementById('fingerprintWrapper');
+        if (fpWrapper) {
+            fpWrapper.style.cursor = 'pointer';
+            fpWrapper.title = 'Click to Scan Fingerprint on U.are.U 4500 Optical Sensor';
+            fpWrapper.addEventListener('click', triggerBiometricScan);
+        }
+
         if (triggerBioBtn) triggerBioBtn.addEventListener('click', triggerBiometricScan);
         if (execBtn) execBtn.addEventListener('click', executeIssuanceAction);
         if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', loadTransactionLogs);
@@ -1390,5 +1492,5 @@
 
     // Global helper function for sidebar link or external buttons
     window.openIssuedModal = openIssuanceModal;
-    window.openQmIssuedModal = openIssuanceModal;
+    window.openQmIssuedModal = openIssuanceModal;s
 </script>

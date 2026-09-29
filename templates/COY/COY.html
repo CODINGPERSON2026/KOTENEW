@@ -440,11 +440,11 @@
 
 <!-- Stat Cards Row (4 Live Stat Cards) -->
 <div class="coy-stats-row">
-    <!-- Card 1: Total Stock -->
+    <!-- Card 1: Weapons Held -->
     <div class="coy-stat-card">
         <div class="coy-stat-card__info">
-            <span class="coy-stat-card__val" id="coyTotalStock">{{ stats.total_weapons if stats else 0 }}</span>
-            <span class="coy-stat-card__label">Company Ordnance Stock</span>
+            <span class="coy-stat-card__val" id="coyWeaponsHeld">{{ stats.weapons_held if stats else 0 }}</span>
+            <span class="coy-stat-card__label">WEAPONS HELD</span>
         </div>
         <div class="coy-stat-card__icon coy-stat-card__icon--blue">
             <i class="fa-solid fa-shield-halved"></i>
@@ -462,25 +462,25 @@
         </div>
     </div>
 
-    <!-- Card 3: Allotted Weapons -->
-    <div class="coy-stat-card">
+    <!-- Card 3: OUT WEAPON -->
+    <div class="coy-stat-card coy-stat-card--clickable" id="coyAllottedCard" style="cursor: pointer;" onclick="openAllottedWeaponsHubModal()" title="Click to view Out Weapons & Duty Location Hub">
         <div class="coy-stat-card__info">
             <span class="coy-stat-card__val" id="coyIssuedStock">{{ stats.issued_weapons if stats else 0 }}</span>
-            <span class="coy-stat-card__label">Allotted Weapon</span>
+            <span class="coy-stat-card__label">OUT WEAPON</span>
         </div>
         <div class="coy-stat-card__icon coy-stat-card__icon--amber">
             <i class="fa-solid fa-person-military-rifle"></i>
         </div>
     </div>
 
-    <!-- Card 4: Registered Models -->
+    <!-- Card 4: IN KOTE (Returned Weapons Count for Company) -->
     <div class="coy-stat-card">
         <div class="coy-stat-card__info">
-            <span class="coy-stat-card__val">{{ stats.total_types if stats else 0 }}</span>
-            <span class="coy-stat-card__label">Weapon Models</span>
+            <span class="coy-stat-card__val" id="coyInKote">{{ stats.in_kote if stats else 0 }}</span>
+            <span class="coy-stat-card__label">IN KOTE</span>
         </div>
         <div class="coy-stat-card__icon coy-stat-card__icon--purple">
-            <i class="fa-solid fa-layer-group"></i>
+            <i class="fa-solid fa-right-to-bracket"></i>
         </div>
     </div>
 </div>
@@ -533,6 +533,45 @@
 
         <form id="allotWeaponForm" style="position: relative; z-index: 2;">
             <div class="modal-body-grid">
+                <!-- 0. Allotment Category: Permanent vs Temporary Transfer on Leave -->
+                <div class="form-group form-group-full" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px;">
+                    <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">Allotment Mode & Category <span style="color: #ef4444;">*</span></label>
+                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: #15803d;">
+                            <input type="radio" name="allotment_type" value="Permanent" checked id="typePermanentRadio">
+                            <span>🟢 Permanent Allotment</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: #0284c7;">
+                            <input type="radio" name="allotment_type" value="Temporary" id="typeTemporaryRadio">
+                            <span>🔄 Temporary Transfer (Jawan on Leave)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Leave Duration & Permanent Owner Fields (Visible when Temporary is selected) -->
+                <div id="temporaryLeaveFieldsGroup" class="form-group form-group-full" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px;">
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;">
+                        <i class="fa-solid fa-plane-departure"></i> Leave Duration & Permanent Owner Record:
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">Permanent Owner Army No *</label>
+                            <input type="text" class="form-input" name="permanent_army_number" id="allotPermanentArmyNumber" placeholder="Permanent Jawan Army No..." style="font-size: 0.78rem; height: 32px; font-weight: 700;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">Leave Start Date *</label>
+                            <input type="date" class="form-input" name="leave_start_date" id="allotLeaveStartDate" style="font-size: 0.78rem; height: 32px; font-weight: 700;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">Leave End Date *</label>
+                            <input type="date" class="form-input" name="leave_end_date" id="allotLeaveEndDate" style="font-size: 0.78rem; height: 32px; font-weight: 700;">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #0369a1; margin-top: 6px; font-weight: 600;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> <strong>Automatic Reversion:</strong> Leave end date khatam hote hi, next date se weapon automatically Permanent Owner (Original Jawan) ke paas revert ho jayega.
+                    </div>
+                </div>
+
                 <!-- 1. Weapon Register Number Field -->
                 <div class="form-group form-group-full">
                     <label class="form-label">Weapon Register Number <span style="color: #ef4444;">*</span></label>
@@ -777,6 +816,23 @@
 
     let availableWeaponsStock = [];
     let allotBiometricVerified = false;
+
+    // Toggle Temporary Transfer Leave Fields
+    const radioPerm = document.getElementById('typePermanentRadio');
+    const radioTemp = document.getElementById('typeTemporaryRadio');
+    const tempGroup = document.getElementById('temporaryLeaveFieldsGroup');
+
+    if (radioPerm && radioTemp && tempGroup) {
+        radioPerm.addEventListener('change', () => { tempGroup.style.display = 'none'; });
+        radioTemp.addEventListener('change', () => { 
+            tempGroup.style.display = 'block';
+            const permInput = document.getElementById('allotPermanentArmyNumber');
+            const armyInput = document.getElementById('allotArmyNumber');
+            if (permInput && armyInput && armyInput.value && !permInput.value) {
+                permInput.value = armyInput.value;
+            }
+        });
+    }
 
     const allotBioBtn = document.getElementById('allotTriggerBioBtn');
     const allotBioBadge = document.getElementById('allotBiometricBadge');

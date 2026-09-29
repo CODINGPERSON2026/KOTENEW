@@ -312,6 +312,27 @@
         .qm-btn i {
             font-size: 0.85rem;
         }
+
+        /* ─── GLOBAL MODAL BACKDROP ─── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
     {% block extra_styles %}{% endblock %}
 </head>
@@ -330,14 +351,20 @@
                 <a href="{{ url_for('home_route') }}" class="sidebar__link active" data-tooltip="Dashboard">
                     <i class="fa-solid fa-gauge-high"></i>
                 </a>
-                <a href="#" class="sidebar__link" data-tooltip="Weapons & Ordnance">
-                    <i class="fa-solid fa-shield-halved"></i>
+                {% if session.get('role', '') | lower == 'qm' %}
+                <a href="{{ url_for('qm.issue_page_route') }}" class="sidebar__link" id="sidebarIssueLink" data-tooltip="Issue Weapons">
+                    <i class="fa-solid fa-hand-holding-hand"></i>
                 </a>
-                <a href="#" class="sidebar__link" data-tooltip="Inventory & Stock">
+                {% endif %}
+                {% if session.get('role', '') | lower != 'qm' %}
+                <a href="#" class="sidebar__link" id="sidebarInventoryLink" data-tooltip="Inventory & Stock">
                     <i class="fa-solid fa-boxes-stacked"></i>
                 </a>
                 <a href="#" class="sidebar__link" id="sidebarIssuanceLink" data-tooltip="Issuance & Return">
                     <i class="fa-solid fa-hand-holding-hand"></i>
+                </a>
+                <a href="#" class="sidebar__link" id="sidebarHistorySheetLink" data-tooltip="Weapon History Sheet">
+                    <i class="fa-solid fa-file-signature"></i>
                 </a>
                 <a href="#" class="sidebar__link" data-tooltip="Maintenance Logs">
                     <i class="fa-solid fa-wrench"></i>
@@ -345,14 +372,17 @@
                 <a href="#" class="sidebar__link" data-tooltip="Reports & Analytics">
                     <i class="fa-solid fa-chart-pie"></i>
                 </a>
+                {% endif %}
             </nav>
 
             <!-- Bottom Action Items -->
             <div class="sidebar__bottom">
                 <div class="sidebar__divider"></div>
+                {% if session.get('role', '') | lower != 'qm' %}
                 <a href="#" class="sidebar__link" data-tooltip="System Settings">
                     <i class="fa-solid fa-gear"></i>
                 </a>
+                {% endif %}
                 <a href="{{ url_for('logout_route') }}" class="sidebar__link sidebar__link--logout" data-tooltip="Sign Out">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </a>
@@ -376,6 +406,8 @@
     </div>
 
     {% include "issuance_modal.html" %}
+    {% include "inventory_modal.html" %}
+    {% include "history_sheet_modal.html" %}
 
     {% block extra_scripts %}{% endblock %}
     <script>
@@ -388,6 +420,26 @@
                         openIssuedModal();
                     } else if (typeof openQmIssuedModal === 'function') {
                         openQmIssuedModal();
+                    }
+                });
+            }
+
+            const sidebarInventoryLink = document.getElementById('sidebarInventoryLink');
+            if (sidebarInventoryLink) {
+                sidebarInventoryLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof openInventoryStockModal === 'function') {
+                        openInventoryStockModal();
+                    }
+                });
+            }
+
+            const sidebarHistorySheetLink = document.getElementById('sidebarHistorySheetLink');
+            if (sidebarHistorySheetLink) {
+                sidebarHistorySheetLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof openHistorySheetModal === 'function') {
+                        openHistorySheetModal();
                     }
                 });
             }
