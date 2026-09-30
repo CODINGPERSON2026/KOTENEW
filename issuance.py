@@ -357,10 +357,10 @@ def api_return_weapon():
                     rank_name = t_row['rank_name']
                     company_name = t_row['company']
 
-            # 2. Update QM_stock weapon_status to 'Available' and clear alloted_to_army_number & duty_location
+            # 2. Update QM_stock: weapon remains 'Alloted' to the personnel, clear active duty_location
             cursor.execute("""
                 UPDATE QM_stock 
-                SET weapon_status = 'Available', alloted_to_army_number = NULL, duty_location = NULL 
+                SET weapon_status = 'Alloted', duty_location = NULL 
                 WHERE id = %s;
             """, (weapon['id'],))
 

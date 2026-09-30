@@ -5,7 +5,7 @@ from mysql.connector import Error
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'qaz123QAZ!@#',
+    'password': 'yawar@123',
     'database': 'wms',
     'port': 3306
 }
