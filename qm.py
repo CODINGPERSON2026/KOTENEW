@@ -1,4 +1,5 @@
 from imports import *
+import re
 
 qm_bp = Blueprint('qm', __name__)
 
@@ -54,7 +55,17 @@ def qm_dashboard_route():
             cursor.execute("SELECT COUNT(*) as cnt FROM QM_stock WHERE LOWER(weapon_status) = 'available' AND company IS NOT NULL AND TRIM(company) != '' AND company != 'In Armory (Unassigned)';")
             stats['assigned_to_company'] = cursor.fetchone()['cnt']
 
-            cursor.execute("SELECT COUNT(*) as cnt FROM QM_stock WHERE LOWER(weapon_status) IN ('issued', 'alloted');")
+            cursor.execute("""
+                SELECT COUNT(*) as cnt 
+                FROM QM_stock qs
+                WHERE (
+                    SELECT il.action_type 
+                    FROM issuance_logs il 
+                    WHERE LOWER(il.register_number) = LOWER(qs.register_number)
+                       OR (qs.alloted_to_army_number IS NOT NULL AND TRIM(qs.alloted_to_army_number) != '' AND LOWER(il.army_number) = LOWER(qs.alloted_to_army_number))
+                    ORDER BY il.id DESC LIMIT 1
+                ) = 'OUT';
+            """)
             stats['issued_weapons'] = cursor.fetchone()['cnt']
 
             # Query stock count for each weapon type for the Bar Chart
@@ -86,18 +97,50 @@ def qm_dashboard_route():
                 bar_chart_labels.append(short_name)
                 bar_chart_full_names.append(full_name)
                 bar_chart_data.append(tr['cnt'])
+            # Query stock count for weapon categories for the Pie Chart
+            cursor.execute("""
+                SELECT cw.weapon_type, 
+                       COUNT(qs.id) as total_cnt
+                FROM core_weapons cw
+                LEFT JOIN QM_stock qs ON LOWER(cw.weapon_type) = LOWER(qs.type) AND LOWER(qs.weapon_status) NOT IN ('deposited', 'deposit')
+                GROUP BY cw.id, cw.weapon_type
+                ORDER BY cw.id ASC;
+            """)
+            cat_rows = cursor.fetchall()
+            pie_labels = []
+            pie_counts = []
+            for cr in cat_rows:
+                if cr['total_cnt'] > 0:
+                    full_n = cr['weapon_type']
+                    short_n = short_labels_map.get(full_n, full_n)
+                    pie_labels.append(short_n)
+                    pie_counts.append(cr['total_cnt'])
 
             chart_data = {
                 'bar_labels': bar_chart_labels,
                 'bar_full_names': bar_chart_full_names,
                 'bar_counts': bar_chart_data,
-                'donut_counts': [stats['available_weapons'], stats['issued_weapons']]
+                'donut_counts': [stats['available_weapons'], stats['assigned_to_company']],
+                'donut_labels': ['In Armory', 'Assigned to Company'],
+                'pie_labels': pie_labels,
+                'pie_counts': pie_counts
             }
+
+            # Fetch recent stock additions
+            recent_additions = []
+            cursor.execute("""
+                SELECT id, s_no, type, butt_number, register_number, company, weapon_status
+                FROM QM_stock
+                ORDER BY id DESC
+                LIMIT 5;
+            """)
+            recent_additions = cursor.fetchall()
 
             cursor.close()
             conn.close()
         except Exception as e:
             print("Error querying QM dashboard stats:", e)
+            recent_additions = []
 
     return render_template(
         'QM/QM.html',
@@ -105,7 +148,8 @@ def qm_dashboard_route():
         role=session.get('role'),
         weapons=weapons_list,
         stats=stats,
-        chart_data=chart_data
+        chart_data=chart_data,
+        recent_additions=recent_additions
     )
 
 
@@ -114,39 +158,82 @@ def add_weapon_route():
     if 'username' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     
-    weapon_type = request.form.get('weapon_type')
-    butt_number = request.form.get('butt_number')
-    register_number = request.form.get('register_number')
-    company = request.form.get('company') or None
+    data = request.get_json(silent=True) or request.form
+    weapon_type = (data.get('weapon_type') or request.form.get('weapon_type') or '').strip()
+    company = (data.get('company') or request.form.get('company') or '').strip() or None
 
-    if not weapon_type or not butt_number or not register_number:
-        return jsonify({'success': False, 'message': 'All fields are required.'}), 400
+    weapons = []
+    if request.is_json and isinstance(data.get('weapons'), list):
+        for item in data.get('weapons'):
+            b = str(item.get('butt_number') or item.get('butt_no') or '').strip()
+            r = str(item.get('register_number') or item.get('reg_no') or '').strip()
+            if b and r:
+                weapons.append({'butt_number': b, 'register_number': r})
+    else:
+        butt_nums = request.form.getlist('butt_number')
+        reg_nums = request.form.getlist('register_number')
+        if butt_nums and reg_nums:
+            for b, r in zip(butt_nums, reg_nums):
+                b_str = (b or '').strip()
+                r_str = (r or '').strip()
+                if b_str and r_str:
+                    weapons.append({'butt_number': b_str, 'register_number': r_str})
+        else:
+            b_single = (request.form.get('butt_number') or data.get('butt_number') or '').strip()
+            r_single = (request.form.get('register_number') or data.get('register_number') or '').strip()
+            if b_single and r_single:
+                weapons.append({'butt_number': b_single, 'register_number': r_single})
+
+    if not weapon_type:
+        return jsonify({'success': False, 'message': 'Weapon type is required.'}), 400
+    if not weapons:
+        return jsonify({'success': False, 'message': 'At least one valid Butt Number and Register Number pair is required.'}), 400
 
     conn = get_db_connection()
     if conn and conn.is_connected():
         try:
             cursor = conn.cursor()
+            added_count = 0
+            duplicates = []
+            
+            for item in weapons:
+                b_raw = str(item['butt_number']).strip()
+                b_no = re.sub(r'\D', '', b_raw) or b_raw
+                r_no = item['register_number']
 
-            # Calculate next s_no (sequential, starting from 1)
-            cursor.execute("SELECT COALESCE(MAX(s_no), 0) + 1 FROM QM_stock;")
-            next_s_no = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM QM_stock WHERE LOWER(register_number) = LOWER(%s);", (r_no,))
+                if cursor.fetchone()[0] > 0:
+                    duplicates.append(r_no)
+                    continue
 
-            query = """
-            INSERT INTO QM_stock (s_no, type, butt_number, register_number, company, weapon_status)
-            VALUES (%s, %s, %s, %s, %s, 'Available');
-            """
-            cursor.execute(query, (next_s_no, weapon_type, butt_number, register_number, company))
+                cursor.execute("SELECT COALESCE(MAX(s_no), 0) + 1 FROM QM_stock;")
+                next_s_no = cursor.fetchone()[0]
+
+                query = """
+                INSERT INTO QM_stock (s_no, type, butt_number, register_number, company, weapon_status, barcode, allotment_type)
+                VALUES (%s, %s, %s, %s, %s, 'Available', %s, NULL);
+                """
+                cursor.execute(query, (next_s_no, weapon_type, b_no, r_no, company, r_no))
+                added_count += 1
+
             conn.commit()
             cursor.close()
             conn.close()
-            return jsonify({'success': True, 'message': 'Weapon added to QM stock successfully!'})
+
+            if added_count == 0 and duplicates:
+                return jsonify({'success': False, 'message': f"Register Number(s) already exist in stock: {', '.join(duplicates)}"}), 400
+
+            msg = f"{added_count} weapon(s) of type '{weapon_type}' added to QM stock successfully!"
+            if duplicates:
+                msg += f" (Skipped {len(duplicates)} duplicate(s): {', '.join(duplicates)})"
+
+            return jsonify({'success': True, 'message': msg, 'added_count': added_count, 'duplicates': duplicates})
         except Error as e:
             print("Database Error when adding weapon:", e)
-            if e.errno == 1062:  # Duplicate entry
-                return jsonify({'success': False, 'message': 'Register Number already exists in stock!'}), 400
             return jsonify({'success': False, 'message': str(e)}), 500
     else:
         return jsonify({'success': False, 'message': 'Database connection error'}), 500
+
 
 
 @qm_bp.route("/qm/check_register_number")
@@ -171,6 +258,82 @@ def check_register_number_route():
             print("Error checking register_number:", e)
             return jsonify({'exists': False})
     return jsonify({'exists': False})
+
+
+def sanitize_qm_stock_butt_numbers():
+    """Sanitizes butt_number column in QM_stock to ensure pure integer strings (removing BT- or other prefixes)."""
+    try:
+        conn = get_db_connection()
+        if conn and conn.is_connected():
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT id, butt_number FROM QM_stock WHERE butt_number IS NOT NULL AND butt_number != '';")
+            rows = cursor.fetchall()
+            for row in rows:
+                raw_b = str(row['butt_number']).strip()
+                digits = re.sub(r'\D', '', raw_b)
+                if digits and digits != raw_b:
+                    cursor.execute("UPDATE QM_stock SET butt_number = %s WHERE id = %s;", (digits, row['id']))
+            conn.commit()
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        print("Error sanitizing butt numbers:", e)
+
+
+@qm_bp.route("/qm/get_last_butt_number")
+def get_last_butt_number_route():
+    """Finds highest integer butt number for a given weapon type in QM_stock and returns last & next expected butt number (1 if none exists)."""
+    if 'username' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    weapon_type = request.args.get('weapon_type', '').strip()
+    if not weapon_type:
+        return jsonify({'success': False, 'message': 'Weapon type is required'}), 400
+
+    # Auto sanitize DB entries if needed
+    sanitize_qm_stock_butt_numbers()
+
+    conn = get_db_connection()
+    if conn and conn.is_connected():
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT butt_number FROM QM_stock WHERE LOWER(type) = LOWER(%s);", (weapon_type,))
+            rows = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            max_num = None
+
+            for (b_no,) in rows:
+                if not b_no:
+                    continue
+                digits = re.sub(r'\D', '', str(b_no))
+                if digits:
+                    val = int(digits)
+                    if max_num is None or val > max_num:
+                        max_num = val
+
+            if max_num is not None:
+                next_num = max_num + 1
+                return jsonify({
+                    'success': True,
+                    'last_butt_number': str(max_num),
+                    'next_butt_number': str(next_num),
+                    'max_num': max_num
+                })
+            else:
+                return jsonify({
+                    'success': True,
+                    'last_butt_number': None,
+                    'next_butt_number': "1",
+                    'max_num': 0
+                })
+
+        except Exception as e:
+            print("Error fetching last butt number:", e)
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    return jsonify({'success': False, 'message': 'Database connection error'}), 500
 
 
 # ─── STAT BREAKDOWN APIS (for clickable stat card modals) ────────────────────
@@ -419,7 +582,7 @@ def api_qm_companies():
 
 @qm_bp.route("/qm/assign_company", methods=['POST'])
 def assign_company_route():
-    """Update only the company column in QM_stock for the given weapon id."""
+    """Update company column in QM_stock for single or multiple weapon IDs."""
     if 'username' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
@@ -427,28 +590,49 @@ def assign_company_route():
     if role != 'qm':
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
-    weapon_id = request.form.get('weapon_id', '').strip()
-    company   = request.form.get('company', '').strip()
+    data = request.get_json(silent=True) or request.form
+    company = (data.get('company') or request.form.get('company') or '').strip()
 
-    if not weapon_id or not company:
-        return jsonify({'success': False, 'message': 'Weapon ID and Company are required.'}), 400
+    weapon_ids = []
+    if request.is_json and isinstance(data.get('weapon_ids'), list):
+        weapon_ids = [str(x).strip() for x in data.get('weapon_ids') if str(x).strip()]
+    else:
+        raw_list = request.form.getlist('weapon_id') or request.form.getlist('weapon_ids')
+        if not raw_list and data.get('weapon_id'):
+            raw_list = [str(data.get('weapon_id'))]
+        if not raw_list and data.get('weapon_ids'):
+            raw_list = str(data.get('weapon_ids')).split(',')
+
+        for item in raw_list:
+            for sub in str(item).split(','):
+                if sub.strip():
+                    weapon_ids.append(sub.strip())
+
+    if not weapon_ids or not company:
+        return jsonify({'success': False, 'message': 'At least one Weapon ID and a Company are required.'}), 400
 
     conn = get_db_connection()
     if conn and conn.is_connected():
         try:
             cursor = conn.cursor()
-            cursor.execute(
-                "UPDATE QM_stock SET company = %s WHERE id = %s;",
-                (company, weapon_id)
-            )
+            format_strings = ','.join(['%s'] * len(weapon_ids))
+            sql = f"UPDATE QM_stock SET company = %s WHERE id IN ({format_strings});"
+            params = [company] + weapon_ids
+            cursor.execute(sql, tuple(params))
             conn.commit()
+            affected = cursor.rowcount
             cursor.close()
             conn.close()
-            return jsonify({'success': True, 'message': f'Weapon assigned to {company} successfully!'})
+
+            return jsonify({
+                'success': True,
+                'message': f'{affected} weapon(s) assigned to {company} successfully!'
+            })
         except Exception as e:
             print("Error assigning company:", e)
             return jsonify({'success': False, 'message': str(e)}), 500
     return jsonify({'success': False, 'message': 'Database connection error'}), 500
+
 
 
 @qm_bp.route("/qm/bulk_assign_company", methods=['POST'])

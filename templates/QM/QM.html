@@ -302,8 +302,8 @@
     .qm-stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        margin-bottom: 20px;
+        gap: 10px;
+        margin-bottom: 12px;
     }
 
     @media (max-width: 900px) {
@@ -316,7 +316,7 @@
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 14px 18px;
+        padding: 10px 14px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         display: flex;
         align-items: center;
@@ -336,38 +336,38 @@
     }
 
     .qm-stat-card__val {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
         font-weight: 800;
         color: #0f172a;
-        line-height: 1.2;
+        line-height: 1.15;
     }
 
     .qm-stat-card__label {
-        font-size: 0.78rem;
+        font-size: 0.74rem;
         font-weight: 500;
         color: #64748b;
         margin-top: 2px;
     }
 
     .qm-stat-card__icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 0.95rem;
     }
 
-    /* ─── QM CHARTS SECTION ─── */
+    /* ─── QM CHARTS SECTION (2x2 Grid) ─── */
     .qm-charts-row {
         display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 20px;
-        margin-top: 24px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 12px;
     }
 
-    @media (max-width: 960px) {
+    @media (max-width: 900px) {
         .qm-charts-row {
             grid-template-columns: 1fr;
         }
@@ -376,8 +376,8 @@
     .qm-chart-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 20px;
+        border-radius: 12px;
+        padding: 12px 16px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         display: flex;
         flex-direction: column;
@@ -387,13 +387,13 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
         border-bottom: 1px solid #f1f5f9;
     }
 
     .qm-chart-card__title {
-        font-size: 0.95rem;
+        font-size: 0.88rem;
         font-weight: 700;
         color: #0f172a;
         display: flex;
@@ -404,7 +404,8 @@
     .qm-chart-card__body {
         position: relative;
         flex: 1;
-        min-height: 250px;
+        min-height: 180px;
+        max-height: 215px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -499,23 +500,134 @@
         border-color: #b45309 !important;
         box-shadow: 0 8px 20px -4px rgba(180, 83, 9, 0.15) !important;
     }
+
+    /* ─── QM RECENT ACTIVITY SECTION ─── */
+    .qm-recent-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .qm-recent-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .qm-recent-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qm-recent-subtitle {
+        font-size: 0.72rem;
+        background: #eff6ff;
+        color: #1e3a8a;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: 1px solid #bfdbfe;
+    }
+
+    .qm-recent-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        text-align: left;
+    }
+
+    .qm-recent-table th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        padding: 7px 10px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .qm-recent-table td {
+        padding: 7px 10px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .qm-recent-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .qm-recent-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .qm-recent-tag-available {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+
+    .qm-recent-tag-assigned {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+    }
+
+    .qm-recent-tag-issued {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
 </style>
 {% endblock %}
 
-{% block content %}
-<!-- Action Buttons -->
-<div class="qm-actions" style="margin-top: 0; margin-bottom: 20px;">
+{% block header_actions %}
+<div class="qm-actions" style="margin-top: 0; margin-bottom: 0;">
     <button type="button" class="qm-btn qm-btn--primary" id="openAddWeaponBtn">
         <i class="fa-solid fa-plus"></i>
         <span>Add Weapon</span>
     </button>
 
-    <a href="#" class="qm-btn qm-btn--secondary">
+    <a href="#" class="qm-btn qm-btn--secondary" onclick="openInventoryStockModal(); return false;">
         <i class="fa-solid fa-boxes-stacked"></i>
         <span>View Stock</span>
     </a>
 </div>
+{% endblock %}
 
+{% block content %}
 <!-- Stat Cards Row (4 Live Stat Cards) -->
 <div class="qm-stats-row">
     <!-- Card 1: Total Stock -->
@@ -565,9 +677,9 @@
 
 </div>
 
-<!-- Charts Section (Bar Chart & Donut Chart) -->
+<!-- Charts Section (2x2 Grid: 4 Interactive Armory Charts) -->
 <div class="qm-charts-row">
-    <!-- Bar Chart: Weapon Count by Type -->
+    <!-- Chart 1: Bar Chart: Available in Armory by Type -->
     <div class="qm-chart-card">
         <div class="qm-chart-card__header">
             <div class="qm-chart-card__title">
@@ -580,7 +692,7 @@
         </div>
     </div>
 
-    <!-- Donut Chart: Company-wise Distribution -->
+    <!-- Chart 2: Company Distribution Pie Chart (Restored with Filter Dropdown) -->
     <div class="qm-chart-card">
         <div class="qm-chart-card__header" style="flex-wrap: wrap; gap: 8px;">
             <div class="qm-chart-card__title">
@@ -589,38 +701,139 @@
             </div>
             <select id="companyDistWeaponFilter" style="
                 font-family: 'Inter', sans-serif;
-                font-size: 0.75rem;
+                font-size: 0.72rem;
                 font-weight: 600;
-                padding: 5px 10px;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
+                padding: 4px 8px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
                 background: #f8fafc;
                 color: #334155;
                 cursor: pointer;
                 outline: none;
                 transition: border-color 0.15s;
-                min-width: 140px;
+                min-width: 130px;
             ">
                 <option value="">All Weapons</option>
             </select>
         </div>
         <div class="qm-chart-card__body" style="position: relative;">
             <canvas id="companyDistChart"></canvas>
-            <div id="companyDistEmpty" style="display:none; text-align:center; padding:40px 10px; color:#94a3b8; font-size:0.88rem; font-weight:500;">
-                <i class="fa-solid fa-box-open" style="font-size:1.4rem; margin-bottom:8px; display:block;"></i>
-                No data available
+            <div id="companyDistEmpty" style="display:none; text-align:center; padding:30px 10px; color:#94a3b8; font-size:0.82rem; font-weight:500;">
+                <i class="fa-solid fa-box-open" style="font-size:1.3rem; margin-bottom:6px; display:block;"></i>
+                No weapons assigned to any company
             </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Donut Chart: In Armory vs Assigned to Company -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #0369a1;"></i>
+                Stock Allocation
+            </div>
+            <span style="font-size: 0.68rem; font-weight: 600; color: #0369a1; background: #e0f2fe; padding: 2px 7px; border-radius: 10px; border: 1px solid #bae6fd;">Armory vs Company</span>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="allocationDonutChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart 4: Pie Chart: Weapon Count Category Share -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #7c3aed;"></i>
+                Weapon Category Share
+            </div>
+            <span style="font-size: 0.68rem; font-weight: 600; color: #7c3aed; background: #f3e8ff; padding: 2px 7px; border-radius: 10px; border: 1px solid #ddd6fe;">Total Stock</span>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="categoryPieChart"></canvas>
         </div>
     </div>
 </div>
 
+<!-- Recent Stock Activity Section -->
+<div class="qm-recent-card">
+    <div class="qm-recent-header">
+        <div class="qm-recent-title">
+            <i class="fa-solid fa-clock-rotate-left" style="color: #1e3a8a;"></i>
+            <span>Recent Stock Activity</span>
+        </div>
+        <span class="qm-recent-subtitle">Recently Added Stock</span>
+    </div>
+
+    {% if recent_additions and recent_additions|length > 0 %}
+    <div style="overflow-x: auto;">
+        <table class="qm-recent-table">
+            <thead>
+                <tr>
+                    <th>Weapon Type</th>
+                    <th>Butt No.</th>
+                    <th>Register / Serial No.</th>
+                    <th>Location / Company</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in recent_additions %}
+                <tr>
+                    <td style="font-weight: 600; color: #0f172a;">
+                        <i class="fa-solid fa-crosshairs" style="color: #64748b; font-size: 0.75rem; margin-right: 6px;"></i>
+                        {{ item.type }}
+                    </td>
+                    <td>
+                        <span style="font-weight: 700; color: #1e3a8a; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">#{{ item.butt_number }}</span>
+                    </td>
+                    <td style="font-family: monospace; font-weight: 600; color: #334155;">{{ item.register_number }}</td>
+                    <td>
+                        {% if item.company and item.company != 'In Armory (Unassigned)' and item.company.strip() != '' %}
+                        <span style="font-weight: 600; color: #0369a1;">
+                            <i class="fa-solid fa-building" style="font-size: 0.75rem;"></i> {{ item.company }}
+                        </span>
+                        {% else %}
+                        <span style="color: #94a3b8; font-style: italic;">
+                            <i class="fa-solid fa-warehouse" style="font-size: 0.75rem;"></i> Armory Stock
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set st = (item.weapon_status or 'Available') | lower %}
+                        {% if st == 'available' and (not item.company or item.company == 'In Armory (Unassigned)' or item.company.strip() == '') %}
+                        <span class="qm-recent-tag-available">
+                            <i class="fa-solid fa-circle-check"></i> Available
+                        </span>
+                        {% elif st == 'available' %}
+                        <span class="qm-recent-tag-assigned">
+                            <i class="fa-solid fa-building"></i> Assigned
+                        </span>
+                        {% else %}
+                        <span class="qm-recent-tag-issued">
+                            <i class="fa-solid fa-hand-holding-hand"></i> {{ item.weapon_status }}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 18px 10px; color: #94a3b8; font-size: 0.82rem;">
+        <i class="fa-solid fa-box-open" style="font-size: 1.3rem; margin-bottom: 6px; display: block; color: #cbd5e1;"></i>
+        No recent stock additions found.
+    </div>
+    {% endif %}
+</div>
+
 <!-- Modal Popup -->
 <div class="modal-backdrop" id="addWeaponModal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width: 680px; width: 92%;">
         <div class="modal-header">
             <div class="modal-header__title">
                 <i class="fa-solid fa-shield-halved" style="color: #1e3a8a;"></i>
-                Add Weapon
+                Add Weapon(s) to Armory Stock
             </div>
             <button type="button" class="modal-header__close" id="closeAddWeaponBtn">&times;</button>
         </div>
@@ -630,7 +843,7 @@
                 
                 <!-- Choose Weapon Type (Custom Dropdown with Live Hover Preview) -->
                 <div class="form-group">
-                    <label class="form-label">Choose Weapon Type</label>
+                    <label class="form-label">Choose Weapon Type <span style="color: #ef4444;">*</span></label>
                     <div class="custom-select-container" id="weaponSelectContainer">
                         <div class="custom-select-trigger" id="weaponSelectTrigger">
                             <span id="selectedWeaponText">Select Weapon Type...</span>
@@ -661,25 +874,30 @@
                     </div>
                 </div>
 
-
-
-                <!-- Butt Number Input -->
-                <div class="form-group">
-                    <label class="form-label">Butt Number</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-hashtag input-icon"></i>
-                        <input type="text" class="form-input" name="butt_number" placeholder="e.g. BT-104" required>
-                    </div>
+                <!-- Last Butt Number Info Banner -->
+                <div id="lastButtInfoBanner" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin-top: 12px; margin-bottom: 2px; font-size: 0.82rem; color: #1e3a8a; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-info" style="color: #2563eb; font-size: 0.95rem;"></i>
+                    <span id="lastButtInfoText">Select a weapon type to view last recorded butt number.</span>
                 </div>
 
-                <!-- Register Number Input -->
-                <div class="form-group">
-                    <label class="form-label">Register Number</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-barcode input-icon"></i>
-                        <input type="text" class="form-input" name="register_number" id="registerNumberInput" placeholder="e.g. REG-88492" autocomplete="off" required>
+                <!-- Multi-Weapon Entry Section -->
+                <div class="form-group" style="margin-top: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <label class="form-label" style="margin-bottom: 0;">Weapons (Butt & Register Numbers) <span style="color: #ef4444;">*</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="qmAddRowBtn" style="padding: 5px 14px; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <i class="fa-solid fa-plus"></i> Add Row
+                            </button>
+                            <button type="button" id="qmAdd5RowsBtn" style="padding: 5px 14px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                +5 Rows
+                            </button>
+                        </div>
                     </div>
-                    <div id="registerNumError" class="input-error-msg" style="display: none;"></div>
+
+                    <!-- Dynamic Weapon Rows List -->
+                    <div id="qmWeaponRowsList" style="max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                        <!-- Dynamic rows injected via JS -->
+                    </div>
                 </div>
 
             </div>
@@ -687,7 +905,7 @@
             <div class="modal-footer">
                 <button type="button" class="qm-btn qm-btn--secondary" id="cancelAddWeaponBtn">Cancel</button>
                 <button type="submit" class="btn-submit-weapon">
-                    <i class="fa-solid fa-plus"></i> Add Weapon
+                    <i class="fa-solid fa-plus"></i> Save Weapons
                 </button>
             </div>
         </form>
@@ -704,11 +922,38 @@
 <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
 <script>
     /* Chart.js Setup */
+    // Plugin to draw counts on pie/donut chart slices
+    const pieSliceCountPlugin = {
+        id: 'pieSliceCount',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                if (!meta.hidden) {
+                    meta.data.forEach((element, index) => {
+                        const val = dataset.data[index];
+                        if (!val) return;
+                        const pos = element.tooltipPosition();
+                        ctx.save();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 11px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                        ctx.shadowBlur = 3;
+                        ctx.fillText(val.toString(), pos.x, pos.y);
+                        ctx.restore();
+                    });
+                }
+            });
+        }
+    };
+
+    // 1. Available in Armory Bar Chart
     const barLabels = {{ (chart_data.bar_labels if chart_data else []) | tojson }};
     const barFullNames = {{ (chart_data.bar_full_names if chart_data else []) | tojson }};
     const barCounts = {{ (chart_data.bar_counts if chart_data else []) | tojson }};
 
-    // 1. Available in Armory Bar Chart
     const barCtx = document.getElementById('weaponBarChart');
     if (barCtx) {
         new Chart(barCtx.getContext('2d'), {
@@ -722,7 +967,7 @@
                     borderColor: '#1e3a8a',
                     borderWidth: 1.5,
                     borderRadius: 6,
-                    maxBarThickness: 40
+                    maxBarThickness: 36
                 }]
             },
             options: {
@@ -745,11 +990,11 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { stepSize: 1, precision: 0, font: { family: 'Inter', size: 11 } },
+                        ticks: { stepSize: 1, precision: 0, font: { family: 'Inter', size: 10 } },
                         grid: { color: 'rgba(226, 232, 240, 0.6)' }
                     },
                     x: {
-                        ticks: { font: { family: 'Inter', size: 11, weight: '600' } },
+                        ticks: { font: { family: 'Inter', size: 10, weight: '600' } },
                         grid: { display: false }
                     }
                 }
@@ -757,7 +1002,7 @@
         });
     }
 
-    // 2. Company Distribution Pie Chart
+    // 2. Company Distribution Pie Chart (Restored with Live Filter Dropdown)
     const companyDistColors = [
         '#059669', '#0369a1', '#b45309', '#7c3aed',
         '#dc2626', '#0891b2', '#ca8a04', '#4f46e5',
@@ -769,6 +1014,7 @@
     let compDistChart = null;
 
     async function loadCompanyDist(weaponType) {
+        if (!compDistCanvas) return;
         const url = weaponType
             ? `/api/qm/company_distribution?weapon_type=${encodeURIComponent(weaponType)}`
             : '/api/qm/company_distribution';
@@ -777,8 +1023,7 @@
             const res  = await fetch(url);
             const data = await res.json();
 
-            // Populate dropdown once (on first load)
-            if (compDistFilter.options.length <= 1 && data.weapon_types) {
+            if (compDistFilter && compDistFilter.options.length <= 1 && data.weapon_types) {
                 data.weapon_types.forEach(t => {
                     const opt = document.createElement('option');
                     opt.value = t;
@@ -789,45 +1034,17 @@
 
             if (!data.success || !data.rows || !data.rows.length) {
                 compDistCanvas.style.display = 'none';
-                compDistEmpty.style.display  = 'block';
-                compDistEmpty.innerHTML = '<i class="fa-solid fa-box-open" style="font-size:1.4rem; margin-bottom:8px; display:block;"></i>No weapons assigned to any company';
+                if (compDistEmpty) compDistEmpty.style.display  = 'block';
                 if (compDistChart) { compDistChart.destroy(); compDistChart = null; }
                 return;
             }
 
             compDistCanvas.style.display = 'block';
-            compDistEmpty.style.display  = 'none';
+            if (compDistEmpty) compDistEmpty.style.display  = 'none';
 
             const labels = data.rows.map(r => r.label);
             const counts = data.rows.map(r => r.count);
             const colors = labels.map((_, i) => companyDistColors[i % companyDistColors.length]);
-
-            // Plugin to draw counts on pie chart slices
-            const pieSliceCountPlugin = {
-                id: 'pieSliceCount',
-                afterDatasetsDraw(chart) {
-                    const { ctx } = chart;
-                    chart.data.datasets.forEach((dataset, i) => {
-                        const meta = chart.getDatasetMeta(i);
-                        if (!meta.hidden) {
-                            meta.data.forEach((element, index) => {
-                                const val = dataset.data[index];
-                                if (!val) return;
-                                const pos = element.tooltipPosition();
-                                ctx.save();
-                                ctx.fillStyle = '#ffffff';
-                                ctx.font = 'bold 12px Inter, sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                                ctx.shadowBlur = 4;
-                                ctx.fillText(val.toString(), pos.x, pos.y);
-                                ctx.restore();
-                            });
-                        }
-                    });
-                }
-            };
 
             if (compDistChart) {
                 compDistChart.data.labels = labels;
@@ -856,9 +1073,9 @@
                                 position: 'bottom',
                                 labels: {
                                     usePointStyle: true,
-                                    padding: 12,
-                                    font: { family: 'Inter', size: 11, weight: '500' },
-                                    boxWidth: 10
+                                    padding: 6,
+                                    font: { family: 'Inter', size: 9.5, weight: '500' },
+                                    boxWidth: 8
                                 }
                             },
                             tooltip: {
@@ -876,43 +1093,370 @@
             }
         } catch (err) {
             console.error('Company distribution load error:', err);
-            compDistCanvas.style.display = 'none';
-            compDistEmpty.style.display  = 'block';
+            if (compDistCanvas) compDistCanvas.style.display = 'none';
+            if (compDistEmpty) compDistEmpty.style.display  = 'block';
         }
     }
 
-    compDistFilter.addEventListener('change', () => loadCompanyDist(compDistFilter.value));
-    loadCompanyDist('');  // initial load — all weapons
+    if (compDistFilter) {
+        compDistFilter.addEventListener('change', () => loadCompanyDist(compDistFilter.value));
+    }
+    loadCompanyDist('');  // Initial load
+
+    // 3. Stock Allocation Donut Chart (In Armory vs Assigned to Company)
+    const donutLabels = {{ (chart_data.donut_labels if chart_data else ['In Armory', 'Assigned to Company']) | tojson }};
+    const donutCounts = {{ (chart_data.donut_counts if chart_data else [0, 0]) | tojson }};
+    const donutCtx = document.getElementById('allocationDonutChart');
+    if (donutCtx) {
+        new Chart(donutCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: donutLabels,
+                datasets: [{
+                    data: donutCounts,
+                    backgroundColor: ['#059669', '#0369a1'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
+                }]
+            },
+            plugins: [pieSliceCountPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 8,
+                            font: { family: 'Inter', size: 10, weight: '500' },
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+                                const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Category Pie Chart (Stock by Weapon Category)
+    const pieLabels = {{ (chart_data.pie_labels if chart_data else []) | tojson }};
+    const pieCounts = {{ (chart_data.pie_counts if chart_data else []) | tojson }};
+    const categoryColors = [
+        '#1e3a8a', '#059669', '#0369a1', '#b45309',
+        '#7c3aed', '#dc2626', '#0891b2', '#ca8a04'
+    ];
+    const pieCtx = document.getElementById('categoryPieChart');
+    if (pieCtx) {
+        new Chart(pieCtx.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieCounts,
+                    backgroundColor: pieLabels.map((_, i) => categoryColors[i % categoryColors.length]),
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
+                }]
+            },
+            plugins: [pieSliceCountPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 6,
+                            font: { family: 'Inter', size: 9.5, weight: '500' },
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+                                const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     const modal = document.getElementById('addWeaponModal');
     const openBtn = document.getElementById('openAddWeaponBtn');
     const closeBtn = document.getElementById('closeAddWeaponBtn');
     const cancelBtn = document.getElementById('cancelAddWeaponBtn');
     const addWeaponForm = document.getElementById('addWeaponForm');
-    const regInput = document.getElementById('registerNumberInput');
-    const regError = document.getElementById('registerNumError');
     const submitBtn = document.querySelector('.btn-submit-weapon');
 
-    let regCheckTimeout = null;
-    let isRegisterNumberValid = true;
+    const rowsContainer = document.getElementById('qmWeaponRowsList');
+    const addRowBtn = document.getElementById('qmAddRowBtn');
+    const add5RowsBtn = document.getElementById('qmAdd5RowsBtn');
+
+    let currentLastButtInfo = {
+        last_butt_number: null,
+        next_butt_number: null,
+        max_num: 0,
+        prefix: '',
+        num_digits: 0
+    };
+
+    function parseIntegerButt(val) {
+        if (!val) return null;
+        const s = val.trim();
+        if (/^\d+$/.test(s)) {
+            return parseInt(s, 10);
+        }
+        return null;
+    }
+
+    async function fetchLastButtNumber(wType) {
+        const banner = document.getElementById('lastButtInfoBanner');
+        const infoText = document.getElementById('lastButtInfoText');
+        if (!wType) {
+            if (banner) banner.style.display = 'none';
+            currentLastButtInfo = { last_butt_number: null, next_butt_number: null, max_num: 0, prefix: '', num_digits: 0 };
+            return;
+        }
+
+        try {
+            const res = await fetch(`/qm/get_last_butt_number?weapon_type=${encodeURIComponent(wType)}`);
+            const data = await res.json();
+            if (data.success) {
+                currentLastButtInfo = data;
+                if (banner && infoText) {
+                    banner.style.display = 'flex';
+                    if (data.last_butt_number) {
+                        infoText.innerHTML = `Last Butt No. in stock for <b>${wType}</b> is <span style="font-weight: 800; color: #1e3a8a;">${data.last_butt_number}</span> | Next consecutive expected: <span style="font-weight: 800; color: #059669;">${data.next_butt_number}</span>`;
+                    } else {
+                        infoText.innerHTML = `No weapons of <b>${wType}</b> exist in stock yet. Default starting Butt No. is <span style="font-weight: 800; color: #059669;">1</span>.`;
+                    }
+                }
+
+                autoFillConsecutiveButtNumbers();
+            }
+        } catch (err) {
+            console.error('Error fetching last butt number:', err);
+        }
+    }
+
+    function validateButtNumbers() {
+        if (!rowsContainer) return;
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        let previousValidInt = null;
+
+        rows.forEach((row, i) => {
+            const buttInput = row.querySelector('.qm-butt-input');
+            const errDiv = row.querySelector('.butt-err-msg');
+            if (!buttInput || !errDiv) return;
+
+            const val = buttInput.value.trim();
+            buttInput.style.borderColor = '#cbd5e1';
+            errDiv.style.display = 'none';
+
+            if (!val) return;
+
+            let expectedInt = null;
+
+            if (i === 0) {
+                if (currentLastButtInfo.next_butt_number !== null && currentLastButtInfo.next_butt_number !== undefined) {
+                    expectedInt = parseInt(currentLastButtInfo.next_butt_number, 10);
+                }
+            } else {
+                if (previousValidInt !== null) {
+                    expectedInt = previousValidInt + 1;
+                }
+            }
+
+            const valInt = parseIntegerButt(val);
+
+            if (valInt === null) {
+                errDiv.style.display = 'block';
+                errDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Butt number is not appropriate`;
+                buttInput.style.borderColor = '#ef4444';
+            } else if (expectedInt !== null && valInt !== expectedInt) {
+                errDiv.style.display = 'block';
+                errDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Butt number is not appropriate (Expected: ${expectedInt})`;
+                buttInput.style.borderColor = '#ef4444';
+                previousValidInt = valInt;
+            } else {
+                previousValidInt = valInt;
+            }
+        });
+    }
+
+    function autoFillConsecutiveButtNumbers() {
+        if (!rowsContainer) return;
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        
+        rows.forEach((row, i) => {
+            const buttInput = row.querySelector('.qm-butt-input');
+            if (!buttInput) return;
+
+            if (i === 0) {
+                if (!buttInput.value.trim() && currentLastButtInfo.next_butt_number) {
+                    buttInput.value = currentLastButtInfo.next_butt_number;
+                }
+            } else {
+                const prevRow = rows[i - 1];
+                const prevInput = prevRow ? prevRow.querySelector('.qm-butt-input') : null;
+                if (prevInput && prevInput.value.trim() && !buttInput.value.trim()) {
+                    const prevInt = parseIntegerButt(prevInput.value.trim());
+                    if (prevInt !== null) {
+                        buttInput.value = (prevInt + 1).toString();
+                    }
+                }
+            }
+        });
+        validateButtNumbers();
+    }
+
+    function createRowHTML(index, buttVal = '', regVal = '') {
+        return `
+            <div class="qm-weapon-row" style="display: flex; gap: 8px; align-items: flex-start; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px;">
+                <span class="row-num" style="font-size: 0.76rem; font-weight: 700; color: #475569; min-width: 24px; text-align: center; margin-top: 6px;">#${index}</span>
+                <div style="flex: 1; position: relative;">
+                    <input type="text" class="form-input qm-butt-input" name="butt_number" placeholder="Butt No (e.g. 104 or 1)" value="${buttVal}" style="padding: 6px 10px; font-size: 0.82rem;" required>
+                    <div class="butt-err-msg" style="display: none; font-size: 0.7rem; color: #ef4444; margin-top: 3px; font-weight: 600;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Butt number is not appropriate
+                    </div>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <input type="text" class="form-input qm-reg-input" name="register_number" placeholder="Reg No (e.g. REG-88492)" value="${regVal}" style="padding: 6px 10px; font-size: 0.82rem;" required>
+                    <div class="reg-dup-msg" style="display: none; font-size: 0.7rem; color: #ef4444; margin-top: 3px; font-weight: 600;">Already exists in stock!</div>
+                </div>
+                <button type="button" class="btn-remove-row" style="background: transparent; border: none; color: #ef4444; font-size: 0.9rem; cursor: pointer; padding: 4px 6px; border-radius: 4px; margin-top: 4px;" title="Remove row">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    function updateQMRowNumbers() {
+        if (!rowsContainer) return;
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        rows.forEach((row, i) => {
+            const numSpan = row.querySelector('.row-num');
+            if (numSpan) numSpan.textContent = `#${i + 1}`;
+            const removeBtn = row.querySelector('.btn-remove-row');
+            if (removeBtn) {
+                removeBtn.disabled = (rows.length === 1);
+                removeBtn.style.opacity = (rows.length === 1) ? '0.3' : '1';
+                removeBtn.style.cursor = (rows.length === 1) ? 'not-allowed' : 'pointer';
+            }
+        });
+        validateButtNumbers();
+    }
+
+    function addQMWeaponRow(buttVal = '', regVal = '') {
+        if (!rowsContainer) return;
+        const tempDiv = document.createElement('div');
+        const count = rowsContainer.querySelectorAll('.qm-weapon-row').length + 1;
+        tempDiv.innerHTML = createRowHTML(count, buttVal, regVal).trim();
+        const newRow = tempDiv.firstElementChild;
+
+        const removeBtn = newRow.querySelector('.btn-remove-row');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                if (rowsContainer.querySelectorAll('.qm-weapon-row').length > 1) {
+                    newRow.remove();
+                    updateQMRowNumbers();
+                }
+            });
+        }
+
+        const buttInput = newRow.querySelector('.qm-butt-input');
+        if (buttInput) {
+            buttInput.addEventListener('input', () => {
+                validateButtNumbers();
+            });
+        }
+
+        const regInput = newRow.querySelector('.qm-reg-input');
+        const dupMsg = newRow.querySelector('.reg-dup-msg');
+        let regTimeout = null;
+
+        if (regInput) {
+            regInput.addEventListener('input', () => {
+                const val = regInput.value.trim();
+                clearTimeout(regTimeout);
+                regInput.style.borderColor = '#cbd5e1';
+                if (dupMsg) dupMsg.style.display = 'none';
+
+                if (!val) return;
+
+                regTimeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`{{ url_for('qm.check_register_number_route') }}?num=${encodeURIComponent(val)}`);
+                        const data = await res.json();
+                        if (data.exists) {
+                            regInput.style.borderColor = '#ef4444';
+                            if (dupMsg) dupMsg.style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.error('Validation error:', e);
+                    }
+                }, 250);
+            });
+        }
+
+        rowsContainer.appendChild(newRow);
+        updateQMRowNumbers();
+        autoFillConsecutiveButtNumbers();
+        return newRow;
+    }
+
+    function resetQMWeaponRows() {
+        if (!rowsContainer) return;
+        rowsContainer.innerHTML = '';
+        addQMWeaponRow('', '');
+        const banner = document.getElementById('lastButtInfoBanner');
+        if (banner) banner.style.display = 'none';
+        currentLastButtInfo = { last_butt_number: null, next_butt_number: null, max_num: 0, prefix: '', num_digits: 0 };
+    }
+
+    if (addRowBtn) addRowBtn.addEventListener('click', () => {
+        addQMWeaponRow();
+    });
+    if (add5RowsBtn) {
+        add5RowsBtn.addEventListener('click', () => {
+            for (let i = 0; i < 5; i++) addQMWeaponRow();
+        });
+    }
 
     function openModal() {
+        resetQMWeaponRows();
         modal.classList.add('active');
     }
 
     function closeModal() {
         modal.classList.remove('active');
         const container = document.getElementById('weaponSelectContainer');
-        container.classList.remove('open');
-        document.getElementById('weaponHoverCard').style.display = 'none';
+        if (container) container.classList.remove('open');
+        const hoverCard = document.getElementById('weaponHoverCard');
+        if (hoverCard) hoverCard.style.display = 'none';
         
-        // Reset validation state
-        regInput.classList.remove('is-invalid', 'is-valid');
-        regError.style.display = 'none';
-        isRegisterNumberValid = true;
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save Weapons';
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
     }
 
     openBtn.addEventListener('click', openModal);
@@ -927,49 +1471,8 @@
         if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
     });
 
-    /* Realtime Register Number Uniqueness Check */
-    regInput.addEventListener('input', () => {
-        const val = regInput.value.trim();
-        clearTimeout(regCheckTimeout);
-
-        if (!val) {
-            regInput.classList.remove('is-invalid', 'is-valid');
-            regError.style.display = 'none';
-            isRegisterNumberValid = true;
-            submitBtn.disabled = false;
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
-            return;
-        }
-
-        regCheckTimeout = setTimeout(async () => {
-            try {
-                const res = await fetch(`{{ url_for('qm.check_register_number_route') }}?num=${encodeURIComponent(val)}`);
-                const data = await res.json();
-
-                if (data.exists) {
-                    regInput.classList.add('is-invalid');
-                    regInput.classList.remove('is-valid');
-                    regError.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Register Number already exists in stock!';
-                    regError.style.display = 'flex';
-                    isRegisterNumberValid = false;
-                    submitBtn.disabled = true;
-                    submitBtn.style.opacity = '0.5';
-                    submitBtn.style.cursor = 'not-allowed';
-                } else {
-                    regInput.classList.remove('is-invalid');
-                    regInput.classList.add('is-valid');
-                    regError.style.display = 'none';
-                    isRegisterNumberValid = true;
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
-                    submitBtn.style.cursor = 'pointer';
-                }
-            } catch (err) {
-                console.error('Validation error:', err);
-            }
-        }, 220);
-    });
+    // Initialize initial row
+    resetQMWeaponRows();
 
     /* Custom Dropdown & Live Hover Preview Logic */
     const container = document.getElementById('weaponSelectContainer');
@@ -1015,6 +1518,9 @@
 
             container.classList.remove('open');
             hoverCard.style.display = 'none';
+
+            // Fetch last butt number for selected weapon type
+            fetchLastButtNumber(value);
         });
     });
 
@@ -1029,31 +1535,82 @@
     addWeaponForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if (!hiddenInput.value) {
+        if (!hiddenInput || !hiddenInput.value) {
             alert('Please select a weapon type!');
             return;
         }
 
-        if (!isRegisterNumberValid) {
-            alert('Register Number already exists in stock!');
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        const weaponsList = [];
+        let hasIncomplete = false;
+        let hasDuplicateErr = false;
+        let hasButtErr = false;
+
+        rows.forEach(row => {
+            const b = row.querySelector('.qm-butt-input').value.trim();
+            const r = row.querySelector('.qm-reg-input').value.trim();
+            const dupMsg = row.querySelector('.reg-dup-msg');
+            const buttMsg = row.querySelector('.butt-err-msg');
+
+            if (dupMsg && dupMsg.style.display !== 'none') {
+                hasDuplicateErr = true;
+            }
+            if (buttMsg && buttMsg.style.display !== 'none') {
+                hasButtErr = true;
+            }
+            if (b && r) {
+                weaponsList.push({ butt_number: b, register_number: r });
+            } else if (b || r) {
+                hasIncomplete = true;
+            }
+        });
+
+        if (hasButtErr) {
+            alert('One or more Butt Numbers are not appropriate / consecutive! Please fix the highlighted butt numbers before saving.');
             return;
         }
 
-        const formData = new FormData(addWeaponForm);
+        if (hasDuplicateErr) {
+            alert('One or more Register Numbers already exist in stock. Please fix or remove them before saving!');
+            return;
+        }
+
+        if (hasIncomplete) {
+            alert('Please complete both Butt Number and Register Number for all rows, or remove incomplete rows.');
+            return;
+        }
+
+        if (weaponsList.length === 0) {
+            alert('Please enter at least one Butt Number and Register Number pair.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
         try {
             const res = await fetch("{{ url_for('qm.add_weapon_route') }}", {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    weapon_type: hiddenInput.value,
+                    weapons: weaponsList
+                })
             });
             const data = await res.json();
             if (data.success) {
+                alert(data.message || `${weaponsList.length} weapon(s) added successfully!`);
                 closeModal();
                 location.reload();   // Reload to fetch fresh stats and charts from DB
             } else {
-                alert('Error: ' + data.message);
+                alert('Error: ' + (data.message || 'Failed to add weapons'));
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save Weapons';
             }
         } catch (err) {
             alert('An unexpected error occurred: ' + err);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save Weapons';
         }
     });
 

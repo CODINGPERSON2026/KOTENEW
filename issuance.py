@@ -18,7 +18,7 @@ def scan_barcode_route():
     conn = get_db_connection()
     if conn and conn.is_connected():
         try:
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor(dictionary=True, buffered=True)
             # Query weapon matching register_number, butt_number, or barcode
             sql = """
                 SELECT id, type, butt_number, register_number, barcode, weapon_status, alloted_to_army_number
@@ -42,11 +42,30 @@ def scan_barcode_route():
                     'message': f'No weapon found matching Barcode / Register No: "{raw_query}"'
                 })
 
-            # Fetch troop details if allotted
+            # Check latest log in issuance_logs to auto-detect OUT or RETURN mode
+            cursor.execute("""
+                SELECT action_type, army_number, troop_name, rank_name, company, purpose, duty_location 
+                FROM issuance_logs 
+                WHERE LOWER(register_number) = LOWER(%s)
+                ORDER BY id DESC LIMIT 1;
+            """, (weapon['register_number'],))
+            last_log = cursor.fetchone()
+
+            is_currently_out = False
+            last_purpose = 'DUTY'
+            last_duty = 'RP'
+            if last_log and str(last_log.get('action_type') or '').upper() == 'OUT':
+                is_currently_out = True
+                last_purpose = last_log.get('purpose') or 'DUTY'
+                last_duty = last_log.get('duty_location') or 'RP'
+
+            auto_mode = 'RETURN' if is_currently_out else 'OUT'
+
+            # Fetch troop details if allotted in QM_stock or in last_log
             troop = None
-            if weapon.get('alloted_to_army_number'):
-                army_no = weapon['alloted_to_army_number']
-                cursor.execute("SELECT army_number, name, rank_name, company, section FROM troops WHERE army_number = %s LIMIT 1;", (army_no,))
+            target_army_no = weapon.get('alloted_to_army_number') or (last_log.get('army_number') if last_log else None)
+            if target_army_no:
+                cursor.execute("SELECT army_number, name, rank_name, company, section FROM troops WHERE LOWER(army_number) = LOWER(%s) LIMIT 1;", (target_army_no,))
                 t_row = cursor.fetchone()
                 if t_row:
                     troop = {
@@ -56,6 +75,14 @@ def scan_barcode_route():
                         'company': t_row['company'],
                         'section': t_row['section']
                     }
+                elif last_log and last_log.get('army_number'):
+                    troop = {
+                        'army_number': last_log['army_number'],
+                        'name': last_log.get('troop_name') or 'Personnel',
+                        'rank': last_log.get('rank_name') or '',
+                        'company': last_log.get('company') or '',
+                        'section': ''
+                    }
 
             cursor.close()
             conn.close()
@@ -63,6 +90,10 @@ def scan_barcode_route():
             return jsonify({
                 'success': True,
                 'found': True,
+                'is_currently_out': is_currently_out,
+                'auto_mode': auto_mode,
+                'last_purpose': last_purpose,
+                'last_duty': last_duty,
                 'weapon': {
                     'id': weapon['id'],
                     'type': weapon['type'],
@@ -127,7 +158,7 @@ def api_issue_weapon():
     conn = get_db_connection()
     if conn and conn.is_connected():
         try:
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor(dictionary=True, buffered=True)
 
             # 1. Fetch weapon details
             cursor.execute("SELECT id, type, butt_number, register_number, weapon_status FROM QM_stock WHERE LOWER(register_number) = LOWER(%s);", (register_number,))
@@ -138,7 +169,15 @@ def api_issue_weapon():
                 return jsonify({'success': False, 'message': f'Weapon {register_number} not found in stock.'}), 404
 
             w_status = str(weapon.get('weapon_status') or '').strip().lower()
-            if w_status in ['issued', 'alloted', 'allotted', 'on duty']:
+            # Check if latest issuance_log action for this weapon is OUT
+            cursor.execute("""
+                SELECT il.action_type 
+                FROM issuance_logs il 
+                WHERE LOWER(il.register_number) = LOWER(%s)
+                ORDER BY il.id DESC LIMIT 1;
+            """, (register_number,))
+            last_log = cursor.fetchone()
+            if last_log and str(last_log.get('action_type') or '').upper() == 'OUT':
                 cursor.close()
                 conn.close()
                 return jsonify({'success': False, 'message': f'Weapon {register_number} (Butt #{weapon["butt_number"]}) is ALREADY issued out!'}), 400
@@ -150,12 +189,17 @@ def api_issue_weapon():
             rank_name = troop['rank_name'] if troop else ''
             company_name = troop['company'] if troop else ''
 
-            # 3. Check current weapons issued to this army_number
+            # 3. Check current weapons issued to this army_number based on action_type = OUT in issuance_logs
             cursor.execute("""
-                SELECT COUNT(*) as count, GROUP_CONCAT(register_number SEPARATOR ', ') as issued_regs
-                FROM QM_stock 
-                WHERE LOWER(alloted_to_army_number) = LOWER(%s)
-                  AND LOWER(weapon_status) IN ('issued', 'alloted');
+                SELECT COUNT(*) as count, GROUP_CONCAT(qs.register_number SEPARATOR ', ') as issued_regs
+                FROM QM_stock qs
+                WHERE LOWER(qs.alloted_to_army_number) = LOWER(%s)
+                  AND (
+                      SELECT il.action_type 
+                      FROM issuance_logs il 
+                      WHERE LOWER(il.register_number) = LOWER(qs.register_number)
+                      ORDER BY il.id DESC LIMIT 1
+                  ) = 'OUT';
             """, (army_number,))
             existing_info = cursor.fetchone()
             existing_count = existing_info['count'] if existing_info and existing_info['count'] else 0
@@ -184,10 +228,10 @@ def api_issue_weapon():
                         'message': f'Issue Blocked: Personnel {troop_name} ({rank_name}) already has weapon ({existing_regs}) issued! Only 1 weapon per person allowed for non-maintenance duties.'
                     }), 400
 
-            # 5. Update QM_stock weapon_status to 'Issued' & record duty location
+            # 5. Update QM_stock alloted_to_army_number & record duty location (weapon_status is NOT updated to Issued)
             cursor.execute("""
                 UPDATE QM_stock 
-                SET weapon_status = 'Issued', alloted_to_army_number = %s, duty_location = %s 
+                SET alloted_to_army_number = %s, duty_location = %s 
                 WHERE id = %s;
             """, (army_number, f"{purpose}: {duty_location}", weapon['id']))
 
@@ -224,7 +268,16 @@ def api_issue_weapon():
             total_cnt = cursor.fetchone()['total']
             cursor.execute("SELECT COUNT(*) as avail FROM QM_stock WHERE LOWER(weapon_status) = 'available';")
             avail_cnt = cursor.fetchone()['avail']
-            cursor.execute("SELECT COUNT(*) as issued FROM QM_stock WHERE LOWER(weapon_status) IN ('issued', 'alloted');")
+            cursor.execute("""
+                SELECT COUNT(*) as issued 
+                FROM QM_stock qs
+                WHERE (
+                    SELECT il.action_type 
+                    FROM issuance_logs il 
+                    WHERE LOWER(il.register_number) = LOWER(qs.register_number)
+                    ORDER BY il.id DESC LIMIT 1
+                ) = 'OUT';
+            """)
             issued_cnt = cursor.fetchone()['issued']
 
             cursor.close()
@@ -280,7 +333,7 @@ def api_return_weapon():
     conn = get_db_connection()
     if conn and conn.is_connected():
         try:
-            cursor = conn.cursor(dictionary=True)
+            cursor = conn.cursor(dictionary=True, buffered=True)
 
             # 1. Fetch weapon details
             cursor.execute("SELECT id, type, butt_number, register_number, weapon_status, alloted_to_army_number, duty_location FROM QM_stock WHERE LOWER(register_number) = LOWER(%s);", (register_number,))
@@ -311,32 +364,51 @@ def api_return_weapon():
                 WHERE id = %s;
             """, (weapon['id'],))
 
-            # 3. Insert into issuance_logs
+            # 3. Update the most recent OUT row for this weapon → mark as RETURN
             try:
                 dt_obj = datetime.strptime(scan_timestamp, '%Y-%m-%d %H:%M:%S')
             except Exception:
                 dt_obj = datetime.now()
 
-            log_sql = """
-                INSERT INTO issuance_logs 
-                (register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, purpose, duty_location, biometric_status, action_time, operator_username)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'RETURN', %s, %s, %s, %s, %s, %s);
-            """
-            cursor.execute(log_sql, (
-                weapon['register_number'],
-                weapon['butt_number'],
-                weapon['type'],
-                army_number,
-                troop_name,
-                rank_name,
-                company_name,
-                barcode,
-                'RETURN',
-                prev_duty,
-                biometric_status,
-                dt_obj,
-                session.get('username', 'KOTE Operator')
-            ))
+            # Find the most recent OUT log row for this weapon
+            cursor.execute("""
+                SELECT id FROM issuance_logs
+                WHERE LOWER(register_number) = LOWER(%s) AND action_type = 'OUT'
+                ORDER BY id DESC LIMIT 1;
+            """, (weapon['register_number'],))
+            out_row = cursor.fetchone()
+
+            if out_row:
+                # Update the existing OUT row — flip it to RETURN with return timestamp
+                cursor.execute("""
+                    UPDATE issuance_logs
+                    SET action_type = 'RETURN',
+                        return_time = %s,
+                        return_operator_username = %s,
+                        biometric_status = %s
+                    WHERE id = %s;
+                """, (dt_obj, session.get('username', 'KOTE Operator'), biometric_status, out_row['id']))
+            else:
+                # Fallback: no OUT row found — insert a RETURN record as before
+                cursor.execute("""
+                    INSERT INTO issuance_logs 
+                    (register_number, butt_number, weapon_type, army_number, troop_name, rank_name, company, action_type, barcode, purpose, duty_location, biometric_status, action_time, operator_username)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'RETURN', %s, %s, %s, %s, %s, %s);
+                """, (
+                    weapon['register_number'],
+                    weapon['butt_number'],
+                    weapon['type'],
+                    army_number,
+                    troop_name,
+                    rank_name,
+                    company_name,
+                    barcode,
+                    'RETURN',
+                    prev_duty,
+                    biometric_status,
+                    dt_obj,
+                    session.get('username', 'KOTE Operator')
+                ))
             conn.commit()
 
             # 4. Fetch updated stock counts (Total active stock excludes Deposited)
@@ -683,10 +755,10 @@ def api_inventory_stock():
             params = []
 
             if role != 'qm' and user_company:
-                sql += """ AND (LOWER(qs.company) = LOWER(%s) 
-                           OR LOWER((SELECT t.company FROM troops t WHERE LOWER(t.army_number) = LOWER(qs.alloted_to_army_number) LIMIT 1)) = LOWER(%s)
-                           OR qs.company IS NULL OR qs.company = '')"""
-                params.extend([user_company, user_company])
+                coy_pattern = f"%{user_company.lower()}%"
+                sql += """ AND (LOWER(qs.company) LIKE LOWER(%s) 
+                           OR LOWER((SELECT t.company FROM troops t WHERE LOWER(t.army_number) = LOWER(qs.alloted_to_army_number) LIMIT 1)) LIKE LOWER(%s))"""
+                params.extend([coy_pattern, coy_pattern])
 
             if w_type and w_type.upper() != 'ALL':
                 sql += " AND LOWER(qs.type) = LOWER(%s)"
@@ -740,16 +812,29 @@ def api_inventory_stock():
             distinct_types = [t['type'] for t in types_rows]
 
             # Stock stats (Held Strength excludes Deposited weapons)
-            cursor.execute("SELECT COUNT(*) as total FROM QM_stock;")
-            total_cnt = cursor.fetchone()['total']
-            cursor.execute("SELECT COUNT(*) as held FROM QM_stock WHERE LOWER(weapon_status) NOT IN ('deposited', 'deposit');")
-            held_cnt = cursor.fetchone()['held']
-            cursor.execute("SELECT COUNT(*) as avail FROM QM_stock WHERE LOWER(weapon_status) = 'available';")
-            avail_cnt = cursor.fetchone()['avail']
-            cursor.execute("SELECT COUNT(*) as issued FROM QM_stock WHERE LOWER(weapon_status) IN ('issued', 'alloted');")
-            issued_cnt = cursor.fetchone()['issued']
-            cursor.execute("SELECT COUNT(*) as deposited FROM QM_stock WHERE LOWER(weapon_status) IN ('deposited', 'deposit');")
-            deposited_cnt = cursor.fetchone()['deposited']
+            if role != 'qm' and user_company:
+                coy_pattern = f"%{user_company.lower()}%"
+                cursor.execute("SELECT COUNT(*) as total FROM QM_stock WHERE LOWER(company) LIKE LOWER(%s);", (coy_pattern,))
+                total_cnt = cursor.fetchone()['total']
+                cursor.execute("SELECT COUNT(*) as held FROM QM_stock WHERE LOWER(company) LIKE LOWER(%s) AND LOWER(weapon_status) IN ('available', 'issued', 'alloted');", (coy_pattern,))
+                held_cnt = cursor.fetchone()['held']
+                cursor.execute("SELECT COUNT(*) as avail FROM QM_stock WHERE LOWER(company) LIKE LOWER(%s) AND LOWER(weapon_status) = 'available';", (coy_pattern,))
+                avail_cnt = cursor.fetchone()['avail']
+                cursor.execute("SELECT COUNT(*) as issued FROM QM_stock WHERE LOWER(company) LIKE LOWER(%s) AND LOWER(weapon_status) IN ('issued', 'alloted');", (coy_pattern,))
+                issued_cnt = cursor.fetchone()['issued']
+                cursor.execute("SELECT COUNT(*) as deposited FROM QM_stock WHERE LOWER(company) LIKE LOWER(%s) AND LOWER(weapon_status) IN ('deposited', 'deposit');", (coy_pattern,))
+                deposited_cnt = cursor.fetchone()['deposited']
+            else:
+                cursor.execute("SELECT COUNT(*) as total FROM QM_stock;")
+                total_cnt = cursor.fetchone()['total']
+                cursor.execute("SELECT COUNT(*) as held FROM QM_stock WHERE LOWER(weapon_status) NOT IN ('deposited', 'deposit');")
+                held_cnt = cursor.fetchone()['held']
+                cursor.execute("SELECT COUNT(*) as avail FROM QM_stock WHERE LOWER(weapon_status) = 'available';")
+                avail_cnt = cursor.fetchone()['avail']
+                cursor.execute("SELECT COUNT(*) as issued FROM QM_stock WHERE LOWER(weapon_status) IN ('issued', 'alloted');")
+                issued_cnt = cursor.fetchone()['issued']
+                cursor.execute("SELECT COUNT(*) as deposited FROM QM_stock WHERE LOWER(weapon_status) IN ('deposited', 'deposit');")
+                deposited_cnt = cursor.fetchone()['deposited']
 
             cursor.close()
             conn.close()
@@ -775,52 +860,85 @@ def api_inventory_stock():
 
 @issuance_bp.route('/api/add_inventory_weapon', methods=['POST'])
 def api_add_inventory_weapon():
-    """Adds a new weapon into QM_stock DB and returns the newly created weapon details."""
+    """Adds single or multiple weapons into QM_stock DB and returns newly created weapon details."""
     if 'username' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
     data = request.get_json(silent=True) or request.form
     w_type = (data.get('weapon_type') or data.get('type') or '').strip()
-    butt_no = (data.get('butt_number') or data.get('butt_no') or '').strip()
-    reg_no = (data.get('register_number') or data.get('reg_no') or '').strip()
-    company = (data.get('company') or '').strip()
+    company = (data.get('company') or '').strip() or None
 
-    if not w_type or not butt_no or not reg_no:
-        return jsonify({'success': False, 'message': 'Type of Weapon, Butt Number, and Register Number are required!'}), 400
+    weapons = []
+    if request.is_json and isinstance(data.get('weapons'), list):
+        for item in data.get('weapons'):
+            b = str(item.get('butt_number') or item.get('butt_no') or '').strip()
+            r = str(item.get('register_number') or item.get('reg_no') or '').strip()
+            if b and r:
+                weapons.append({'butt_number': b, 'register_number': r})
+    else:
+        single_b = (data.get('butt_number') or data.get('butt_no') or '').strip()
+        single_r = (data.get('register_number') or data.get('reg_no') or '').strip()
+        if single_b and single_r:
+            weapons.append({'butt_number': single_b, 'register_number': single_r})
+
+    if not w_type:
+        return jsonify({'success': False, 'message': 'Type of Weapon is required!'}), 400
+    if not weapons:
+        return jsonify({'success': False, 'message': 'At least one Butt Number and Register Number pair is required!'}), 400
 
     conn = get_db_connection()
     if conn and conn.is_connected():
         try:
             cursor = conn.cursor(dictionary=True)
-            # Check duplicate register number
-            cursor.execute("SELECT id FROM QM_stock WHERE LOWER(register_number) = LOWER(%s) LIMIT 1;", (reg_no,))
-            dup = cursor.fetchone()
-            if dup:
-                cursor.close()
-                conn.close()
-                return jsonify({'success': False, 'message': f'Register Number "{reg_no}" already exists in stock!'}), 400
+            added_weapons = []
+            duplicates = []
 
-            # Insert weapon
-            query = """
-            INSERT INTO QM_stock (type, butt_number, register_number, company, weapon_status, barcode)
-            VALUES (%s, %s, %s, %s, 'Available', %s);
-            """
-            cursor.execute(query, (w_type, butt_no, reg_no, company, reg_no))
+            for item in weapons:
+                b_no = item['butt_number']
+                r_no = item['register_number']
+
+                cursor.execute("SELECT id FROM QM_stock WHERE LOWER(register_number) = LOWER(%s) LIMIT 1;", (r_no,))
+                dup = cursor.fetchone()
+                if dup:
+                    duplicates.append(r_no)
+                    continue
+
+                cursor.execute("SELECT COALESCE(MAX(s_no), 0) AS max_s FROM QM_stock;")
+                s_res = cursor.fetchone()
+                next_s_no = (s_res['max_s'] or 0) + 1 if s_res else 1
+
+                query = """
+                INSERT INTO QM_stock (s_no, type, butt_number, register_number, company, weapon_status, barcode, allotment_type)
+                VALUES (%s, %s, %s, %s, %s, 'Available', %s, NULL);
+                """
+                cursor.execute(query, (next_s_no, w_type, b_no, r_no, company, r_no))
+                new_id = cursor.lastrowid
+                added_weapons.append({
+                    'id': new_id,
+                    'type': w_type,
+                    'butt_number': b_no,
+                    'register_number': r_no,
+                    'weapon_status': 'Available'
+                })
+
             conn.commit()
-            new_id = cursor.lastrowid
             cursor.close()
             conn.close()
 
+            if len(added_weapons) == 0 and duplicates:
+                return jsonify({'success': False, 'message': f"Register Number(s) already exist in stock: {', '.join(duplicates)}"}), 400
+
+            msg = f"{len(added_weapons)} weapon(s) of type '{w_type}' added to stock successfully!"
+            if duplicates:
+                msg += f" (Skipped {len(duplicates)} duplicate(s): {', '.join(duplicates)})"
+
             return jsonify({
                 'success': True,
-                'message': f'Weapon {w_type} (Butt: {butt_no}, Reg: {reg_no}) added to stock successfully!',
-                'weapon': {
-                    'id': new_id,
-                    'type': w_type,
-                    'butt_number': butt_no,
-                    'register_number': reg_no,
-                    'weapon_status': 'Available'
-                }
+                'message': msg,
+                'count': len(added_weapons),
+                'weapons': added_weapons,
+                'duplicates': duplicates,
+                'weapon': added_weapons[0] if added_weapons else None
             })
         except Exception as e:
             print("Error adding inventory weapon:", e)

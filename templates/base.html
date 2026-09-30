@@ -236,16 +236,32 @@
 
         .main-content {
             flex: 1;
-            padding: 20px 24px;
+            padding: 14px 24px;
         }
 
         /* Header Section in Base */
         .app-header {
-            margin-bottom: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .app-header__info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header__actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .app-header__title {
-            font-size: 1.6rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: #0f172a;
             letter-spacing: -0.02em;
@@ -253,25 +269,25 @@
 
         .app-header__subtitle {
             color: #64748b;
-            font-size: 0.9rem;
-            margin-top: 4px;
+            font-size: 0.82rem;
+            margin-top: 2px;
         }
 
         /* Shared Minimal Action Buttons */
         .qm-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-top: 16px;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .qm-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 7px 14px;
+            padding: 6px 14px;
             border-radius: 8px;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 500;
             text-decoration: none;
             transition: all 0.2s ease;
@@ -394,8 +410,13 @@
             <main class="main-content">
                 <!-- Standard Header in Base -->
                 <header class="app-header">
-                    <h1 class="app-header__title">{% block page_title %}Welcome, Quarter Master {{ session.username if session.username else (username if username else 'QM') }}!{% endblock %}</h1>
-                    <p class="app-header__subtitle">{% block page_subtitle %}15 CESR Ordnance Control & Armory Management System{% endblock %}</p>
+                    <div class="app-header__info">
+                        <h1 class="app-header__title">{% block page_title %}Welcome, Quarter Master {{ session.username if session.username else (username if username else 'QM') }}!{% endblock %}</h1>
+                        <p class="app-header__subtitle">{% block page_subtitle %}15 CESR Ordnance Control & Armory Management System{% endblock %}</p>
+                    </div>
+                    <div class="app-header__actions">
+                        {% block header_actions %}{% endblock %}
+                    </div>
                 </header>
 
                 {% block content %}
@@ -416,7 +437,9 @@
             if (sidebarIssuanceLink) {
                 sidebarIssuanceLink.addEventListener('click', (e) => {
                     e.preventDefault();
-                    if (typeof openIssuedModal === 'function') {
+                    if (typeof openIssuanceModal === 'function') {
+                        openIssuanceModal();
+                    } else if (typeof openIssuedModal === 'function') {
                         openIssuedModal();
                     } else if (typeof openQmIssuedModal === 'function') {
                         openQmIssuedModal();

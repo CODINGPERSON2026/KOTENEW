@@ -102,16 +102,22 @@ def coy_dashboard_route():
                     SELECT COUNT(*) as cnt 
                     FROM QM_stock qs
                     WHERE LOWER(qs.company) LIKE LOWER(%s)
-                      AND LOWER(qs.weapon_status) IN ('issued', 'alloted');
+                      AND (
+                          SELECT il.action_type 
+                          FROM issuance_logs il 
+                          WHERE LOWER(il.register_number) = LOWER(qs.register_number)
+                             OR (qs.alloted_to_army_number IS NOT NULL AND TRIM(qs.alloted_to_army_number) != '' AND LOWER(il.army_number) = LOWER(qs.alloted_to_army_number))
+                          ORDER BY il.id DESC LIMIT 1
+                      ) = 'OUT';
                 """, (coy_pattern,))
                 stats['issued_weapons'] = cursor.fetchone()['cnt']
 
                 cursor.execute("""
                     SELECT COUNT(*) as cnt 
-                    FROM issuance_logs 
-                    WHERE UPPER(action_type) = 'RETURN'
-                      AND (LOWER(company) LIKE LOWER(%s) OR LOWER(operator_username) LIKE LOWER(%s));
-                """, (coy_pattern, coy_pattern))
+                    FROM QM_stock qs
+                    WHERE LOWER(qs.company) LIKE LOWER(%s)
+                      AND LOWER(qs.weapon_status) = 'available';
+                """, (coy_pattern,))
                 stats['in_kote'] = cursor.fetchone()['cnt']
             else:
                 cursor.execute("SELECT COUNT(*) as cnt FROM QM_stock WHERE LOWER(weapon_status) IN ('available', 'issued', 'alloted');")
@@ -120,10 +126,20 @@ def coy_dashboard_route():
                 cursor.execute("SELECT COUNT(*) as cnt FROM QM_stock WHERE LOWER(weapon_status) = 'available';")
                 stats['available_weapons'] = cursor.fetchone()['cnt']
 
-                cursor.execute("SELECT COUNT(*) as cnt FROM QM_stock WHERE LOWER(weapon_status) IN ('issued', 'alloted');")
+                cursor.execute("""
+                    SELECT COUNT(*) as cnt 
+                    FROM QM_stock qs
+                    WHERE (
+                        SELECT il.action_type 
+                        FROM issuance_logs il 
+                        WHERE LOWER(il.register_number) = LOWER(qs.register_number)
+                           OR (qs.alloted_to_army_number IS NOT NULL AND TRIM(qs.alloted_to_army_number) != '' AND LOWER(il.army_number) = LOWER(qs.alloted_to_army_number))
+                        ORDER BY il.id DESC LIMIT 1
+                    ) = 'OUT';
+                """)
                 stats['issued_weapons'] = cursor.fetchone()['cnt']
 
-                cursor.execute("SELECT COUNT(*) as cnt FROM issuance_logs WHERE UPPER(action_type) = 'RETURN';")
+                cursor.execute("SELECT COUNT(*) as cnt FROM QM_stock WHERE LOWER(weapon_status) = 'available';")
                 stats['in_kote'] = cursor.fetchone()['cnt']
 
             # Query stock count for each weapon type for the Bar Chart
@@ -146,7 +162,7 @@ def coy_dashboard_route():
                     FROM core_weapons cw
                     LEFT JOIN QM_stock qs ON LOWER(cw.weapon_type) = LOWER(qs.type) 
                                          AND LOWER(qs.weapon_status) = 'available'
-                                         AND (LOWER(qs.company) LIKE LOWER(%s) OR qs.company IS NULL OR qs.company = '')
+                                         AND LOWER(qs.company) LIKE LOWER(%s)
                     GROUP BY cw.id, cw.weapon_type
                     ORDER BY cw.id ASC;
                 """, (coy_pattern,))
@@ -263,9 +279,9 @@ def available_weapons_route():
                     SELECT register_number, butt_number, type 
                     FROM QM_stock 
                     WHERE LOWER(weapon_status) = 'available'
-                      AND (LOWER(company) = LOWER(%s) OR company IS NULL OR company = '')
+                      AND LOWER(company) LIKE LOWER(%s)
                     ORDER BY register_number ASC;
-                """, (user_company,))
+                """, (f"%{user_company.lower()}%",))
             else:
                 cursor.execute("SELECT register_number, butt_number, type FROM QM_stock WHERE LOWER(weapon_status) = 'available' ORDER BY register_number ASC;")
 

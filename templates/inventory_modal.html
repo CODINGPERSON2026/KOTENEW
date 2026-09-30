@@ -468,18 +468,10 @@
                 if (data.stats) {
                     const heldStr = data.stats.held_strength !== undefined ? data.stats.held_strength : data.stats.total;
                     const depCount = data.stats.deposited || 0;
-                    document.getElementById('invStockStatsBadge').textContent = 
-                        `Held Strength: ${heldStr} | Available: ${data.stats.available} | Issued: ${data.stats.issued} | Deposited: ${depCount}`;
-                    
-                    // Live update main dashboard stat card counters
-                    const coyTotalEl = document.getElementById('coyWeaponsHeld') || document.getElementById('coyTotalStock') || document.getElementById('statTotalWeapons');
-                    if (coyTotalEl) coyTotalEl.textContent = heldStr;
-
-                    const coyAvailEl = document.getElementById('coyAvailableStock') || document.getElementById('statAvailableWeapons');
-                    if (coyAvailEl) coyAvailEl.textContent = data.stats.available;
-
-                    const coyIssuedEl = document.getElementById('coyIssuedStock') || document.getElementById('statIssuedWeapons');
-                    if (coyIssuedEl) coyIssuedEl.textContent = data.stats.issued;
+                    const badgeEl = document.getElementById('invStockStatsBadge');
+                    if (badgeEl) {
+                        badgeEl.textContent = `Held Strength: ${heldStr} | Available: ${data.stats.available} | Issued: ${data.stats.issued} | Deposited: ${depCount}`;
+                    }
                 }
 
                 renderInventoryTable(inventoryStockData);

@@ -425,19 +425,21 @@
 </style>
 {% endblock %}
 
-{% block content %}
-    <!-- Action Buttons -->
-<div class="qm-actions" style="margin-top: 0; margin-bottom: 20px;">
+{% block header_actions %}
+<div class="qm-actions" style="margin-top: 0; margin-bottom: 0;">
     <button type="button" class="qm-btn qm-btn--primary" id="openAllotWeaponBtn" style="background-color: #1e3a8a; border-color: #1e3a8a;">
+        <i class="fa-solid fa-plus"></i>
         <span>Allot Weapon</span>
     </button>
 
-    <a href="#" class="qm-btn qm-btn--secondary">
+    <a href="#" class="qm-btn qm-btn--secondary" onclick="openInventoryStockModal(); return false;">
         <i class="fa-solid fa-boxes-stacked"></i>
         <span>View Stock</span>
     </a>
 </div>
+{% endblock %}
 
+{% block content %}
 <!-- Stat Cards Row (4 Live Stat Cards) -->
 <div class="coy-stats-row">
     <!-- Card 1: Weapons Held -->

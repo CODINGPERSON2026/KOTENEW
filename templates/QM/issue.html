@@ -257,27 +257,39 @@
         color: #475569;
     }
 
-    /* Issue button per row */
-    .btn-issue-row {
+    /* Select Button per row */
+    .btn-select-row {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 6px;
-        padding: 7px 16px;
+        padding: 6px 14px;
         border-radius: 8px;
-        border: none;
-        background: #1e3a8a;
-        color: #ffffff;
+        border: 1.5px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
         font-size: 0.8rem;
-        font-weight: 600;
+        font-weight: 700;
         font-family: 'Inter', sans-serif;
         cursor: pointer;
         transition: all 0.2s ease;
     }
 
-    .btn-issue-row:hover {
-        background: #1e40af;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(30,58,138,0.25);
+    .btn-select-row:hover {
+        border-color: #1e3a8a;
+        color: #1e3a8a;
+        background: #eff6ff;
+    }
+
+    .weapon-row.selected-row {
+        background: #f0f7ff !important;
+    }
+
+    .weapon-row.selected-row .btn-select-row {
+        background: #1e3a8a;
+        border-color: #1e3a8a;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25);
     }
 
     /* Empty state */
@@ -651,12 +663,15 @@
     <table class="weapons-table" id="weaponsTable">
         <thead>
             <tr>
+                <th style="width: 45px; text-align: center;">
+                    <input type="checkbox" id="selectAllWeaponsCheckbox" title="Select / Deselect All Visible Weapons" style="width: 17px; height: 17px; cursor: pointer; accent-color: #1e3a8a;">
+                </th>
                 <th>S.No</th>
                 <th>Weapon Type</th>
                 <th>Butt No.</th>
                 <th>Register No.</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th style="text-align: center;">Select Action</th>
             </tr>
         </thead>
         <tbody>
@@ -670,6 +685,9 @@
                 data-butt-number="{{ w.butt_number }}"
                 data-register-number="{{ w.register_number }}"
                 data-image="{{ url_for('static', filename='weapons/' + (w.image_path or 'ak47.png')) }}">
+                <td style="text-align: center;">
+                    <input type="checkbox" class="row-select-checkbox" data-weapon-id="{{ w.id }}" style="width: 17px; height: 17px; cursor: pointer; accent-color: #1e3a8a;">
+                </td>
                 <td><span class="sno-chip">{{ w.s_no if w.s_no else loop.index }}</span></td>
                 <td>
                     <div class="weapon-name-cell">
@@ -686,10 +704,10 @@
                         Available
                     </span>
                 </td>
-                <td>
-                    <button class="btn-issue-row" onclick="openIssueModal(this)">
-                        <i class="fa-solid fa-hand-holding-hand"></i>
-                        Issue
+                <td style="text-align: center;">
+                    <button type="button" class="btn-select-row" data-weapon-id="{{ w.id }}">
+                        <i class="fa-regular fa-square" style="font-size: 0.95rem;"></i>
+                        <span>Select</span>
                     </button>
                 </td>
             </tr>
@@ -702,6 +720,23 @@
         <p>No weapons currently available in armory stock.</p>
     </div>
     {% endif %}
+</div>
+
+<!-- Floating Multi-Selection Action Bar -->
+<div id="selectionActionBar" style="position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(100px); opacity: 0; pointer-events: none; z-index: 1000; background: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 50px; box-shadow: 0 20px 40px rgba(15,23,42,0.35); border: 1.5px solid #334155; display: flex; align-items: center; gap: 18px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #2563eb; color: #ffffff; font-size: 0.82rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; font-family: monospace;" id="selectedCountChip">0</span>
+        <span style="font-size: 0.88rem; font-weight: 700; color: #f8fafc;" id="selectedTextLabel">Weapons Selected</span>
+    </div>
+    <div style="height: 20px; width: 1px; background: #334155;"></div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" id="btnAssignSelectedToCompany" style="padding: 8px 20px; background: #2563eb; color: #ffffff; border: none; border-radius: 20px; font-size: 0.84rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background 0.2s;">
+            <i class="fa-solid fa-building"></i> Assign Selected to Company
+        </button>
+        <button type="button" id="btnClearAllSelections" style="padding: 8px 14px; background: transparent; color: #94a3b8; border: 1px solid #475569; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            Deselect All
+        </button>
+    </div>
 </div>
 
 <!-- ─── ISSUE CONFIRMATION MODAL ─── -->
@@ -870,15 +905,20 @@
         applyFilters();
     });
 
-    /* ─── ISSUE MODAL ─── */
+    /* ─── MULTI SELECTION SYSTEM ─── */
+    const selectedWeaponIds = new Set();
+    const selectAllCheckbox = document.getElementById('selectAllWeaponsCheckbox');
+    const selectionActionBar = document.getElementById('selectionActionBar');
+    const selectedCountChip = document.getElementById('selectedCountChip');
+    const selectedTextLabel = document.getElementById('selectedTextLabel');
+    const btnAssignSelected = document.getElementById('btnAssignSelectedToCompany');
+    const btnClearSelected  = document.getElementById('btnClearAllSelections');
+
     const modal      = document.getElementById('issueConfirmModal');
     const closeBtn   = document.getElementById('closeIssueModalBtn');
     const cancelBtn  = document.getElementById('cancelIssueBtn');
     const confirmBtn = document.getElementById('confirmIssueBtn');
     const companySelect = document.getElementById('companySelect');
-
-    let selectedWeaponId  = null;
-    let selectedWeaponReg = null;
 
     /* Load companies from API on page load */
     async function loadCompanies() {
@@ -907,20 +947,125 @@
         confirmBtn.disabled = !companySelect.value;
     });
 
-    function openIssueModal(btn) {
-        const row = btn.closest('tr');
-        selectedWeaponId  = row.getAttribute('data-weapon-id');
-        selectedWeaponReg = row.getAttribute('data-register-number');
-        const wType = row.getAttribute('data-weapon-type');
-        const wButt = row.getAttribute('data-butt-number');
-        const wImg  = row.getAttribute('data-image');
+    function updateSelectionUI() {
+        const count = selectedWeaponIds.size;
+        
+        if (count > 0) {
+            selectedCountChip.textContent = count;
+            selectedTextLabel.textContent = count === 1 ? 'Weapon Selected' : 'Weapons Selected';
+            selectionActionBar.style.opacity = '1';
+            selectionActionBar.style.pointerEvents = 'auto';
+            selectionActionBar.style.transform = 'translateX(-50%) translateY(0)';
+        } else {
+            selectionActionBar.style.opacity = '0';
+            selectionActionBar.style.pointerEvents = 'none';
+            selectionActionBar.style.transform = 'translateX(-50%) translateY(100px)';
+        }
+
+        const visibleRows = Array.from(document.querySelectorAll('.weapon-row')).filter(r => !r.classList.contains('hidden-row'));
+        if (visibleRows.length > 0 && selectAllCheckbox) {
+            const allSelected = visibleRows.every(r => selectedWeaponIds.has(r.getAttribute('data-weapon-id')));
+            selectAllCheckbox.checked = allSelected && count > 0;
+        }
+    }
+
+    function toggleWeaponSelectionById(weaponId, forceState = null) {
+        const row = document.querySelector(`.weapon-row[data-weapon-id="${weaponId}"]`);
+        if (!row) return;
+
+        const btn = row.querySelector('.btn-select-row');
+        const chk = row.querySelector('.row-select-checkbox');
+
+        const isCurrentlySelected = selectedWeaponIds.has(weaponId);
+        const newState = (forceState !== null) ? forceState : !isCurrentlySelected;
+
+        if (newState) {
+            selectedWeaponIds.add(weaponId);
+            row.classList.add('selected-row');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-square-check"></i> <span>Selected</span>';
+            if (chk) chk.checked = true;
+        } else {
+            selectedWeaponIds.delete(weaponId);
+            row.classList.remove('selected-row');
+            if (btn) btn.innerHTML = '<i class="fa-regular fa-square"></i> <span>Select</span>';
+            if (chk) chk.checked = false;
+        }
+    }
+
+    document.querySelectorAll('.weapon-row').forEach(row => {
+        const weaponId = row.getAttribute('data-weapon-id');
+        const btn = row.querySelector('.btn-select-row');
+        const chk = row.querySelector('.row-select-checkbox');
+
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleWeaponSelectionById(weaponId);
+                updateSelectionUI();
+            });
+        }
+
+        if (chk) {
+            chk.addEventListener('change', (e) => {
+                e.stopPropagation();
+                toggleWeaponSelectionById(weaponId, chk.checked);
+                updateSelectionUI();
+            });
+        }
+
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('input')) return;
+            toggleWeaponSelectionById(weaponId);
+            updateSelectionUI();
+        });
+    });
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', () => {
+            const isChecked = selectAllCheckbox.checked;
+            const visibleRows = Array.from(document.querySelectorAll('.weapon-row')).filter(r => !r.classList.contains('hidden-row'));
+            visibleRows.forEach(row => {
+                const weaponId = row.getAttribute('data-weapon-id');
+                toggleWeaponSelectionById(weaponId, isChecked);
+            });
+            updateSelectionUI();
+        });
+    }
+
+    if (btnClearSelected) {
+        btnClearSelected.addEventListener('click', () => {
+            selectedWeaponIds.clear();
+            document.querySelectorAll('.weapon-row').forEach(row => {
+                const weaponId = row.getAttribute('data-weapon-id');
+                toggleWeaponSelectionById(weaponId, false);
+            });
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateSelectionUI();
+        });
+    }
+
+    if (btnAssignSelected) {
+        btnAssignSelected.addEventListener('click', () => {
+            if (selectedWeaponIds.size === 0) return;
+            openBatchIssueModal();
+        });
+    }
+
+    function openBatchIssueModal() {
+        const ids = Array.from(selectedWeaponIds);
+        const firstRow = document.querySelector(`.weapon-row[data-weapon-id="${ids[0]}"]`);
+        const wImg = firstRow ? firstRow.getAttribute('data-image') : '';
+
+        const buttNums = [];
+        ids.forEach(id => {
+            const r = document.querySelector(`.weapon-row[data-weapon-id="${id}"]`);
+            if (r) buttNums.push(r.getAttribute('data-butt-number'));
+        });
 
         document.getElementById('modalWeaponImg').src = wImg;
-        document.getElementById('modalWeaponName').textContent = wType;
-        document.getElementById('modalWeaponMeta').textContent =
-            'Butt No: ' + wButt + '  |  Reg No: ' + selectedWeaponReg;
+        document.getElementById('modalWeaponName').textContent = `Assigning ${ids.length} Selected Weapon(s)`;
+        document.getElementById('modalWeaponMeta').textContent = 'Butt Numbers: ' + buttNums.join(', ');
 
-        /* Reset */
         companySelect.value = '';
         confirmBtn.disabled = true;
 
@@ -930,8 +1075,6 @@
 
     function closeIssueModal() {
         modal.classList.remove('active');
-        selectedWeaponId  = null;
-        selectedWeaponReg = null;
     }
 
     closeBtn.addEventListener('click', closeIssueModal);
@@ -941,20 +1084,23 @@
         if (e.key === 'Escape' && modal.classList.contains('active')) closeIssueModal();
     });
 
-    /* Confirm — only updates company in QM_stock */
     confirmBtn.addEventListener('click', async () => {
         const company = companySelect.value.trim();
-        if (!company || !selectedWeaponId) return;
+        const ids = Array.from(selectedWeaponIds);
+        if (!company || ids.length === 0) return;
 
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Assigning…';
 
         try {
-            const formData = new FormData();
-            formData.append('weapon_id', selectedWeaponId);
-            formData.append('company', company);
-
-            const res  = await fetch('/qm/assign_company', { method: 'POST', body: formData });
+            const res = await fetch('/qm/assign_company', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    company: company,
+                    weapon_ids: ids
+                })
+            });
             const data = await res.json();
 
             if (data.success) {
