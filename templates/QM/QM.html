@@ -1,0 +1,1637 @@
+{% extends "base.html" %}
+
+{% block title %}QM Dashboard — 15 CESR Ordnance Platform{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ─── MODAL BACKDROP ─── */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* ─── MODAL BOX ─── */
+    .modal-box {
+        background: #ffffff;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateX(-140px) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: visible;
+        position: relative;
+    }
+
+    .modal-backdrop.active .modal-box {
+        transform: scale(1) translateX(-140px) translateY(0);
+    }
+
+    .modal-header {
+        padding: 18px 24px 14px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-header__title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-header__close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .modal-header__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .modal-body {
+        padding: 20px 24px 24px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Form Fields */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: relative;
+    }
+
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        font-size: 0.88rem;
+        pointer-events: none;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 9px 14px 9px 36px;
+        border-radius: 9px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.88rem;
+        font-family: inherit;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    .form-input.is-invalid {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+    }
+
+    .form-input.is-valid {
+        border-color: #10b981 !important;
+    }
+
+    .input-error-msg {
+        font-size: 0.78rem;
+        color: #ef4444;
+        margin-top: 4px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* ─── CUSTOM SELECT DROPDOWN WITH LIVE HOVER PREVIEW ─── */
+    .custom-select-container {
+        position: relative;
+    }
+
+    .custom-select-trigger {
+        width: 100%;
+        padding: 9px 14px;
+        border-radius: 9px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-size: 0.88rem;
+        color: #64748b;
+        font-weight: 400;
+        transition: all 0.2s ease;
+    }
+
+    .custom-select-trigger:hover,
+    .custom-select-container.open .custom-select-trigger {
+        border-color: #1e3a8a;
+    }
+
+    .custom-select-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: none;
+        flex-direction: column;
+        padding: 5px;
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .custom-select-container.open .custom-select-menu {
+        display: flex;
+    }
+
+    .custom-option {
+        padding: 9px 12px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.86rem;
+        color: #334155;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .custom-option:hover,
+    .custom-option.selected {
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-weight: 600;
+    }
+
+    /* ─── HOVER PREVIEW CARD (ENLARGED) ─── */
+    .weapon-preview-card {
+        position: absolute;
+        top: -12px;
+        left: calc(100% + 18px);
+        width: 350px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #cbd5e1;
+        box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.22);
+        padding: 16px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        z-index: 1010;
+        pointer-events: none;
+        animation: fadeInPreview 0.2s ease;
+    }
+
+    @keyframes fadeInPreview {
+        from { opacity: 0; transform: translateX(-8px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .weapon-preview-card__img-container {
+        width: 100%;
+        height: 200px;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .weapon-preview-card__img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    .weapon-preview-card__name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        line-height: 1.3;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+        padding: 14px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: #f8fafc;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .btn-submit-weapon {
+        background: #0f172a;
+        color: #ffffff;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ─── QM STAT CARDS ROW ─── */
+    .qm-stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    @media (max-width: 900px) {
+        .qm-stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .qm-stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .qm-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+    }
+
+    .qm-stat-card__info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .qm-stat-card__val {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.15;
+    }
+
+    .qm-stat-card__label {
+        font-size: 0.74rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .qm-stat-card__icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+    }
+
+    /* ─── QM CHARTS SECTION (2x2 Grid) ─── */
+    .qm-charts-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+        .qm-charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .qm-chart-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .qm-chart-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .qm-chart-card__title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qm-chart-card__body {
+        position: relative;
+        flex: 1;
+        min-height: 180px;
+        max-height: 215px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ─── ISSUED WEAPONS TABLE MODAL ─── */
+    .modal-box-xlarge {
+        background: #ffffff;
+        width: 95%;
+        max-width: 1100px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-backdrop.active .modal-box-xlarge {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-table-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        flex: 1;
+        max-height: 55vh;
+    }
+
+    .issued-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        text-align: left;
+    }
+
+    .issued-table th {
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 12px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .issued-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .issued-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge--issued {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .status-badge--returned {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .qm-stat-card--clickable {
+        cursor: pointer;
+    }
+
+    .qm-stat-card--clickable:hover {
+        border-color: #b45309 !important;
+        box-shadow: 0 8px 20px -4px rgba(180, 83, 9, 0.15) !important;
+    }
+
+    /* ─── QM RECENT ACTIVITY SECTION ─── */
+    .qm-recent-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .qm-recent-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .qm-recent-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qm-recent-subtitle {
+        font-size: 0.72rem;
+        background: #eff6ff;
+        color: #1e3a8a;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: 1px solid #bfdbfe;
+    }
+
+    .qm-recent-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        text-align: left;
+    }
+
+    .qm-recent-table th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        padding: 7px 10px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .qm-recent-table td {
+        padding: 7px 10px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .qm-recent-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .qm-recent-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .qm-recent-tag-available {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+
+    .qm-recent-tag-assigned {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+    }
+
+    .qm-recent-tag-issued {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+</style>
+{% endblock %}
+
+{% block header_actions %}
+<div class="qm-actions" style="margin-top: 0; margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+    <button type="button" class="qm-btn qm-btn--primary" id="openAddWeaponBtn">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Weapon</span>
+    </button>
+
+    <a href="#" class="qm-btn qm-btn--secondary" onclick="openInventoryStockModal(); return false;">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>View Stock</span>
+    </a>
+
+    <button type="button" class="qm-btn qm-btn--secondary" id="openUpdateBiometricBtn" onclick="openUpdateBiometricModal(); return false;" style="background: #ffffff; color: #059669; border: 1.5px solid #059669; font-weight: 700;">
+        <i class="fa-solid fa-fingerprint" style="color: #059669;"></i>
+        <span>Update Biometric</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stat Cards Row (4 Live Stat Cards) -->
+<div class="qm-stats-row">
+    <!-- Card 1: Total Stock -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statTotalWeapons">{{ stats.total_weapons if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Total Weapons in Stock</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--blue">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+    </div>
+
+    <!-- Card 2: Available -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statAvailableWeapons">{{ stats.available_weapons if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Available in Armory</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--green">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+    </div>
+
+    <!-- Card 2b: Assigned to Company -->
+    <div class="qm-stat-card">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statAssignedWeapons">{{ stats.assigned_to_company if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Assigned to Company</span>
+        </div>
+        <div class="qm-stat-card__icon" style="background: #e0f2fe; color: #0369a1;">
+            <i class="fa-solid fa-building"></i>
+        </div>
+    </div>
+
+    <!-- Card 3: Issued -->
+    <div class="qm-stat-card qm-stat-card--clickable" id="qmIssuedCard" title="Click to view Issued Weapons Table">
+        <div class="qm-stat-card__info">
+            <span class="qm-stat-card__val" id="statIssuedWeapons">{{ stats.issued_weapons if stats else 0 }}</span>
+            <span class="qm-stat-card__label">Issued / Active</span>
+        </div>
+        <div class="qm-stat-card__icon qm-stat-card__icon--amber">
+            <i class="fa-solid fa-hand-holding-hand"></i>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- Charts Section (2x2 Grid: 4 Interactive Armory Charts) -->
+<div class="qm-charts-row">
+    <!-- Chart 1: Bar Chart: Available in Armory by Type -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-column" style="color: #1e3a8a;"></i>
+                Available in Armory by Type
+            </div>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="weaponBarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart 2: Company Distribution Pie Chart (Restored with Filter Dropdown) -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header" style="flex-wrap: wrap; gap: 8px;">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #059669;"></i>
+                Company Distribution
+            </div>
+            <select id="companyDistWeaponFilter" style="
+                font-family: 'Inter', sans-serif;
+                font-size: 0.72rem;
+                font-weight: 600;
+                padding: 4px 8px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                background: #f8fafc;
+                color: #334155;
+                cursor: pointer;
+                outline: none;
+                transition: border-color 0.15s;
+                min-width: 130px;
+            ">
+                <option value="">All Weapons</option>
+            </select>
+        </div>
+        <div class="qm-chart-card__body" style="position: relative;">
+            <canvas id="companyDistChart"></canvas>
+            <div id="companyDistEmpty" style="display:none; text-align:center; padding:30px 10px; color:#94a3b8; font-size:0.82rem; font-weight:500;">
+                <i class="fa-solid fa-box-open" style="font-size:1.3rem; margin-bottom:6px; display:block;"></i>
+                No weapons assigned to any company
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Donut Chart: In Armory vs Assigned to Company -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #0369a1;"></i>
+                Stock Allocation
+            </div>
+            <span style="font-size: 0.68rem; font-weight: 600; color: #0369a1; background: #e0f2fe; padding: 2px 7px; border-radius: 10px; border: 1px solid #bae6fd;">Armory vs Company</span>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="allocationDonutChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart 4: Pie Chart: Weapon Count Category Share -->
+    <div class="qm-chart-card">
+        <div class="qm-chart-card__header">
+            <div class="qm-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #7c3aed;"></i>
+                Weapon Category Share
+            </div>
+            <span style="font-size: 0.68rem; font-weight: 600; color: #7c3aed; background: #f3e8ff; padding: 2px 7px; border-radius: 10px; border: 1px solid #ddd6fe;">Total Stock</span>
+        </div>
+        <div class="qm-chart-card__body">
+            <canvas id="categoryPieChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Stock Activity Section -->
+<div class="qm-recent-card">
+    <div class="qm-recent-header">
+        <div class="qm-recent-title">
+            <i class="fa-solid fa-clock-rotate-left" style="color: #1e3a8a;"></i>
+            <span>Recent Stock Activity</span>
+        </div>
+        <span class="qm-recent-subtitle">Recently Added Stock</span>
+    </div>
+
+    {% if recent_additions and recent_additions|length > 0 %}
+    <div style="overflow-x: auto;">
+        <table class="qm-recent-table">
+            <thead>
+                <tr>
+                    <th>Weapon Type</th>
+                    <th>Butt No.</th>
+                    <th>Register / Serial No.</th>
+                    <th>Location / Company</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in recent_additions %}
+                <tr>
+                    <td style="font-weight: 600; color: #0f172a;">
+                        <i class="fa-solid fa-crosshairs" style="color: #64748b; font-size: 0.75rem; margin-right: 6px;"></i>
+                        {{ item.type }}
+                    </td>
+                    <td>
+                        <span style="font-weight: 700; color: #1e3a8a; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">#{{ item.butt_number }}</span>
+                    </td>
+                    <td style="font-family: monospace; font-weight: 600; color: #334155;">{{ item.register_number }}</td>
+                    <td>
+                        {% if item.company and item.company != 'In Armory (Unassigned)' and item.company.strip() != '' %}
+                        <span style="font-weight: 600; color: #0369a1;">
+                            <i class="fa-solid fa-building" style="font-size: 0.75rem;"></i> {{ item.company }}
+                        </span>
+                        {% else %}
+                        <span style="color: #94a3b8; font-style: italic;">
+                            <i class="fa-solid fa-warehouse" style="font-size: 0.75rem;"></i> Armory Stock
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set st = (item.weapon_status or 'Available') | lower %}
+                        {% if st == 'available' and (not item.company or item.company == 'In Armory (Unassigned)' or item.company.strip() == '') %}
+                        <span class="qm-recent-tag-available">
+                            <i class="fa-solid fa-circle-check"></i> Available
+                        </span>
+                        {% elif st == 'available' %}
+                        <span class="qm-recent-tag-assigned">
+                            <i class="fa-solid fa-building"></i> Assigned
+                        </span>
+                        {% else %}
+                        <span class="qm-recent-tag-issued">
+                            <i class="fa-solid fa-hand-holding-hand"></i> {{ item.weapon_status }}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 18px 10px; color: #94a3b8; font-size: 0.82rem;">
+        <i class="fa-solid fa-box-open" style="font-size: 1.3rem; margin-bottom: 6px; display: block; color: #cbd5e1;"></i>
+        No recent stock additions found.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Popup -->
+<div class="modal-backdrop" id="addWeaponModal">
+    <div class="modal-box" style="max-width: 680px; width: 92%;">
+        <div class="modal-header">
+            <div class="modal-header__title">
+                <i class="fa-solid fa-shield-halved" style="color: #1e3a8a;"></i>
+                Add Weapon(s) to Armory Stock
+            </div>
+            <button type="button" class="modal-header__close" id="closeAddWeaponBtn">&times;</button>
+        </div>
+
+        <form id="addWeaponForm">
+            <div class="modal-body">
+                
+                <!-- Choose Weapon Type (Custom Dropdown with Live Hover Preview) -->
+                <div class="form-group">
+                    <label class="form-label">Choose Weapon Type <span style="color: #ef4444;">*</span></label>
+                    <div class="custom-select-container" id="weaponSelectContainer">
+                        <div class="custom-select-trigger" id="weaponSelectTrigger">
+                            <span id="selectedWeaponText">Select Weapon Type...</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size: 0.78rem; color: #94a3b8;"></i>
+                        </div>
+                        <input type="hidden" name="weapon_type" id="weaponTypeInput" required>
+
+                        <!-- Options List -->
+                        <div class="custom-select-menu" id="weaponSelectMenu">
+                            {% for w in weapons %}
+                            <div class="custom-option" 
+                                 data-value="{{ w.name }}" 
+                                 data-name="{{ w.name }}"
+                                 data-img="{{ url_for('static', filename='weapons/' + w.filename) }}">
+                                <i class="fa-solid fa-crosshairs" style="color: #64748b; font-size: 0.8rem;"></i>
+                                <span>{{ w.name }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Hover Image Preview Card -->
+                        <div class="weapon-preview-card" id="weaponHoverCard">
+                            <div class="weapon-preview-card__img-container">
+                                <img src="" alt="Weapon Preview" class="weapon-preview-card__img" id="weaponHoverImg">
+                            </div>
+                            <span class="weapon-preview-card__name" id="weaponHoverTitle"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Last Butt Number Info Banner -->
+                <div id="lastButtInfoBanner" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin-top: 12px; margin-bottom: 2px; font-size: 0.82rem; color: #1e3a8a; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-info" style="color: #2563eb; font-size: 0.95rem;"></i>
+                    <span id="lastButtInfoText">Select a weapon type to view last recorded butt number.</span>
+                </div>
+
+                <!-- Multi-Weapon Entry Section -->
+                <div class="form-group" style="margin-top: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <label class="form-label" style="margin-bottom: 0;">Weapons (Butt & Register Numbers) <span style="color: #ef4444;">*</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="qmAddRowBtn" style="padding: 5px 14px; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <i class="fa-solid fa-plus"></i> Add Row
+                            </button>
+                            <button type="button" id="qmAdd5RowsBtn" style="padding: 5px 14px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                                +5 Rows
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Weapon Rows List -->
+                    <div id="qmWeaponRowsList" style="max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                        <!-- Dynamic rows injected via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="qm-btn qm-btn--secondary" id="cancelAddWeaponBtn">Cancel</button>
+                <button type="submit" class="btn-submit-weapon">
+                    <i class="fa-solid fa-plus"></i> Save Weapons
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% include 'QM/modals/qm_stats_modals.html' %}
+
+{% endblock %}
+
+
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+<script>
+    /* Chart.js Setup */
+    // Plugin to draw counts on pie/donut chart slices
+    const pieSliceCountPlugin = {
+        id: 'pieSliceCount',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                if (!meta.hidden) {
+                    meta.data.forEach((element, index) => {
+                        const val = dataset.data[index];
+                        if (!val) return;
+                        const pos = element.tooltipPosition();
+                        ctx.save();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 11px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                        ctx.shadowBlur = 3;
+                        ctx.fillText(val.toString(), pos.x, pos.y);
+                        ctx.restore();
+                    });
+                }
+            });
+        }
+    };
+
+    // 1. Available in Armory Bar Chart
+    const barLabels = {{ (chart_data.bar_labels if chart_data else []) | tojson }};
+    const barFullNames = {{ (chart_data.bar_full_names if chart_data else []) | tojson }};
+    const barCounts = {{ (chart_data.bar_counts if chart_data else []) | tojson }};
+
+    const barCtx = document.getElementById('weaponBarChart');
+    if (barCtx) {
+        new Chart(barCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Available in Armory',
+                    data: barCounts,
+                    backgroundColor: 'rgba(30, 58, 138, 0.85)',
+                    borderColor: '#1e3a8a',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    maxBarThickness: 36
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(ctx) {
+                                const idx = ctx[0].dataIndex;
+                                return barFullNames[idx] || ctx[0].label;
+                            },
+                            label: function(ctx) {
+                                return ` Available in Armory: ${ctx.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0, font: { family: 'Inter', size: 10 } },
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Inter', size: 10, weight: '600' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Company Distribution Pie Chart (Restored with Live Filter Dropdown)
+    const companyDistColors = [
+        '#059669', '#0369a1', '#b45309', '#7c3aed',
+        '#dc2626', '#0891b2', '#ca8a04', '#4f46e5',
+        '#be185d', '#64748b'
+    ];
+    const compDistFilter = document.getElementById('companyDistWeaponFilter');
+    const compDistCanvas = document.getElementById('companyDistChart');
+    const compDistEmpty  = document.getElementById('companyDistEmpty');
+    let compDistChart = null;
+
+    async function loadCompanyDist(weaponType) {
+        if (!compDistCanvas) return;
+        const url = weaponType
+            ? `/api/qm/company_distribution?weapon_type=${encodeURIComponent(weaponType)}`
+            : '/api/qm/company_distribution';
+
+        try {
+            const res  = await fetch(url);
+            const data = await res.json();
+
+            if (compDistFilter && compDistFilter.options.length <= 1 && data.weapon_types) {
+                data.weapon_types.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    compDistFilter.appendChild(opt);
+                });
+            }
+
+            if (!data.success || !data.rows || !data.rows.length) {
+                compDistCanvas.style.display = 'none';
+                if (compDistEmpty) compDistEmpty.style.display  = 'block';
+                if (compDistChart) { compDistChart.destroy(); compDistChart = null; }
+                return;
+            }
+
+            compDistCanvas.style.display = 'block';
+            if (compDistEmpty) compDistEmpty.style.display  = 'none';
+
+            const labels = data.rows.map(r => r.label);
+            const counts = data.rows.map(r => r.count);
+            const colors = labels.map((_, i) => companyDistColors[i % companyDistColors.length]);
+
+            if (compDistChart) {
+                compDistChart.data.labels = labels;
+                compDistChart.data.datasets[0].data = counts;
+                compDistChart.data.datasets[0].backgroundColor = colors;
+                compDistChart.update();
+            } else {
+                compDistChart = new Chart(compDistCanvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    plugins: [pieSliceCountPlugin],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 6,
+                                    font: { family: 'Inter', size: 9.5, weight: '500' },
+                                    boxWidth: 8
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+                                        const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                        return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Company distribution load error:', err);
+            if (compDistCanvas) compDistCanvas.style.display = 'none';
+            if (compDistEmpty) compDistEmpty.style.display  = 'block';
+        }
+    }
+
+    if (compDistFilter) {
+        compDistFilter.addEventListener('change', () => loadCompanyDist(compDistFilter.value));
+    }
+    loadCompanyDist('');  // Initial load
+
+    // 3. Stock Allocation Donut Chart (In Armory vs Assigned to Company)
+    const donutLabels = {{ (chart_data.donut_labels if chart_data else ['In Armory', 'Assigned to Company']) | tojson }};
+    const donutCounts = {{ (chart_data.donut_counts if chart_data else [0, 0]) | tojson }};
+    const donutCtx = document.getElementById('allocationDonutChart');
+    if (donutCtx) {
+        new Chart(donutCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: donutLabels,
+                datasets: [{
+                    data: donutCounts,
+                    backgroundColor: ['#059669', '#0369a1'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
+                }]
+            },
+            plugins: [pieSliceCountPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 8,
+                            font: { family: 'Inter', size: 10, weight: '500' },
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+                                const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Category Pie Chart (Stock by Weapon Category)
+    const pieLabels = {{ (chart_data.pie_labels if chart_data else []) | tojson }};
+    const pieCounts = {{ (chart_data.pie_counts if chart_data else []) | tojson }};
+    const categoryColors = [
+        '#1e3a8a', '#059669', '#0369a1', '#b45309',
+        '#7c3aed', '#dc2626', '#0891b2', '#ca8a04'
+    ];
+    const pieCtx = document.getElementById('categoryPieChart');
+    if (pieCtx) {
+        new Chart(pieCtx.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieCounts,
+                    backgroundColor: pieLabels.map((_, i) => categoryColors[i % categoryColors.length]),
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
+                }]
+            },
+            plugins: [pieSliceCountPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 6,
+                            font: { family: 'Inter', size: 9.5, weight: '500' },
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+                                const pct = total ? Math.round(ctx.raw / total * 100) : 0;
+                                return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const modal = document.getElementById('addWeaponModal');
+    const openBtn = document.getElementById('openAddWeaponBtn');
+    const closeBtn = document.getElementById('closeAddWeaponBtn');
+    const cancelBtn = document.getElementById('cancelAddWeaponBtn');
+    const addWeaponForm = document.getElementById('addWeaponForm');
+    const submitBtn = document.querySelector('.btn-submit-weapon');
+
+    const rowsContainer = document.getElementById('qmWeaponRowsList');
+    const addRowBtn = document.getElementById('qmAddRowBtn');
+    const add5RowsBtn = document.getElementById('qmAdd5RowsBtn');
+
+    let currentLastButtInfo = {
+        last_butt_number: null,
+        next_butt_number: null,
+        max_num: 0,
+        prefix: '',
+        num_digits: 0
+    };
+
+    function parseIntegerButt(val) {
+        if (!val) return null;
+        const s = val.trim();
+        if (/^\d+$/.test(s)) {
+            return parseInt(s, 10);
+        }
+        return null;
+    }
+
+    async function fetchLastButtNumber(wType) {
+        const banner = document.getElementById('lastButtInfoBanner');
+        const infoText = document.getElementById('lastButtInfoText');
+        if (!wType) {
+            if (banner) banner.style.display = 'none';
+            currentLastButtInfo = { last_butt_number: null, next_butt_number: null, max_num: 0, prefix: '', num_digits: 0 };
+            return;
+        }
+
+        try {
+            const res = await fetch(`/qm/get_last_butt_number?weapon_type=${encodeURIComponent(wType)}`);
+            const data = await res.json();
+            if (data.success) {
+                currentLastButtInfo = data;
+                if (banner && infoText) {
+                    banner.style.display = 'flex';
+                    if (data.last_butt_number) {
+                        infoText.innerHTML = `Last Butt No. in stock for <b>${wType}</b> is <span style="font-weight: 800; color: #1e3a8a;">${data.last_butt_number}</span> | Next consecutive expected: <span style="font-weight: 800; color: #059669;">${data.next_butt_number}</span>`;
+                    } else {
+                        infoText.innerHTML = `No weapons of <b>${wType}</b> exist in stock yet. Default starting Butt No. is <span style="font-weight: 800; color: #059669;">1</span>.`;
+                    }
+                }
+
+                autoFillConsecutiveButtNumbers();
+            }
+        } catch (err) {
+            console.error('Error fetching last butt number:', err);
+        }
+    }
+
+    function validateButtNumbers() {
+        if (!rowsContainer) return;
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        let previousValidInt = null;
+
+        rows.forEach((row, i) => {
+            const buttInput = row.querySelector('.qm-butt-input');
+            const errDiv = row.querySelector('.butt-err-msg');
+            if (!buttInput || !errDiv) return;
+
+            const val = buttInput.value.trim();
+            buttInput.style.borderColor = '#cbd5e1';
+            errDiv.style.display = 'none';
+
+            if (!val) return;
+
+            let expectedInt = null;
+
+            if (i === 0) {
+                if (currentLastButtInfo.next_butt_number !== null && currentLastButtInfo.next_butt_number !== undefined) {
+                    expectedInt = parseInt(currentLastButtInfo.next_butt_number, 10);
+                }
+            } else {
+                if (previousValidInt !== null) {
+                    expectedInt = previousValidInt + 1;
+                }
+            }
+
+            const valInt = parseIntegerButt(val);
+
+            if (valInt === null) {
+                errDiv.style.display = 'block';
+                errDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Butt number is not appropriate`;
+                buttInput.style.borderColor = '#ef4444';
+            } else if (expectedInt !== null && valInt !== expectedInt) {
+                errDiv.style.display = 'block';
+                errDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Butt number is not appropriate (Expected: ${expectedInt})`;
+                buttInput.style.borderColor = '#ef4444';
+                previousValidInt = valInt;
+            } else {
+                previousValidInt = valInt;
+            }
+        });
+    }
+
+    function autoFillConsecutiveButtNumbers() {
+        if (!rowsContainer) return;
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        
+        rows.forEach((row, i) => {
+            const buttInput = row.querySelector('.qm-butt-input');
+            if (!buttInput) return;
+
+            if (i === 0) {
+                if (!buttInput.value.trim() && currentLastButtInfo.next_butt_number) {
+                    buttInput.value = currentLastButtInfo.next_butt_number;
+                }
+            } else {
+                const prevRow = rows[i - 1];
+                const prevInput = prevRow ? prevRow.querySelector('.qm-butt-input') : null;
+                if (prevInput && prevInput.value.trim() && !buttInput.value.trim()) {
+                    const prevInt = parseIntegerButt(prevInput.value.trim());
+                    if (prevInt !== null) {
+                        buttInput.value = (prevInt + 1).toString();
+                    }
+                }
+            }
+        });
+        validateButtNumbers();
+    }
+
+    function createRowHTML(index, buttVal = '', regVal = '') {
+        return `
+            <div class="qm-weapon-row" style="display: flex; gap: 8px; align-items: flex-start; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px;">
+                <span class="row-num" style="font-size: 0.76rem; font-weight: 700; color: #475569; min-width: 24px; text-align: center; margin-top: 6px;">#${index}</span>
+                <div style="flex: 1; position: relative;">
+                    <input type="text" class="form-input qm-butt-input" name="butt_number" placeholder="Butt No (e.g. 104 or 1)" value="${buttVal}" style="padding: 6px 10px; font-size: 0.82rem;" required>
+                    <div class="butt-err-msg" style="display: none; font-size: 0.7rem; color: #ef4444; margin-top: 3px; font-weight: 600;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Butt number is not appropriate
+                    </div>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <input type="text" class="form-input qm-reg-input" name="register_number" placeholder="Reg No (e.g. REG-88492)" value="${regVal}" style="padding: 6px 10px; font-size: 0.82rem;" required>
+                    <div class="reg-dup-msg" style="display: none; font-size: 0.7rem; color: #ef4444; margin-top: 3px; font-weight: 600;">Already exists in stock!</div>
+                </div>
+                <button type="button" class="btn-remove-row" style="background: transparent; border: none; color: #ef4444; font-size: 0.9rem; cursor: pointer; padding: 4px 6px; border-radius: 4px; margin-top: 4px;" title="Remove row">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    function updateQMRowNumbers() {
+        if (!rowsContainer) return;
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        rows.forEach((row, i) => {
+            const numSpan = row.querySelector('.row-num');
+            if (numSpan) numSpan.textContent = `#${i + 1}`;
+            const removeBtn = row.querySelector('.btn-remove-row');
+            if (removeBtn) {
+                removeBtn.disabled = (rows.length === 1);
+                removeBtn.style.opacity = (rows.length === 1) ? '0.3' : '1';
+                removeBtn.style.cursor = (rows.length === 1) ? 'not-allowed' : 'pointer';
+            }
+        });
+        validateButtNumbers();
+    }
+
+    function addQMWeaponRow(buttVal = '', regVal = '') {
+        if (!rowsContainer) return;
+        const tempDiv = document.createElement('div');
+        const count = rowsContainer.querySelectorAll('.qm-weapon-row').length + 1;
+        tempDiv.innerHTML = createRowHTML(count, buttVal, regVal).trim();
+        const newRow = tempDiv.firstElementChild;
+
+        const removeBtn = newRow.querySelector('.btn-remove-row');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                if (rowsContainer.querySelectorAll('.qm-weapon-row').length > 1) {
+                    newRow.remove();
+                    updateQMRowNumbers();
+                }
+            });
+        }
+
+        const buttInput = newRow.querySelector('.qm-butt-input');
+        if (buttInput) {
+            buttInput.addEventListener('input', () => {
+                validateButtNumbers();
+            });
+        }
+
+        const regInput = newRow.querySelector('.qm-reg-input');
+        const dupMsg = newRow.querySelector('.reg-dup-msg');
+        let regTimeout = null;
+
+        if (regInput) {
+            regInput.addEventListener('input', () => {
+                const val = regInput.value.trim();
+                clearTimeout(regTimeout);
+                regInput.style.borderColor = '#cbd5e1';
+                if (dupMsg) dupMsg.style.display = 'none';
+
+                if (!val) return;
+
+                regTimeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`{{ url_for('qm.check_register_number_route') }}?num=${encodeURIComponent(val)}`);
+                        const data = await res.json();
+                        if (data.exists) {
+                            regInput.style.borderColor = '#ef4444';
+                            if (dupMsg) dupMsg.style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.error('Validation error:', e);
+                    }
+                }, 250);
+            });
+        }
+
+        rowsContainer.appendChild(newRow);
+        updateQMRowNumbers();
+        autoFillConsecutiveButtNumbers();
+        return newRow;
+    }
+
+    function resetQMWeaponRows() {
+        if (!rowsContainer) return;
+        rowsContainer.innerHTML = '';
+        addQMWeaponRow('', '');
+        const banner = document.getElementById('lastButtInfoBanner');
+        if (banner) banner.style.display = 'none';
+        currentLastButtInfo = { last_butt_number: null, next_butt_number: null, max_num: 0, prefix: '', num_digits: 0 };
+    }
+
+    if (addRowBtn) addRowBtn.addEventListener('click', () => {
+        addQMWeaponRow();
+    });
+    if (add5RowsBtn) {
+        add5RowsBtn.addEventListener('click', () => {
+            for (let i = 0; i < 5; i++) addQMWeaponRow();
+        });
+    }
+
+    function openModal() {
+        resetQMWeaponRows();
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        const container = document.getElementById('weaponSelectContainer');
+        if (container) container.classList.remove('open');
+        const hoverCard = document.getElementById('weaponHoverCard');
+        if (hoverCard) hoverCard.style.display = 'none';
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save Weapons';
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+
+    // Initialize initial row
+    resetQMWeaponRows();
+
+    /* Custom Dropdown & Live Hover Preview Logic */
+    const container = document.getElementById('weaponSelectContainer');
+    const trigger = document.getElementById('weaponSelectTrigger');
+    const options = document.querySelectorAll('.custom-option');
+    const hoverCard = document.getElementById('weaponHoverCard');
+    const hoverImg = document.getElementById('weaponHoverImg');
+    const hoverTitle = document.getElementById('weaponHoverTitle');
+    const hiddenInput = document.getElementById('weaponTypeInput');
+    const selectedText = document.getElementById('selectedWeaponText');
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        container.classList.toggle('open');
+        if (!container.classList.contains('open')) {
+            hoverCard.style.display = 'none';
+        }
+    });
+
+    options.forEach(option => {
+        option.addEventListener('mouseenter', () => {
+            const imgSrc = option.getAttribute('data-img');
+            const name = option.getAttribute('data-name');
+            hoverImg.src = imgSrc;
+            hoverTitle.textContent = name;
+            hoverCard.style.display = 'flex';
+        });
+
+        option.addEventListener('mouseleave', () => {
+            hoverCard.style.display = 'none';
+        });
+
+        option.addEventListener('click', () => {
+            const value = option.getAttribute('data-value');
+            const name = option.getAttribute('data-name');
+            hiddenInput.value = value;
+            selectedText.textContent = name;
+            selectedText.style.color = '#0f172a';
+            selectedText.style.fontWeight = '600';
+            
+            options.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+
+            container.classList.remove('open');
+            hoverCard.style.display = 'none';
+
+            // Fetch last butt number for selected weapon type
+            fetchLastButtNumber(value);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+            container.classList.remove('open');
+            hoverCard.style.display = 'none';
+        }
+    });
+
+    /* Form Submit Handling to save in QM_stock DB */
+    addWeaponForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!hiddenInput || !hiddenInput.value) {
+            alert('Please select a weapon type!');
+            return;
+        }
+
+        const rows = rowsContainer.querySelectorAll('.qm-weapon-row');
+        const weaponsList = [];
+        let hasIncomplete = false;
+        let hasDuplicateErr = false;
+        let hasButtErr = false;
+
+        rows.forEach(row => {
+            const b = row.querySelector('.qm-butt-input').value.trim();
+            const r = row.querySelector('.qm-reg-input').value.trim();
+            const dupMsg = row.querySelector('.reg-dup-msg');
+            const buttMsg = row.querySelector('.butt-err-msg');
+
+            if (dupMsg && dupMsg.style.display !== 'none') {
+                hasDuplicateErr = true;
+            }
+            if (buttMsg && buttMsg.style.display !== 'none') {
+                hasButtErr = true;
+            }
+            if (b && r) {
+                weaponsList.push({ butt_number: b, register_number: r });
+            } else if (b || r) {
+                hasIncomplete = true;
+            }
+        });
+
+        if (hasButtErr) {
+            alert('One or more Butt Numbers are not appropriate / consecutive! Please fix the highlighted butt numbers before saving.');
+            return;
+        }
+
+        if (hasDuplicateErr) {
+            alert('One or more Register Numbers already exist in stock. Please fix or remove them before saving!');
+            return;
+        }
+
+        if (hasIncomplete) {
+            alert('Please complete both Butt Number and Register Number for all rows, or remove incomplete rows.');
+            return;
+        }
+
+        if (weaponsList.length === 0) {
+            alert('Please enter at least one Butt Number and Register Number pair.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+        try {
+            const res = await fetch("{{ url_for('qm.add_weapon_route') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    weapon_type: hiddenInput.value,
+                    weapons: weaponsList
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message || `${weaponsList.length} weapon(s) added successfully!`);
+                closeModal();
+                location.reload();   // Reload to fetch fresh stats and charts from DB
+            } else {
+                alert('Error: ' + (data.message || 'Failed to add weapons'));
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save Weapons';
+            }
+        } catch (err) {
+            alert('An unexpected error occurred: ' + err);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Save Weapons';
+        }
+    });
+
+    /* Open Allotted Weapons & Duty Location Hub Modal when clicking Issued stat card */
+    const qmIssuedCard = document.getElementById('qmIssuedCard');
+    if (qmIssuedCard) {
+        qmIssuedCard.addEventListener('click', () => {
+            if (typeof openAllottedWeaponsHubModal === 'function') {
+                openAllottedWeaponsHubModal();
+            } else if (typeof openInventoryStockModal === 'function') {
+                openInventoryStockModal('Issued');
+            }
+        });
+    }
+
+</script>
+
+{% include 'update_biometric_modal.html' %}
+{% endblock %}

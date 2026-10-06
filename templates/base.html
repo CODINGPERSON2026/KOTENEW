@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}15 CESR KOTE — Ordnance Platform{% endblock %}</title>
+    <meta name="description" content="15 CESR Armory & Weapon Management System">
+
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="{{ url_for('static', filename='fonts/inter/Inter-Medium.ttf') }}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="{{ url_for('static', filename='fonts/inter/Inter-Bold.ttf') }}" as="font" type="font/ttf" crossorigin>
+    
+    <!-- Local Fonts & Icons -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inter-font.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --sidebar-width: 72px;
+            --sidebar-bg: #ffffff;
+            --sidebar-border: #e5e7eb;
+            --icon-color: #6b7280;
+            --icon-hover-color: #111827;
+            --icon-hover-bg: #f3f4f6;
+            --accent-primary: #1e3a8a;
+            --accent-active-bg: #eff6ff;
+            --accent-gold: #c9a84c;
+            --tooltip-bg: #0f172a;
+            --tooltip-text: #ffffff;
+            --bg-main: #f8fafc;
+            --shadow-sidebar: 4px 0 20px rgba(0, 0, 0, 0.04);
+            --shadow-tooltip: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            color: #0f172a;
+            overflow-x: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* ─── MINIMAL SIDEBAR (WHITE THEME) ─── */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            z-index: 100;
+            border-right: 1px solid var(--sidebar-border);
+            box-shadow: var(--shadow-sidebar);
+        }
+
+        /* Sidebar Brand / Top Image */
+        .sidebar__brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            padding: 0 8px;
+            position: relative;
+        }
+
+        .sidebar__logo-img {
+            width: 44px;
+            height: 58px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            background-color: #ffffff;
+            padding: 2px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .sidebar__brand:hover .sidebar__logo-img {
+            transform: scale(1.08);
+            border-color: var(--accent-gold);
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.25);
+        }
+
+        /* Nav menu */
+        .sidebar__nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            align-items: center;
+            flex: 1;
+        }
+
+        .sidebar__bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            align-items: center;
+            margin-top: auto;
+        }
+
+        .sidebar__divider {
+            width: 32px;
+            height: 1px;
+            background: var(--sidebar-border);
+            margin: 8px 0;
+        }
+
+        /* Icon Nav Button */
+        .sidebar__link {
+            position: relative;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: var(--icon-color);
+            text-decoration: none;
+            font-size: 1.15rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .sidebar__link:hover {
+            color: var(--icon-hover-color);
+            background-color: var(--icon-hover-bg);
+        }
+
+        .sidebar__link.active {
+            color: var(--accent-primary);
+            background-color: var(--accent-active-bg);
+        }
+
+        .sidebar__link.active::before {
+            content: '';
+            position: absolute;
+            left: -13px;
+            top: 10px;
+            bottom: 10px;
+            width: 4px;
+            background-color: var(--accent-primary);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 8px rgba(30, 58, 138, 0.3);
+        }
+
+        /* Logout special style */
+        .sidebar__link--logout {
+            color: #9ca3af;
+        }
+
+        .sidebar__link--logout:hover {
+            color: #dc2626;
+            background-color: #fef2f2;
+        }
+
+        /* ─── TOOLTIP ON HOVER ─── */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(100% + 14px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-8px);
+            background: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            padding: 6px 12px;
+            border-radius: 7px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+            box-shadow: var(--shadow-tooltip);
+            z-index: 200;
+        }
+
+        [data-tooltip]::before {
+            content: '';
+            position: absolute;
+            left: calc(100% + 6px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-8px);
+            border-width: 5px 6px 5px 0;
+            border-style: solid;
+            border-color: transparent var(--tooltip-bg) transparent transparent;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+            z-index: 201;
+        }
+
+        [data-tooltip]:hover::after,
+        [data-tooltip]:hover::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        /* ─── MAIN CONTENT CONTAINER ─── */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 14px 24px;
+        }
+
+        /* Header Section in Base */
+        .app-header {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .app-header__info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header__actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-header__title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .app-header__subtitle {
+            color: #64748b;
+            font-size: 0.82rem;
+            margin-top: 2px;
+        }
+
+        /* Shared Minimal Action Buttons */
+        .qm-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .qm-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            line-height: 1.35;
+        }
+
+        .qm-btn--primary {
+            background-color: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+        }
+
+        .qm-btn--primary:hover {
+            background-color: #1e293b;
+            border-color: #1e293b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+        }
+
+        .qm-btn--secondary {
+            background-color: #ffffff;
+            color: #334155;
+            border-color: #cbd5e1;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .qm-btn--secondary:hover {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .qm-btn i {
+            font-size: 0.85rem;
+        }
+
+        /* ─── GLOBAL MODAL BACKDROP ─── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+
+    <div class="app-layout">
+        <!-- Minimal Sidebar -->
+        <aside class="sidebar">
+            <!-- Sidebar Image Header -->
+            <div class="sidebar__brand" data-tooltip="15 CESR Armory">
+                <img src="{{ url_for('static', filename='image_for_sidebar/jimmy2.png') }}" alt="Sidebar Crest" class="sidebar__logo-img">
+            </div>
+
+            <!-- Main Navigation Links (Icons Only) -->
+            <nav class="sidebar__nav">
+                <a href="{{ url_for('home_route') }}" class="sidebar__link active" data-tooltip="Dashboard">
+                    <i class="fa-solid fa-gauge-high"></i>
+                </a>
+                {% if session.get('role', '') | lower == 'qm' %}
+                <a href="{{ url_for('qm.issue_page_route') }}" class="sidebar__link" id="sidebarIssueLink" data-tooltip="Issue Weapons">
+                    <i class="fa-solid fa-hand-holding-hand"></i>
+                </a>
+                {% endif %}
+                {% if session.get('role', '') | lower != 'qm' %}
+                <a href="#" class="sidebar__link" id="sidebarInventoryLink" data-tooltip="Inventory & Stock">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </a>
+                <a href="#" class="sidebar__link" id="sidebarIssuanceLink" data-tooltip="Issuance & Return">
+                    <i class="fa-solid fa-hand-holding-hand"></i>
+                </a>
+                <a href="#" class="sidebar__link" id="sidebarHistorySheetLink" data-tooltip="Weapon History Sheet">
+                    <i class="fa-solid fa-file-signature"></i>
+                </a>
+                <a href="#" class="sidebar__link" data-tooltip="Maintenance Logs">
+                    <i class="fa-solid fa-wrench"></i>
+                </a>
+                <a href="#" class="sidebar__link" data-tooltip="Reports & Analytics">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </a>
+                {% endif %}
+            </nav>
+
+            <!-- Bottom Action Items -->
+            <div class="sidebar__bottom">
+                <div class="sidebar__divider"></div>
+                {% if session.get('role', '') | lower != 'qm' %}
+                <a href="#" class="sidebar__link" data-tooltip="System Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('logout_route') }}" class="sidebar__link sidebar__link--logout" data-tooltip="Sign Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <main class="main-content">
+                <!-- Standard Header in Base -->
+                <header class="app-header">
+                    <div class="app-header__info">
+                        <h1 class="app-header__title">{% block page_title %}Welcome, Quarter Master {{ session.username if session.username else (username if username else 'QM') }}!{% endblock %}</h1>
+                        <p class="app-header__subtitle">{% block page_subtitle %}15 CESR Ordnance Control & Armory Management System{% endblock %}</p>
+                    </div>
+                    <div class="app-header__actions">
+                        {% block header_actions %}{% endblock %}
+                    </div>
+                </header>
+
+                {% block content %}
+                <!-- Child page content will go here -->
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% include "issuance_modal.html" %}
+    {% include "inventory_modal.html" %}
+    {% include "history_sheet_modal.html" %}
+
+    {% block extra_scripts %}{% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarIssuanceLink = document.getElementById('sidebarIssuanceLink');
+            if (sidebarIssuanceLink) {
+                sidebarIssuanceLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof openIssuanceModal === 'function') {
+                        openIssuanceModal();
+                    } else if (typeof openIssuedModal === 'function') {
+                        openIssuedModal();
+                    } else if (typeof openQmIssuedModal === 'function') {
+                        openQmIssuedModal();
+                    }
+                });
+            }
+
+            const sidebarInventoryLink = document.getElementById('sidebarInventoryLink');
+            if (sidebarInventoryLink) {
+                sidebarInventoryLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof openInventoryStockModal === 'function') {
+                        openInventoryStockModal();
+                    }
+                });
+            }
+
+            const sidebarHistorySheetLink = document.getElementById('sidebarHistorySheetLink');
+            if (sidebarHistorySheetLink) {
+                sidebarHistorySheetLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof openHistorySheetModal === 'function') {
+                        openHistorySheetModal();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

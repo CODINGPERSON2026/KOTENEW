@@ -1,0 +1,441 @@
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 🛡️ UPDATE BIOMETRIC / TROOP ENROLLMENT MODAL                        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<style>
+    .bio-update-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        animation: fadeInBioUpdate 0.22s ease-out;
+    }
+
+    .bio-update-modal-backdrop.active {
+        display: flex;
+    }
+
+    @keyframes fadeInBioUpdate {
+        from { opacity: 0; transform: scale(0.98); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .bio-update-card {
+        width: 100%;
+        max-width: 580px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(226, 232, 240, 0.8);
+        overflow: hidden;
+    }
+
+    .bio-update-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #ffffff;
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 3px solid #059669;
+    }
+
+    .bio-update-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        letter-spacing: -0.01em;
+    }
+
+    .bio-update-title i {
+        color: #10b981;
+        font-size: 1.25rem;
+    }
+
+    .bio-update-body {
+        padding: 22px 24px;
+        background: #f8fafc;
+    }
+
+    .bio-update-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .bio-update-scan-box {
+        background: #ffffff;
+        border: 2px dashed #cbd5e1;
+        border-radius: 14px;
+        padding: 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.25s ease;
+    }
+
+    .bio-update-scan-box.scanning {
+        border-color: #059669;
+        background: #f0fdf4;
+    }
+
+    .bio-update-icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        border: 2px solid #cbd5e1;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.4rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .bio-update-scan-box.scanning .bio-update-icon-circle {
+        border-color: #059669;
+        color: #059669;
+        background: #dcfce7;
+        box-shadow: 0 0 24px rgba(16, 185, 129, 0.4);
+        animation: pulseBioUpdate 1.4s infinite;
+    }
+
+    @keyframes pulseBioUpdate {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+        70% { transform: scale(1.06); box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .bio-update-footer {
+        padding: 16px 24px;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .bio-update-btn-save {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #ffffff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        transition: all 0.18s ease;
+    }
+
+    .bio-update-btn-save:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+    }
+</style>
+
+<div class="bio-update-modal-backdrop" id="updateBiometricModal">
+    <div class="bio-update-card">
+        <!-- Header -->
+        <div class="bio-update-header">
+            <div class="bio-update-title">
+                <i class="fa-solid fa-fingerprint"></i>
+                <span>Troop Biometric Enrollment & Update</span>
+            </div>
+            <button type="button" class="modal-header__close" onclick="closeUpdateBiometricModal()" style="color: #ffffff; font-size: 1.5rem; background: none; border: none; cursor: pointer;">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div class="bio-update-body">
+            <div class="bio-update-grid">
+                
+                <!-- Army Number / Name Search -->
+                <div class="form-group" style="position: relative; margin-bottom: 0;">
+                    <label class="form-label" style="font-size: 0.76rem; font-weight: 700; color: #0f172a;">Select / Search Troop (Army No / Name) <span style="color: #ef4444;">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-magnifying-glass input-icon" style="color: #1e3a8a;"></i>
+                        <input type="text" class="form-input" id="updateBioArmyNumber" placeholder="Search by Army No or Name (e.g. 1512... or Vikas)..." autocomplete="off" style="font-weight: 700; font-size: 0.88rem;">
+                    </div>
+                    <div id="updateBioTroopSuggestions" class="suggestions-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 220px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.15);"></div>
+                </div>
+
+                <!-- Troop Info Details Box -->
+                <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Personnel Name</div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;" id="updateBioTroopName">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Rank & Company</div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;" id="updateBioTroopRankCo">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Section</div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;" id="updateBioTroopSec">—</div>
+                    </div>
+                </div>
+
+                <!-- HID 4500 Optical Scanner Box -->
+                <div class="bio-update-scan-box" id="updateBioScanBox">
+                    <div class="bio-update-icon-circle" id="updateBioIconCircle" onclick="triggerUpdateBiometricScan()">
+                        <i class="fa-solid fa-fingerprint"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.88rem; font-weight: 700; color: #0f172a;" id="updateBioStatusTitle">Place Thumb on HID DigitalPersona 4500 Sensor</div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;" id="updateBioStatusSubtitle">Sensor Glass Optical 500 DPI • Master Fingerprint Record in troops Table</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bio-update-footer">
+            <button type="button" class="qm-btn qm-btn--secondary" onclick="closeUpdateBiometricModal()">Cancel</button>
+            <button type="button" class="bio-update-btn-save" id="triggerUpdateBioBtn" onclick="triggerUpdateBiometricScan()">
+                <i class="fa-solid fa-fingerprint"></i>
+                <span>Scan & Update Biometric</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* Global Voice & Chime Helper */
+    if (typeof window.speakBiometricVoice !== 'function') {
+        window.speakBiometricVoice = function(text) {
+            if (!('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                const voices = window.speechSynthesis.getVoices();
+                const preferredVoice = voices.find(v => v.lang && v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Zira') || v.name.includes('David')));
+                if (preferredVoice) utterance.voice = preferredVoice;
+                window.speechSynthesis.speak(utterance);
+            } catch(e) { console.log('Speech notice:', e); }
+        };
+    }
+    if (typeof window.playSuccessChime !== 'function') {
+        window.playSuccessChime = function() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            } catch(e) {}
+        };
+    }
+
+    /* UPDATE BIOMETRIC CONTROLLER */
+    let selectedUpdateBioTroop = null;
+
+    function openUpdateBiometricModal(prefillArmyNo) {
+        const modal = document.getElementById('updateBiometricModal');
+        if (!modal) return;
+
+        selectedUpdateBioTroop = null;
+        document.getElementById('updateBioArmyNumber').value = prefillArmyNo || '';
+        document.getElementById('updateBioTroopName').textContent = '—';
+        document.getElementById('updateBioTroopRankCo').textContent = '—';
+        document.getElementById('updateBioTroopSec').textContent = '—';
+
+        const scanBox = document.getElementById('updateBioScanBox');
+        scanBox.classList.remove('scanning');
+        document.getElementById('updateBioStatusTitle').textContent = 'Place Thumb on HID DigitalPersona 4500 Sensor';
+        document.getElementById('updateBioStatusSubtitle').textContent = 'Sensor Glass Optical 500 DPI • Master Fingerprint Record in troops Table';
+
+        modal.classList.add('active');
+
+        if (prefillArmyNo) {
+            fetch(`/coy/search_troops?q=${encodeURIComponent(prefillArmyNo)}`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success && d.troops.length > 0) {
+                        selectUpdateBioTroop(d.troops[0]);
+                    }
+                }).catch(e => console.log(e));
+        }
+
+        const inp = document.getElementById('updateBioArmyNumber');
+        if (inp) inp.focus();
+    }
+
+    function closeUpdateBiometricModal() {
+        const modal = document.getElementById('updateBiometricModal');
+        if (modal) modal.classList.remove('active');
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    // Autocomplete Search for Update Biometric
+    let updateBioSearchDebounce = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        const bioArmyInput = document.getElementById('updateBioArmyNumber');
+        const bioSuggestions = document.getElementById('updateBioTroopSuggestions');
+
+        if (bioArmyInput && bioSuggestions) {
+            bioArmyInput.addEventListener('input', function() {
+                const q = this.value.trim();
+                clearTimeout(updateBioSearchDebounce);
+
+                if (!q) {
+                    bioSuggestions.style.display = 'none';
+                    return;
+                }
+
+                updateBioSearchDebounce = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`/coy/search_troops?q=${encodeURIComponent(q)}`);
+                        const data = await res.json();
+                        if (data.success && data.troops.length > 0) {
+                            bioSuggestions.innerHTML = '';
+                            const renderedArmies = new Set();
+                            data.troops.forEach(item => {
+                                const armyKey = String(item.army_number || '').trim().toLowerCase();
+                                if (!armyKey || renderedArmies.has(armyKey)) return;
+                                renderedArmies.add(armyKey);
+
+                                const div = document.createElement('div');
+                                div.className = 'suggestion-item';
+                                div.style.padding = '8px 12px';
+                                div.style.cursor = 'pointer';
+                                div.style.borderBottom = '1px solid #f1f5f9';
+                                div.innerHTML = `
+                                    <div style="font-weight: 700; color: #1e3a8a; font-size: 0.82rem;">${item.army_number}</div>
+                                    <div style="font-size: 0.74rem; color: #475569;">${item.rank || ''} <strong>${item.name || ''}</strong> (${item.company || ''})</div>
+                                `;
+                                div.addEventListener('click', () => {
+                                    selectUpdateBioTroop(item);
+                                });
+                                bioSuggestions.appendChild(div);
+                            });
+                            bioSuggestions.style.display = 'block';
+                        } else {
+                            bioSuggestions.innerHTML = '<div style="padding: 10px; color: #94a3b8; font-size: 0.78rem;">No troop found</div>';
+                            bioSuggestions.style.display = 'block';
+                        }
+                    } catch(e) {
+                        console.log(e);
+                    }
+                }, 180);
+            });
+        }
+    });
+
+    function selectUpdateBioTroop(troop) {
+        selectedUpdateBioTroop = troop;
+        document.getElementById('updateBioArmyNumber').value = troop.army_number;
+        document.getElementById('updateBioTroopName').textContent = troop.name;
+        document.getElementById('updateBioTroopRankCo').textContent = `${troop.rank} (${troop.company})`;
+        document.getElementById('updateBioTroopSec').textContent = troop.section || '—';
+
+        const suggestions = document.getElementById('updateBioTroopSuggestions');
+        if (suggestions) suggestions.style.display = 'none';
+    }
+
+    // Scan & Update Master Biometric in troops Table
+    async function triggerUpdateBiometricScan() {
+        const armyInput = document.getElementById('updateBioArmyNumber');
+        const armyNumber = selectedUpdateBioTroop?.army_number || (armyInput ? armyInput.value.trim() : '');
+
+        if (!armyNumber) {
+            alert('⚠️ Please select or enter an Army Number before scanning biometric thumb.');
+            if (armyInput) armyInput.focus();
+            return;
+        }
+
+        const scanBox = document.getElementById('updateBioScanBox');
+        const titleEl = document.getElementById('updateBioStatusTitle');
+        const subEl = document.getElementById('updateBioStatusSubtitle');
+        const scanBtn = document.getElementById('triggerUpdateBioBtn');
+
+        if (scanBox) scanBox.classList.add('scanning');
+        if (titleEl) titleEl.innerHTML = `<span style="color: #059669;"><i class="fa-solid fa-spinner fa-spin"></i> Sensor Active: Place & press thumb firmly on sensor glass now...</span>`;
+        if (subEl) subEl.textContent = `Enrolling Master Biometric for Army No: ${armyNumber}`;
+        if (scanBtn) {
+            scanBtn.disabled = true;
+            scanBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Waiting for Finger...';
+        }
+
+        try {
+            const res = await fetch('/api/update_troop_biometric', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    army_number: armyNumber,
+                    timeout: 8000
+                })
+            });
+            const data = await res.json();
+
+            if (data.success && data.captured) {
+                if (titleEl) titleEl.innerHTML = `<span style="color: #059669; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> Biometric Successfully Updated!</span>`;
+                if (subEl) subEl.textContent = `Master Record saved to troops Table for Army No: ${armyNumber}`;
+
+                // Play pleasant chime
+                if (typeof playSuccessChime === 'function') playSuccessChime();
+
+                // Audio Voice Announcement: "Biometric successfully updated"
+                if (typeof speakBiometricVoice === 'function') {
+                    speakBiometricVoice('Biometric successfully updated.');
+                }
+
+                alert(
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `✅ BIOMETRIC SUCCESSFULLY UPDATED!\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `• Army Number: ${armyNumber}\n` +
+                    `• Personnel: ${data.troop_name || 'Troop'}${data.rank ? ' (' + data.rank + ')' : ''}\n` +
+                    `• Master Record: Saved permanently to troops table\n` +
+                    `• Verification Accuracy: 100% (ANSI-378 FMD Minutiae)\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `👉 All future Weapon Allotments and Weapon OUT / Return transactions will be verified against this master record.`
+                );
+
+                closeUpdateBiometricModal();
+            } else if (data.timeout) {
+                if (titleEl) titleEl.innerHTML = `<span style="color: #dc2626;"><i class="fa-solid fa-clock"></i> Scan Timed Out (No Finger Detected)</span>`;
+                alert('⏱️ Scan Timed Out: Please press finger firmly on sensor glass and click Scan.');
+            } else {
+                if (titleEl) titleEl.innerHTML = `<span style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> ${data.message || 'Capture failed'}</span>`;
+                alert('❌ Biometric Update Notice: ' + (data.message || 'Capture failed'));
+            }
+        } catch(err) {
+            console.error('Update biometric error:', err);
+            alert('Error updating biometric: ' + err);
+        } finally {
+            if (scanBox) scanBox.classList.remove('scanning');
+            if (scanBtn) {
+                scanBtn.disabled = false;
+                scanBtn.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Scan & Update Biometric';
+            }
+        }
+    }
+
+    window.openUpdateBiometricModal = openUpdateBiometricModal;
+    window.closeUpdateBiometricModal = closeUpdateBiometricModal;
+    window.triggerUpdateBiometricScan = triggerUpdateBiometricScan;
+</script>

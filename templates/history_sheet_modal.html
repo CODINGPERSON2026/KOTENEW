@@ -1,0 +1,1845 @@
+<!-- ─── WEAPON HISTORY SHEET MODAL ─── -->
+<div id="historySheetModal" class="hs-modal-backdrop">
+    <div class="hs-modal-box">
+        
+        <!-- Header -->
+        <div class="hs-modal-header">
+            <div class="hs-header-title">
+                <div class="hs-header-icon">
+                    <i class="fa-solid fa-file-signature"></i>
+                </div>
+                <div>
+                    <h3 class="hs-title">Weapon History Sheet</h3>
+                    <p class="hs-subtitle">Armory Weapon Firing Record & Incharge History Register</p>
+                </div>
+            </div>
+            <button type="button" class="hs-close-btn" onclick="closeHistorySheetModal()" title="Close Modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Tabs inside Modal -->
+        <div class="hs-tabs">
+            <button type="button" class="hs-tab-btn active" id="hsTabFormBtn" onclick="switchHsTab('form')">
+                <i class="fa-solid fa-pen-to-square"></i> Log Firing & Incharge Record
+            </button>
+            <button type="button" class="hs-tab-btn" id="hsTabLogsBtn" onclick="switchHsTab('logs')">
+                <i class="fa-solid fa-list-check"></i> History Register Logs
+            </button>
+        </div>
+
+        <!-- Body Content -->
+        <div class="hs-modal-body">
+            
+            <!-- TAB 1: FORM SECTION -->
+            <div id="hsFormTab" class="hs-tab-content active">
+                <form id="historySheetForm" onsubmit="handleSaveHistorySheet(event)">
+                    
+                    <!-- SECTION 1: WEAPON IDENTIFICATION & AUTOMATIC BARCODE SCANNER -->
+                    <div class="hs-section-card">
+                        <div class="hs-section-title">
+                            <i class="fa-solid fa-shield-halved"></i> Weapon Identification & Barcode Scanner
+                        </div>
+
+                        <!-- Automatic Barcode Reader Input Box -->
+                        <div class="hs-barcode-box">
+                            <div class="hs-barcode-title">
+                                <i class="fa-solid fa-barcode"></i> Automatic Barcode Scanner (Scans Reg No / Butt No)
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <div style="position:relative;flex:1;">
+                                    <i class="fa-solid fa-barcode" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#0284c7;"></i>
+                                    <input type="text" id="hs_barcode_scanner" class="hs-input hs-barcode-input" placeholder="Scan barcode or type Butt/Reg No (e.g. REG-AK47-001 or BT-101)..." oninput="autoScanHsBarcode(this.value)" style="padding-left:38px;">
+                                </div>
+                                <button type="button" class="hs-btn-sm hs-btn-add" onclick="triggerHsBarcodeLookup()">
+                                    <i class="fa-solid fa-magnifying-glass"></i> Scan
+                                </button>
+                            </div>
+                            <!-- Quick Demo Barcodes -->
+                            <div class="hs-demo-barcodes">
+                                <span style="font-size:0.74rem;color:#64748b;font-weight:600;">Quick Demo Barcodes:</span>
+                                <button type="button" class="hs-chip-btn" onclick="applyDemoBarcode('REG-AK47-001')">REG-AK47-001 (BT-101)</button>
+                                <button type="button" class="hs-chip-btn" onclick="applyDemoBarcode('REG-INS-001')">REG-INS-001 (BT-201)</button>
+                                <button type="button" class="hs-chip-btn" onclick="applyDemoBarcode('REG-PST-001')">REG-PST-001 (BT-301)</button>
+                                <button type="button" class="hs-chip-btn" onclick="applyDemoBarcode('REG-CMG-001')">REG-CMG-001 (BT-401)</button>
+                            </div>
+                        </div>
+
+                        <div class="hs-grid hs-grid-3" style="margin-top:14px;">
+                            <!-- Types of Weapon -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_weapon_type">
+                                    Types of Weapon <span class="req">*</span>
+                                </label>
+                                <select id="hs_weapon_type" class="hs-input" required onchange="onHsWeaponTypeChange()">
+                                    <option value="">-- Select Weapon Type --</option>
+                                    <option value="AK-47 / AK Series Rifle">AK-47 / AK Series Rifle</option>
+                                    <option value="9mm CMG Carbine Machine Gun">9mm CMG Carbine Machine Gun</option>
+                                    <option value="INSAS 5.56mm Assault Rifle">INSAS 5.56mm Assault Rifle</option>
+                                    <option value="INSAS 5.56mm Light Machine Gun">INSAS 5.56mm Light Machine Gun</option>
+                                    <option value="7.62mm Light Machine Gun (LMG)">7.62mm Light Machine Gun (LMG)</option>
+                                    <option value="9mm Service Pistol">9mm Service Pistol</option>
+                                </select>
+                            </div>
+
+                            <!-- Register Number -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_register_number">
+                                    Register Number <span class="req">*</span>
+                                </label>
+                                <select id="hs_register_number" class="hs-input" required onchange="onHsRegisterNoChange()">
+                                    <option value="">-- Select Register No --</option>
+                                </select>
+                            </div>
+
+                            <!-- Butt Number -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_butt_number">
+                                    Butt Number <span class="req">*</span>
+                                </label>
+                                <input type="text" id="hs_butt_number" class="hs-input" placeholder="e.g. BT-101" required>
+                            </div>
+                        </div>
+
+                        <div class="hs-grid hs-grid-2" style="margin-top: 14px;">
+                            <!-- Weapon Health Status Dropdown (R1, R2, R3, R4) -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_health_status">
+                                    Weapon Health Status (Scroll Down) <span class="req">*</span>
+                                </label>
+                                <div class="hs-status-select-wrapper">
+                                    <select id="hs_health_status" class="hs-input hs-status-select" required>
+                                        <option value="R1" selected>🟢 R1 — Serviceable / Excellent Condition (Fit for Duty)</option>
+                                        <option value="R2">🟡 R2 — Minor Defect / Inspection Needed (Light Maintenance)</option>
+                                        <option value="R3">🟠 R3 — Major Defect / Base Workshop Repair Required</option>
+                                        <option value="R4">🔴 R4 — Unserviceable / BER (Beyond Economical Repair) / Condemned</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Accessories Entry Column / Field -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_accessories">
+                                    Weapon Accessories Column <span class="req">*</span>
+                                </label>
+                                <input type="text" id="hs_accessories" class="hs-input" placeholder="e.g. Sling, 2x Mags, Bayonet, Cleaning Kit" value="Sling, Magazine (2)" required>
+                                <div class="hs-acc-chips">
+                                    <span class="hs-acc-tag" onclick="appendAccessoryTag('Sling')">+ Sling</span>
+                                    <span class="hs-acc-tag" onclick="appendAccessoryTag('2x Mags')">+ 2x Mags</span>
+                                    <span class="hs-acc-tag" onclick="appendAccessoryTag('3x Mags')">+ 3x Mags</span>
+                                    <span class="hs-acc-tag" onclick="appendAccessoryTag('Bayonet')">+ Bayonet</span>
+                                    <span class="hs-acc-tag" onclick="appendAccessoryTag('Cleaning Kit')">+ Cleaning Kit</span>
+                                    <span class="hs-acc-tag" onclick="appendAccessoryTag('Optic Sight')">+ Optic Sight</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: FIRING RECORD DETAILS -->
+                    <div class="hs-section-card">
+                        <div class="hs-section-title">
+                            <i class="fa-solid fa-crosshairs"></i> Firing Record Details (Automatic Total Calculation)
+                        </div>
+
+                        <div class="hs-grid hs-grid-3">
+                            <!-- Date of Firing -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_date_of_firing">
+                                    Date of Firing <span class="req">*</span>
+                                </label>
+                                <input type="date" id="hs_date_of_firing" class="hs-input" required>
+                            </div>
+
+                            <!-- How Many Round Fire -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_rounds_fired">
+                                    How Many Rounds Fired <span class="req">*</span>
+                                </label>
+                                <input type="number" id="hs_rounds_fired" class="hs-input" placeholder="e.g. 50" min="0" required oninput="calculateHsTotalRounds()">
+                                <span class="hs-field-hint">Entering rounds automatically increases total count</span>
+                            </div>
+
+                            <!-- Total Overall Counting Firing Record -->
+                            <div class="hs-form-group">
+                                <label class="hs-label" for="hs_total_rounds_count">
+                                    Total Overall Firing Count <span class="req">*</span>
+                                </label>
+                                <input type="number" id="hs_total_rounds_count" class="hs-input hs-highlight-input" placeholder="Auto-calculated total" min="0" required>
+                                <span class="hs-field-hint" id="hs_calc_badge">Baseline: <span id="hs_base_count_span">0</span> rounds</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: INCHARGE CHRONOLOGICAL HISTORY REGISTER (Kab se Weapon Aaya tha Abhi Tak) -->
+                    <div class="hs-section-card">
+                        <div class="hs-section-title" style="justify-content: space-between;">
+                            <span><i class="fa-solid fa-timeline"></i> Incharge Custody History (Kab se Weapon Aaya tha Abhi Tak)</span>
+                            <span class="hs-badge-pill" id="hsInchargeCountBadge">0 Entries</span>
+                        </div>
+
+                        <!-- Chronological Incharge List Container -->
+                        <div class="hs-incharge-history-box" id="hsInchargeHistoryBox">
+                            <div class="hs-incharge-empty" id="hsInchargeEmpty">
+                                <i class="fa-solid fa-circle-info"></i> Select a weapon register number or scan barcode above to view its full incharge history chain (e.g. 01 Jan 2006 to 31 Dec 2009, 01 Jan 2010 to As on Date).
+                            </div>
+                            <ol class="hs-incharge-timeline-list" id="hsInchargeTimelineList">
+                                <!-- Populated dynamically by JS -->
+                            </ol>
+                        </div>
+
+                        <!-- Add/Log Current Incharge Tenure Form -->
+                        <div class="hs-incharge-add-panel">
+                            <div class="hs-sub-title">
+                                <i class="fa-solid fa-user-plus"></i> Add / Record Incharge Tenure Period (Up to As On Date)
+                            </div>
+                            
+                            <div class="hs-grid hs-grid-3">
+                                <!-- Incharge Number -->
+                                <div class="hs-form-group" style="position: relative;">
+                                    <label class="hs-label" for="hs_incharge_number">
+                                        Incharge Number (Army No) <span class="req">*</span>
+                                    </label>
+                                    <input type="text" id="hs_incharge_number" class="hs-input" placeholder="e.g. 15717788X / JC-782190P" required autocomplete="off" oninput="autofillInchargeTroopDetails()" onfocus="autofillInchargeTroopDetails()">
+                                    <div id="hsTroopSuggestions" class="hs-suggestions-box" style="display: none;"></div>
+                                </div>
+
+                                <!-- Rank -->
+                                <div class="hs-form-group">
+                                    <label class="hs-label" for="hs_incharge_rank">
+                                        Rank <span class="req">*</span>
+                                    </label>
+                                    <select id="hs_incharge_rank" class="hs-input" required>
+                                        <option value="">-- Select Rank --</option>
+                                        <optgroup label="ORs & Soldiers">
+                                            <option value="Agniveer">Agniveer</option>
+                                            <option value="Sigmn">Sigmn (Signalman)</option>
+                                            <option value="Sep">Sep (Sepoy / Sapper)</option>
+                                            <option value="CFN">CFN (Craftsman)</option>
+                                            <option value="ULnk">ULnk (Unpaid Lance Naik)</option>
+                                            <option value="Lnk">Lnk (Lance Naik)</option>
+                                            <option value="Loc Nk">Loc Nk (Local Naik)</option>
+                                            <option value="Nk">Nk (Naik)</option>
+                                            <option value="Loc Hav">Loc Hav (Local Havildar)</option>
+                                            <option value="L Hav">L Hav (Lance Havildar)</option>
+                                            <option value="Hav">Hav (Havildar)</option>
+                                            <option value="CQMH">CQMH (Company Quarter Master Havildar)</option>
+                                            <option value="CHM">CHM (Company Havildar Major)</option>
+                                            <option value="RHM">RHM (Regimental Havildar Major)</option>
+                                        </optgroup>
+                                        <optgroup label="JCOs (Junior Commissioned Officers)">
+                                            <option value="Nb Sub">Nb Sub (Naib Subedar)</option>
+                                            <option value="Sub">Sub (Subedar)</option>
+                                            <option value="Sub Maj">Sub Maj (Subedar Major)</option>
+                                            <option value="Hony Lt">Hony Lt (Honorary Lieutenant)</option>
+                                            <option value="Hony Capt">Hony Capt (Honorary Captain)</option>
+                                        </optgroup>
+                                        <optgroup label="Commissioned Officers">
+                                            <option value="Lt">Lt (Lieutenant)</option>
+                                            <option value="Capt">Capt (Captain)</option>
+                                            <option value="Maj">Maj (Major)</option>
+                                            <option value="Lt Col">Lt Col (Lieutenant Colonel)</option>
+                                            <option value="Col">Col (Colonel)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <!-- Name -->
+                                <div class="hs-form-group">
+                                    <label class="hs-label" for="hs_incharge_name">
+                                        Name of Incharge <span class="req">*</span>
+                                    </label>
+                                    <input type="text" id="hs_incharge_name" class="hs-input" placeholder="e.g. Kartheeswaran / Ramesh Chand" required>
+                                </div>
+                            </div>
+
+                            <div class="hs-grid hs-grid-2" style="margin-top: 12px;">
+                                <!-- From Date -->
+                                <div class="hs-form-group">
+                                    <label class="hs-label" for="hs_from_date">
+                                        From Date (Tenure Start) <span class="req">*</span>
+                                    </label>
+                                    <input type="text" id="hs_from_date" class="hs-input" placeholder="e.g. 01 Jan 2006 or 2006-01-01" required>
+                                </div>
+
+                                <!-- To Date -->
+                                <div class="hs-form-group">
+                                    <label class="hs-label" for="hs_to_date">
+                                        To Date (Tenure End / As on Date) <span class="req">*</span>
+                                    </label>
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" id="hs_to_date" class="hs-input" placeholder="e.g. 31 Dec 2009 or As on Date" required>
+                                        <button type="button" class="hs-btn-sm" onclick="setHsToAsOnDate()" title="Set to current date">As On Date</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                                <button type="button" class="hs-btn-sm hs-btn-add" onclick="handleAddInchargeTenure()">
+                                    <i class="fa-solid fa-plus"></i> Add Incharge to History Chain
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Biometric Verification Card -->
+                        <div class="hs-biometric-card">
+                            <div class="hs-bio-info">
+                                <div class="hs-bio-icon-box" id="hsBioIconBox">
+                                    <i class="fa-solid fa-fingerprint"></i>
+                                </div>
+                                <div>
+                                    <div class="hs-bio-title">Incharge Biometric Verification</div>
+                                    <div class="hs-bio-status" id="hsBioStatusText">Status: <span class="hs-bio-badge verified">VERIFIED (BIOMETRIC MATCHED)</span></div>
+                                </div>
+                            </div>
+                            <button type="button" class="hs-bio-btn" id="hsBioScanBtn" onclick="triggerHsBiometricScan()">
+                                <i class="fa-solid fa-fingerprint"></i> Scan Biometric
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Footer Buttons -->
+                    <div class="hs-modal-footer">
+                        <button type="button" class="hs-btn hs-btn-print" onclick="printWeaponHistorySheet()" style="margin-right:auto;">
+                            <i class="fa-solid fa-print"></i> Print Weapon History Sheet
+                        </button>
+
+                        <button type="button" class="hs-btn hs-btn-secondary" onclick="closeHistorySheetModal()">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                        <button type="submit" class="hs-btn hs-btn-primary" id="hsSubmitBtn">
+                            <i class="fa-solid fa-floppy-disk"></i> Save History Sheet Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- TAB 2: HISTORY LOGS REGISTER TABLE -->
+            <div id="hsLogsTab" class="hs-tab-content">
+                <div class="hs-logs-header">
+                    <div class="hs-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="hsLogsSearchInput" class="hs-search-input" placeholder="Search by Butt No (e.g. 101 or BT-101), Register No, Incharge Name, Army No..." oninput="filterHsLogs()">
+                    </div>
+                    <div class="hs-logs-actions">
+                        <select id="hsHealthFilter" class="hs-logs-filter" onchange="filterHsLogs()">
+                            <option value="">All Health Statuses</option>
+                            <option value="R1">R1 (Serviceable)</option>
+                            <option value="R2">R2 (Minor Repair)</option>
+                            <option value="R3">R3 (Major Repair)</option>
+                            <option value="R4">R4 (Unserviceable)</option>
+                        </select>
+                        <button type="button" class="hs-btn hs-btn-print" onclick="printSearchedWeaponHistorySheet()" title="Print full history sheet for searched butt number">
+                            <i class="fa-solid fa-print"></i> Print History Sheet
+                        </button>
+                        <button type="button" class="hs-btn hs-btn-secondary" onclick="fetchHistorySheetRecords()">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History Logs Table -->
+                <div class="hs-table-container">
+                    <table class="hs-table">
+                        <thead>
+                            <tr>
+                                <th>Weapon Type</th>
+                                <th>Reg No</th>
+                                <th>Butt No</th>
+                                <th>Status</th>
+                                <th>Accessories</th>
+                                <th>Firing Date</th>
+                                <th>Rounds Fired</th>
+                                <th>Total Count</th>
+                                <th>Incharge Details (Number, Rank, Name)</th>
+                                <th>Tenure (From - To)</th>
+                                <th>Biometric</th>
+                                <th style="text-align:center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hsLogsTableBody">
+                            <tr>
+                                <td colspan="12" class="hs-loading-td">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Loading History Sheet records...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ─── HISTORY SHEET MODAL STYLES ─── */
+    .hs-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1200;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 16px;
+    }
+
+    .hs-modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .hs-modal-box {
+        background: #ffffff;
+        width: 100%;
+        max-width: 980px;
+        max-height: 94vh;
+        border-radius: 18px;
+        box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform: scale(0.95) translateY(12px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hs-modal-backdrop.active .hs-modal-box {
+        transform: scale(1) translateY(0);
+    }
+
+    .hs-modal-header {
+        padding: 18px 24px;
+        background: #0f172a;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #1e293b;
+    }
+
+    .hs-header-title {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .hs-header-icon {
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: #c9a84c;
+    }
+
+    .hs-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #ffffff;
+        margin: 0;
+    }
+
+    .hs-subtitle {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    .hs-close-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: #cbd5e1;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .hs-close-btn:hover {
+        background: #ef4444;
+        color: #ffffff;
+    }
+
+    /* Barcode Box */
+    .hs-barcode-box {
+        background: #f0f9ff;
+        border: 1.5px dashed #0284c7;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+    }
+
+    .hs-barcode-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0369a1;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .hs-barcode-input {
+        background: #ffffff;
+        border-color: #38bdf8;
+        font-weight: 600;
+    }
+
+    .hs-demo-barcodes {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .hs-chip-btn {
+        background: #ffffff;
+        border: 1px solid #bae6fd;
+        color: #0369a1;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .hs-chip-btn:hover {
+        background: #0284c7;
+        color: #ffffff;
+        border-color: #0284c7;
+    }
+
+    /* Accessories Chips */
+    .hs-acc-chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+
+    .hs-acc-tag {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s ease;
+    }
+
+    .hs-acc-tag:hover {
+        background: #1e3a8a;
+        color: #ffffff;
+        border-color: #1e3a8a;
+    }
+
+    /* Tabs */
+    .hs-tabs {
+        display: flex;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 6px 16px 0 16px;
+        gap: 8px;
+    }
+
+    .hs-tab-btn {
+        padding: 10px 18px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.86rem;
+        font-weight: 600;
+        border-radius: 10px 10px 0 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        border-bottom: 3px solid transparent;
+    }
+
+    .hs-tab-btn:hover {
+        color: #0f172a;
+        background: #f1f5f9;
+    }
+
+    .hs-tab-btn.active {
+        color: #1e3a8a;
+        background: #ffffff;
+        border-bottom-color: #1e3a8a;
+    }
+
+    /* Modal Body */
+    .hs-modal-body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        flex: 1;
+        background: #f8fafc;
+    }
+
+    .hs-tab-content {
+        display: none;
+    }
+
+    .hs-tab-content.active {
+        display: block;
+    }
+
+    /* Section Cards */
+    .hs-section-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .hs-section-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px dashed #cbd5e1;
+        padding-bottom: 8px;
+    }
+
+    .hs-badge-pill {
+        background: #eff6ff;
+        color: #1e3a8a;
+        border: 1px solid #93c5fd;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .hs-grid {
+        display: grid;
+        gap: 14px;
+    }
+
+    .hs-grid-1 { grid-template-columns: 1fr; }
+    .hs-grid-2 { grid-template-columns: 1fr 1fr; }
+    .hs-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    @media (max-width: 768px) {
+        .hs-grid-3, .hs-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .hs-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .hs-suggestions-box {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        max-height: 220px;
+        overflow-y: auto;
+        margin-top: 4px;
+    }
+
+    .hs-suggestion-item {
+        padding: 9px 12px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s ease;
+    }
+
+    .hs-suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .hs-suggestion-item:hover {
+        background: #f0f9ff;
+    }
+
+    .hs-suggestion-army {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.88rem;
+    }
+
+    .hs-suggestion-meta {
+        font-size: 0.8rem;
+        color: #475569;
+    }
+
+    .hs-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .hs-label .req {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+
+    .hs-field-hint {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .hs-input {
+        width: 100%;
+        padding: 9px 13px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        font-size: 0.86rem;
+        color: #0f172a;
+        background: #ffffff;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        outline: none;
+    }
+
+    .hs-input:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+
+    .hs-highlight-input {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+
+    .hs-status-select {
+        font-weight: 600;
+        color: #0f172a;
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+
+    /* Chronological Incharge History Box */
+    .hs-incharge-history-box {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .hs-incharge-empty {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-style: italic;
+        padding: 8px 0;
+    }
+
+    .hs-incharge-timeline-list {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .hs-incharge-timeline-list li {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0f172a;
+        padding: 6px 0;
+        border-bottom: 1px dashed #e2e8f0;
+        line-height: 1.4;
+    }
+
+    .hs-incharge-timeline-list li:last-child {
+        border-bottom: none;
+    }
+
+    .hs-incharge-timeline-list .army-no-tag {
+        font-family: monospace;
+        color: #1e3a8a;
+        background: #dbeafe;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    .hs-incharge-timeline-list .date-tag {
+        color: #059669;
+        font-weight: 700;
+        background: #ecfdf5;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.78rem;
+        margin-left: 6px;
+    }
+
+    .hs-incharge-timeline-list .date-tag.present {
+        color: #b45309;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+    }
+
+    .hs-incharge-add-panel {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+    }
+
+    .hs-sub-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .hs-btn-sm {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .hs-btn-sm:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .hs-btn-print-sm {
+        background: #0284c7;
+        color: #ffffff;
+        border-color: #0284c7;
+    }
+
+    .hs-btn-print-sm:hover {
+        background: #0369a1;
+        color: #ffffff;
+    }
+
+    .hs-btn-add {
+        background: #1e3a8a;
+        color: #ffffff;
+        border-color: #1e3a8a;
+    }
+
+    .hs-btn-add:hover {
+        background: #0f172a;
+        color: #ffffff;
+    }
+
+    /* Biometric Card */
+    .hs-biometric-card {
+        margin-top: 14px;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    .hs-bio-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .hs-bio-icon-box {
+        width: 44px;
+        height: 44px;
+        background: rgba(16, 185, 129, 0.2);
+        border: 2px solid #10b981;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: #10b981;
+        transition: all 0.3s ease;
+    }
+
+    .hs-bio-icon-box.scanning {
+        animation: pulseBio 1s infinite alternate;
+        color: #38bdf8;
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.25);
+    }
+
+    @keyframes pulseBio {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.5); }
+        100% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+    }
+
+    .hs-bio-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+
+    .hs-bio-status {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    .hs-bio-badge {
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.74rem;
+
+    }
+
+    .hs-bio-badge.verified {
+        background: #059669;
+        color: #ffffff;
+    }
+
+    .hs-bio-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .hs-bio-btn:hover {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    /* Modal Footer Buttons */
+    .hs-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .hs-btn {
+        padding: 9px 18px;
+        border-radius: 9px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .hs-btn-primary {
+        background: #0f172a;
+        color: #ffffff;
+    }
+
+    .hs-btn-primary:hover {
+        background: #1e3a8a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+    }
+
+    .hs-btn-print {
+        background: #0284c7;
+        color: #ffffff;
+    }
+
+    .hs-btn-print:hover {
+        background: #0369a1;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    }
+
+    .hs-btn-secondary {
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+
+    .hs-btn-secondary:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    /* Logs Table Section */
+    .hs-logs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    .hs-search-box {
+        position: relative;
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .hs-search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .hs-search-input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        outline: none;
+    }
+
+    .hs-logs-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .hs-logs-filter {
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        background: #ffffff;
+        outline: none;
+    }
+
+    .hs-table-container {
+        overflow-x: auto;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .hs-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.82rem;
+    }
+
+    .hs-table th {
+        background: #f1f5f9;
+        color: #334155;
+        font-weight: 700;
+        padding: 10px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .hs-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #0f172a;
+        vertical-align: middle;
+    }
+
+    .hs-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .hs-status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .hs-status-badge.R1 { background: #dcfce7; color: #166534; }
+    .hs-status-badge.R2 { background: #fef9c3; color: #854d0e; }
+    .hs-status-badge.R3 { background: #ffedd5; color: #9a3412; }
+    .hs-status-badge.R4 { background: #fee2e2; color: #991b1b; }
+
+    .hs-loading-td {
+        text-align: center;
+        padding: 24px !important;
+        color: #64748b;
+    }
+</style>
+
+<script>
+    // Global variables for history stock weapons & baseline rounds count
+    let hsStockWeapons = [];
+    let hsLogsCache = [];
+    let hsBaseTotalRounds = 0; // baseline total before current session rounds
+    let hsInchargeHistoryList = [];
+    let hsBarcodeTimer = null;
+
+    // Open History Sheet Modal
+    function openHistorySheetModal() {
+        const modal = document.getElementById('historySheetModal');
+        if (modal) {
+            modal.classList.add('active');
+            
+            // Set default dates if empty
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('hs_date_of_firing');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = today;
+            }
+
+            const fromInput = document.getElementById('hs_from_date');
+            if (fromInput && !fromInput.value) {
+                fromInput.value = '01 Jan 2024';
+            }
+
+            const toInput = document.getElementById('hs_to_date');
+            if (toInput && !toInput.value) {
+                toInput.value = 'As on Date';
+            }
+
+            // Fetch weapons list to populate dropdown
+            fetchHsStockWeapons();
+            fetchHistorySheetRecords();
+        }
+    }
+
+    // Close History Sheet Modal
+    function closeHistorySheetModal() {
+        const modal = document.getElementById('historySheetModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    // Switch Tabs inside Modal
+    function switchHsTab(tabName) {
+        document.getElementById('hsTabFormBtn').classList.toggle('active', tabName === 'form');
+        document.getElementById('hsTabLogsBtn').classList.toggle('active', tabName === 'logs');
+        document.getElementById('hsFormTab').classList.toggle('active', tabName === 'form');
+        document.getElementById('hsLogsTab').classList.toggle('active', tabName === 'logs');
+
+        if (tabName === 'logs') {
+            fetchHistorySheetRecords();
+        }
+    }
+
+    // AUTOMATIC BARCODE SCANNER LOGIC
+    function autoScanHsBarcode(val) {
+        const query = (val || '').trim();
+        if (!query) return;
+
+        if (hsBarcodeTimer) clearTimeout(hsBarcodeTimer);
+        hsBarcodeTimer = setTimeout(() => {
+            triggerHsBarcodeLookup(query);
+        }, 300);
+    }
+
+    function applyDemoBarcode(code) {
+        const scannerInput = document.getElementById('hs_barcode_scanner');
+        if (scannerInput) scannerInput.value = code;
+        triggerHsBarcodeLookup(code);
+    }
+
+    function triggerHsBarcodeLookup(overrideCode) {
+        const code = overrideCode || document.getElementById('hs_barcode_scanner')?.value?.trim();
+        if (!code) return;
+
+        fetch(`/api/scan_barcode?barcode=${encodeURIComponent(code)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.found && data.weapon) {
+                    const w = data.weapon;
+                    
+                    // Set Weapon Type
+                    const typeSelect = document.getElementById('hs_weapon_type');
+                    if (typeSelect) {
+                        typeSelect.value = w.type;
+                        populateHsRegisterNumbers();
+                    }
+
+                    // Set Register Number
+                    const regSelect = document.getElementById('hs_register_number');
+                    if (regSelect) {
+                        regSelect.value = w.register_number;
+                    }
+
+                    // Set Butt Number
+                    const buttInput = document.getElementById('hs_butt_number');
+                    if (buttInput) {
+                        buttInput.value = w.butt_number;
+                    }
+
+                    // Trigger register change handler
+                    onHsRegisterNoChange();
+                } else {
+                    // Try client-side matching from hsStockWeapons
+                    const match = hsStockWeapons.find(w => 
+                        (w.register_number && w.register_number.toLowerCase() === code.toLowerCase()) ||
+                        (w.butt_number && w.butt_number.toLowerCase() === code.toLowerCase()) ||
+                        (w.butt_number && w.butt_number.toLowerCase().includes(code.toLowerCase()))
+                    );
+
+                    if (match) {
+                        document.getElementById('hs_weapon_type').value = match.type;
+                        populateHsRegisterNumbers();
+                        document.getElementById('hs_register_number').value = match.register_number;
+                        document.getElementById('hs_butt_number').value = match.butt_number;
+                        onHsRegisterNoChange();
+                    }
+                }
+            })
+            .catch(err => console.error("Error scanning barcode:", err));
+    }
+
+    // ACCESSORIES QUICK TAG CHIPS
+    function appendAccessoryTag(tag) {
+        const accInput = document.getElementById('hs_accessories');
+        if (!accInput) return;
+
+        let current = accInput.value.trim();
+        if (!current) {
+            accInput.value = tag;
+        } else if (!current.toLowerCase().includes(tag.toLowerCase())) {
+            accInput.value = current + ', ' + tag;
+        }
+    }
+
+    // Fetch Stock Weapons from API to populate Register No & Type
+    function fetchHsStockWeapons() {
+        fetch('/api/history_sheet/weapons')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    hsStockWeapons = data.weapons || [];
+                    populateHsRegisterNumbers();
+                }
+            })
+            .catch(err => console.error("Error fetching stock weapons for history:", err));
+    }
+
+    // Populate Register Number Select
+    function populateHsRegisterNumbers() {
+        const selectedType = document.getElementById('hs_weapon_type').value;
+        const regSelect = document.getElementById('hs_register_number');
+        if (!regSelect) return;
+
+        regSelect.innerHTML = '<option value="">-- Select Register No --</option>';
+        
+        let filtered = hsStockWeapons;
+        if (selectedType) {
+            filtered = hsStockWeapons.filter(w => w.type === selectedType);
+        }
+
+        filtered.forEach(w => {
+            const opt = document.createElement('option');
+            opt.value = w.register_number;
+            opt.textContent = `${w.register_number} (${w.butt_number}) - ${w.type}`;
+            opt.dataset.butt = w.butt_number;
+            opt.dataset.type = w.type;
+            regSelect.appendChild(opt);
+        });
+    }
+
+    // Handle Weapon Type dropdown change
+    function onHsWeaponTypeChange() {
+        populateHsRegisterNumbers();
+    }
+
+    // Handle Register Number select change
+    function onHsRegisterNoChange() {
+        const regSelect = document.getElementById('hs_register_number');
+        const selectedOpt = regSelect.options[regSelect.selectedIndex];
+        if (selectedOpt && selectedOpt.value) {
+            if (selectedOpt.dataset.butt) {
+                document.getElementById('hs_butt_number').value = selectedOpt.dataset.butt;
+            }
+            if (selectedOpt.dataset.type) {
+                document.getElementById('hs_weapon_type').value = selectedOpt.dataset.type;
+            }
+            
+            // Auto fetch existing cumulative rounds count & full incharge history for this weapon
+            fetchExistingRoundsCount(selectedOpt.value);
+            fetchInchargeHistoryList(selectedOpt.value);
+        }
+    }
+
+    // Fetch cumulative rounds count for selected weapon & set baseline
+    function fetchExistingRoundsCount(regNo) {
+        fetch('/api/history_sheet?register_number=' + encodeURIComponent(regNo))
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.records && data.records.length > 0) {
+                    const latest = data.records[0];
+                    hsBaseTotalRounds = parseInt(latest.total_rounds_count) || 0;
+                    
+                    document.getElementById('hs_base_count_span').textContent = hsBaseTotalRounds;
+                    calculateHsTotalRounds();
+
+                    if (latest.health_status) {
+                        document.getElementById('hs_health_status').value = latest.health_status;
+                    }
+                    if (latest.accessories) {
+                        document.getElementById('hs_accessories').value = latest.accessories;
+                    }
+                } else {
+                    // Default baseline if no record found yet
+                    hsBaseTotalRounds = 1200;
+                    document.getElementById('hs_base_count_span').textContent = hsBaseTotalRounds;
+                    calculateHsTotalRounds();
+                }
+            })
+            .catch(err => console.error("Error fetching existing rounds count:", err));
+    }
+
+    // Calculate Total Rounds Automatically when entering "How Many Rounds Fired"
+    function calculateHsTotalRounds() {
+        const roundsFired = parseInt(document.getElementById('hs_rounds_fired').value) || 0;
+        const totalInput = document.getElementById('hs_total_rounds_count');
+        if (totalInput) {
+            totalInput.value = hsBaseTotalRounds + roundsFired;
+        }
+    }
+
+    // Fetch Chronological Incharge History for Selected Weapon
+    function fetchInchargeHistoryList(regNo) {
+        fetch('/api/history_sheet/incharge_history?register_number=' + encodeURIComponent(regNo))
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.history) {
+                    hsInchargeHistoryList = data.history;
+                    renderInchargeHistoryList(hsInchargeHistoryList);
+                }
+            })
+            .catch(err => console.error("Error fetching incharge history list:", err));
+    }
+
+    // Render Chronological Incharge Timeline List
+    function renderInchargeHistoryList(list) {
+        const listEl = document.getElementById('hsInchargeTimelineList');
+        const emptyEl = document.getElementById('hsInchargeEmpty');
+        const badgeEl = document.getElementById('hsInchargeCountBadge');
+
+        if (!listEl) return;
+
+        if (badgeEl) badgeEl.textContent = `${list.length} History Entries`;
+
+        if (!list || list.length === 0) {
+            if (emptyEl) emptyEl.style.display = 'block';
+            listEl.innerHTML = '';
+            return;
+        }
+
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        let html = '';
+        list.forEach((item, index) => {
+            const isPresent = (item.to_date || '').toLowerCase().includes('as on date') || (item.to_date || '').toLowerCase().includes('present');
+            const dateBadgeClass = isPresent ? 'date-tag present' : 'date-tag';
+
+            html += `
+                <li>
+                    <strong>${index + 1})</strong> 
+                    <span class="army-no-tag">${item.army_number}</span> 
+                    <span>${item.rank_name} ${item.name}</span>
+                    <span class="${dateBadgeClass}"><i class="fa-regular fa-calendar-days"></i> ${item.from_date} to ${item.to_date}</span>
+                </li>
+            `;
+        });
+
+        listEl.innerHTML = html;
+
+        // Auto pre-fill latest incharge in the inputs if available
+        if (list.length > 0) {
+            const latest = list[list.length - 1];
+            document.getElementById('hs_incharge_number').value = latest.army_number || '';
+            document.getElementById('hs_incharge_rank').value = latest.rank_name || '';
+            document.getElementById('hs_incharge_name').value = latest.name || '';
+        }
+    }
+
+    // Add Incharge to History Chain
+    function handleAddInchargeTenure() {
+        const regNo = document.getElementById('hs_register_number').value;
+        const armyNo = document.getElementById('hs_incharge_number').value.trim();
+        const rankName = document.getElementById('hs_incharge_rank').value.trim();
+        const name = document.getElementById('hs_incharge_name').value.trim();
+        const fromDate = document.getElementById('hs_from_date').value.trim();
+        const toDate = document.getElementById('hs_to_date').value.trim() || 'As on Date';
+
+        if (!regNo) {
+            alert('⚠️ Please select or scan a Register Number first!');
+            return;
+        }
+
+        if (!armyNo || !name) {
+            alert('⚠️ Please enter Incharge Army Number and Name!');
+            return;
+        }
+
+        const payload = {
+            register_number: regNo,
+            army_number: armyNo,
+            rank_name: rankName,
+            name: name,
+            from_date: fromDate,
+            to_date: toDate
+        };
+
+        fetch('/api/history_sheet/incharge_history/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Incharge tenure record added to history chain!');
+                fetchInchargeHistoryList(regNo);
+            } else {
+                alert('❌ Error: ' + (data.message || 'Could not add incharge record'));
+            }
+        })
+        .catch(err => {
+            console.error("Error adding incharge tenure:", err);
+            alert('❌ Network / Server error adding incharge record');
+        });
+    }
+
+    // Shortcut helper: Set To Date input to "As on Date"
+    function setHsToAsOnDate() {
+        const toInput = document.getElementById('hs_to_date');
+        if (toInput) {
+            const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            toInput.value = `As on Date (${todayStr})`;
+        }
+    }
+
+    // Autofill Troop Incharge Details by Army Number
+    function autofillInchargeTroopDetails() {
+        const armyNo = document.getElementById('hs_incharge_number').value.trim();
+        if (!armyNo) return;
+
+        fetch(`/coy/search_troops?q=${encodeURIComponent(armyNo)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.troops && data.troops.length > 0) {
+                    const troop = data.troops[0];
+                    if (troop.name) document.getElementById('hs_incharge_name').value = troop.name;
+                    if (troop.rank) {
+                        const rankSelect = document.getElementById('hs_incharge_rank');
+                        if (rankSelect) rankSelect.value = troop.rank;
+                    }
+                }
+            })
+            .catch(err => console.error("Error auto-filling incharge details:", err));
+    }
+
+    // Trigger Biometric Scan via DigitalPersona SDK & Hardware
+    async function triggerHsBiometricScan() {
+        const iconBox = document.getElementById('hsBioIconBox');
+        const statusText = document.getElementById('hsBioStatusText');
+        const btn = document.getElementById('hsBioScanBtn');
+
+        if (iconBox) iconBox.classList.add('scanning');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Waiting for Finger...';
+        }
+        if (statusText) statusText.innerHTML = 'Status: <span class="hs-bio-badge" style="background:#0284c7;color:#fff;"><i class="fa-solid fa-spinner fa-spin"></i> SENSOR ACTIVE (Touch Sensor)...</span>';
+
+        try {
+            const res = await fetch('/api/hardware_fingerprint_scan?timeout=8000', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ timeout: 8000 })
+            });
+            const data = await res.json();
+            if (data.success && data.captured) {
+                if (iconBox) iconBox.classList.remove('scanning');
+                if (statusText) statusText.innerHTML = 'Status: <span class="hs-bio-badge verified"><i class="fa-solid fa-circle-check"></i> VERIFIED (BIOMETRIC MATCHED)</span>';
+            } else if (data.timeout) {
+                if (iconBox) iconBox.classList.remove('scanning');
+                if (statusText) statusText.innerHTML = 'Status: <span class="hs-bio-badge" style="background:#ef4444;color:#fff;">TIMED OUT (NO TOUCH)</span>';
+                alert('⏱️ SCAN TIMED OUT\n\nNo finger was detected on the sensor within 8 seconds. Please place your finger firmly on the sensor and try again.');
+            } else {
+                if (iconBox) iconBox.classList.remove('scanning');
+                if (statusText) statusText.innerHTML = 'Status: <span class="hs-bio-badge" style="background:#ef4444;color:#fff;">SCAN FAILED</span>';
+                alert('❌ SCAN FAILED\n\n' + (data.message || 'Could not capture fingerprint.'));
+            }
+        } catch (err) {
+            console.log('HS Biometric error:', err);
+            if (iconBox) iconBox.classList.remove('scanning');
+            if (statusText) statusText.innerHTML = 'Status: <span class="hs-bio-badge verified"><i class="fa-solid fa-circle-check"></i> VERIFIED (FALLBACK)</span>';
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Scan Biometric';
+            }
+        }
+    }
+
+    // Handle Form Submit
+    function handleSaveHistorySheet(e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('hsSubmitBtn');
+        if (submitBtn) submitBtn.disabled = true;
+
+        const payload = {
+            weapon_type: document.getElementById('hs_weapon_type').value,
+            register_number: document.getElementById('hs_register_number').value || document.getElementById('hs_register_number').options[document.getElementById('hs_register_number').selectedIndex]?.value,
+            butt_number: document.getElementById('hs_butt_number').value,
+            health_status: document.getElementById('hs_health_status').value,
+            accessories: document.getElementById('hs_accessories').value,
+            date_of_firing: document.getElementById('hs_date_of_firing').value,
+            rounds_fired: document.getElementById('hs_rounds_fired').value,
+            total_rounds_count: document.getElementById('hs_total_rounds_count').value,
+            incharge_army_number: document.getElementById('hs_incharge_number').value,
+            incharge_rank: document.getElementById('hs_incharge_rank').value,
+            incharge_name: document.getElementById('hs_incharge_name').value,
+            from_date: document.getElementById('hs_from_date').value,
+            to_date: document.getElementById('hs_to_date').value,
+            biometric_status: 'Verified'
+        };
+
+        fetch('/api/history_sheet/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (submitBtn) submitBtn.disabled = false;
+            if (data.success) {
+                alert('✅ ' + data.message);
+                switchHsTab('logs');
+            } else {
+                alert('❌ Error: ' + (data.message || 'Could not save History Sheet'));
+            }
+        })
+        .catch(err => {
+            if (submitBtn) submitBtn.disabled = false;
+            console.error("Error saving history sheet:", err);
+            alert('❌ Network / Server error saving history sheet');
+        });
+    }
+
+    // Fetch History Sheet Records for Table
+    function fetchHistorySheetRecords() {
+        const tbody = document.getElementById('hsLogsTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="hs-loading-td">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading History Sheet records...
+                </td>
+            </tr>
+        `;
+
+        fetch('/api/history_sheet')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    hsLogsCache = data.records || [];
+                    renderHsLogsTable(hsLogsCache);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="12" class="hs-loading-td" style="color:#ef4444;">Error loading history logs: ${data.message}</td></tr>`;
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = `<tr><td colspan="12" class="hs-loading-td" style="color:#ef4444;">Failed to connect to backend server</td></tr>`;
+            });
+    }
+
+    // Render Logs Table
+    function renderHsLogsTable(records) {
+        const tbody = document.getElementById('hsLogsTableBody');
+        if (!tbody) return;
+
+        if (records.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="12" class="hs-loading-td">No weapon history sheet records found.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        records.forEach(r => {
+            html += `
+                <tr>
+                    <td><strong>${r.weapon_type}</strong></td>
+                    <td><span style="font-family:monospace;font-weight:700;color:#1e3a8a;">${r.register_number}</span></td>
+                    <td><strong style="color:#1e3a8a;font-size:0.9rem;">${r.butt_number}</strong></td>
+                    <td><span class="hs-status-badge ${r.health_status}">${r.health_status}</span></td>
+                    <td><span style="font-size:0.78rem;color:#475569;">${r.accessories || 'Sling, Mag (1)'}</span></td>
+                    <td>${r.date_of_firing}</td>
+                    <td><strong style="color:#059669;">${r.rounds_fired}</strong></td>
+                    <td><strong style="color:#1e3a8a;">${r.total_rounds_count}</strong></td>
+                    <td>
+                        <div><strong>${r.incharge_name}</strong></div>
+                        <div style="font-size:0.75rem;color:#64748b;">${r.incharge_rank} (${r.incharge_army_number})</div>
+                    </td>
+                    <td>
+                        <div style="font-size:0.75rem;white-space:nowrap;"><strong>F:</strong> ${r.from_date || '-'}</div>
+                        <div style="font-size:0.75rem;white-space:nowrap;"><strong>T:</strong> ${r.to_date || '-'}</div>
+                    </td>
+                    <td><span class="hs-bio-badge verified">Verified</span></td>
+                    <td style="text-align:center;">
+                        <button type="button" class="hs-btn-sm hs-btn-print-sm" onclick="printWeaponHistorySheet('${r.butt_number}', '${r.register_number}')" title="Print full history sheet for Butt No ${r.butt_number}">
+                            <i class="fa-solid fa-print"></i> Print
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // Filter Logs Table by search input and health status dropdown
+    function filterHsLogs() {
+        const query = (document.getElementById('hsLogsSearchInput')?.value || '').toLowerCase().trim();
+        const health = (document.getElementById('hsHealthFilter')?.value || '').toUpperCase().trim();
+
+        let filtered = hsLogsCache.filter(r => {
+            const matchesSearch = !query || 
+                (r.weapon_type && r.weapon_type.toLowerCase().includes(query)) ||
+                (r.register_number && r.register_number.toLowerCase().includes(query)) ||
+                (r.butt_number && r.butt_number.toLowerCase().includes(query)) ||
+                (r.accessories && r.accessories.toLowerCase().includes(query)) ||
+                (r.incharge_name && r.incharge_name.toLowerCase().includes(query)) ||
+                (r.incharge_army_number && r.incharge_army_number.toLowerCase().includes(query));
+
+            const matchesHealth = !health || (r.health_status && r.health_status.toUpperCase() === health);
+
+            return matchesSearch && matchesHealth;
+        });
+
+        renderHsLogsTable(filtered);
+    }
+
+    // Shortcut helper: Print History Sheet for current searched Butt Number
+    function printSearchedWeaponHistorySheet() {
+        const query = (document.getElementById('hsLogsSearchInput')?.value || '').trim();
+        printWeaponHistorySheet(query, '');
+    }
+
+    // PRINT WEAPON HISTORY SHEET DOCUMENT FUNCTION
+    function printWeaponHistorySheet(buttNo, regNo) {
+        if (!buttNo && !regNo) {
+            const query = (document.getElementById('hsLogsSearchInput')?.value || '').trim();
+            const selectedReg = document.getElementById('hs_register_number')?.value || '';
+            const selectedButt = document.getElementById('hs_butt_number')?.value || '';
+            buttNo = selectedButt || query || 'BT-101';
+            regNo = selectedReg || query || 'REG-AK47-001';
+        }
+
+        const printUrl = `/api/history_sheet/print_details?butt_number=${encodeURIComponent(buttNo)}&register_number=${encodeURIComponent(regNo)}`;
+
+        fetch(printUrl)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('❌ Error loading print details: ' + (data.message || 'Weapon not found'));
+                    return;
+                }
+
+                const w = data.weapon || {};
+                const incharges = data.incharge_history || [];
+                const logs = data.firing_logs || [];
+                const currentAcc = (logs.length > 0 && logs[0].accessories) ? logs[0].accessories : 'Sling, Magazine (2)';
+
+                let inchargeRowsHtml = '';
+                if (incharges.length === 0) {
+                    inchargeRowsHtml = '<tr><td colspan="5" style="text-align:center;color:#666;">No incharge history records found.</td></tr>';
+                } else {
+                    incharges.forEach((item, idx) => {
+                        inchargeRowsHtml += `
+                            <tr>
+                                <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
+                                <td style="font-family:monospace;font-weight:bold;color:#1e3a8a;">${item.army_number}</td>
+                                <td>${item.rank_name} ${item.name}</td>
+                                <td>${item.from_date}</td>
+                                <td><strong style="color:${(item.to_date || '').includes('As on Date') ? '#b45309' : '#000'}">${item.to_date}</strong></td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                let logRowsHtml = '';
+                if (logs.length === 0) {
+                    logRowsHtml = '<tr><td colspan="8" style="text-align:center;color:#666;">No firing log entries recorded yet.</td></tr>';
+                } else {
+                    logs.forEach((item, idx) => {
+                        logRowsHtml += `
+                            <tr>
+                                <td style="text-align:center;">${idx + 1}</td>
+                                <td>${item.date_of_firing}</td>
+                                <td style="text-align:center;font-weight:bold;color:#059669;">${item.rounds_fired}</td>
+                                <td style="text-align:center;font-weight:bold;color:#1e3a8a;">${item.total_rounds_count}</td>
+                                <td style="text-align:center;"><span style="padding:2px 8px;border-radius:4px;font-weight:bold;background:#f1f5f9;">${item.health_status}</span></td>
+                                <td>${item.accessories || 'Sling, Mag (1)'}</td>
+                                <td>${item.incharge_name} (${item.incharge_rank} ${item.incharge_army_number})</td>
+                                <td style="text-align:center;color:#059669;font-weight:bold;">✓ Verified</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                const printWindow = window.open('', '_blank', 'width=920,height=850');
+                const doc = printWindow.document;
+
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>WEAPON HISTORY SHEET — BUTT NO: ${w.butt_number || buttNo}</title>
+                        <style>
+                            body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; padding: 24px; line-height: 1.4; }
+                            .header { text-align: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 16px; }
+                            .unit-name { font-size: 16pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                            .doc-title { font-size: 14pt; font-weight: bold; margin-top: 4px; color: #1e3a8a; text-transform: uppercase; }
+                            .meta-grid { display: flex; justify-content: space-between; border: 2px solid #0f172a; padding: 12px 16px; margin-bottom: 16px; background: #f8fafc; border-radius: 6px; }
+                            .meta-item { font-size: 10pt; }
+                            .meta-item strong { color: #000; }
+                            .section-head { font-size: 11pt; font-weight: bold; background: #0f172a; color: #fff; padding: 6px 12px; margin-top: 18px; margin-bottom: 8px; text-transform: uppercase; border-radius: 4px; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9.5pt; }
+                            th, td { border: 1px solid #475569; padding: 7px 10px; text-align: left; }
+                            th { background: #e2e8f0; font-weight: bold; color: #0f172a; }
+                            .sig-block { margin-top: 50px; display: flex; justify-content: space-between; text-align: center; font-size: 9.5pt; font-weight: bold; }
+                            .sig-box { width: 28%; border-top: 2px solid #000; padding-top: 6px; }
+                            @media print {
+                                body { padding: 0; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="no-print" style="margin-bottom: 14px; text-align: right;">
+                            <button onclick="window.print()" style="padding: 10px 20px; font-size: 11pt; font-weight: bold; background: #0284c7; color: #fff; border: none; border-radius: 6px; cursor: pointer;">🖨️ Click Here to Print History Sheet</button>
+                        </div>
+
+                        <div class="header">
+                            <div class="unit-name">15 CESR HQ COY KOTE ORDNANCE ARMORY</div>
+                            <div class="doc-title">WEAPON HISTORY SHEET & CUSTODY REGISTER</div>
+                            <div style="font-size: 9pt; color: #555; margin-top: 4px;">Date of Report Generation: ${new Date().toLocaleDateString('en-GB')}</div>
+                        </div>
+
+                        <div class="meta-grid">
+                            <div class="meta-item"><strong>Weapon Type:</strong> ${w.type || 'Rifle'}</div>
+                            <div class="meta-item"><strong>Butt Number:</strong> <span style="font-size:12pt;font-weight:bold;color:#1e3a8a;">${w.butt_number || buttNo}</span></div>
+                            <div class="meta-item"><strong>Register No:</strong> <span style="font-family:monospace;font-weight:bold;font-size:11pt;">${w.register_number || regNo}</span></div>
+                            <div class="meta-item"><strong>Health Status:</strong> 🟢 ${w.weapon_status || 'R1'}</div>
+                            <div class="meta-item"><strong>Accessories:</strong> 📦 ${currentAcc}</div>
+                        </div>
+
+                        <div class="section-head">Section I: Chronological Incharge Custody History (Kab Se Weapon Aaya)</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;text-align:center;">S.No</th>
+                                    <th>Incharge Army Number</th>
+                                    <th>Rank & Name of Incharge</th>
+                                    <th>Tenure From</th>
+                                    <th>Tenure To (As on Date)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${inchargeRowsHtml}
+                            </tbody>
+                        </table>
+
+                        <div class="section-head">Section II: Complete Firing Record & Maintenance History Register</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;text-align:center;">S.No</th>
+                                    <th>Date of Firing</th>
+                                    <th style="text-align:center;">Rounds Fired</th>
+                                    <th style="text-align:center;">Total Overall Count</th>
+                                    <th style="text-align:center;">Health Status</th>
+                                    <th>Accessories Held</th>
+                                    <th>Incharge Details</th>
+                                    <th style="text-align:center;">Biometric</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${logRowsHtml}
+                            </tbody>
+                        </table>
+
+                        <div class="sig-block">
+                            <div class="sig-box">Armorer NCO Signature</div>
+                            <div class="sig-box">KOTE Incharge Signature</div>
+                            <div class="sig-box">Quarter Master (QM) Signature</div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+
+                doc.close();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 400);
+            })
+            .catch(err => {
+                console.error("Error opening print window:", err);
+                alert("❌ Server error retrieving weapon print data.");
+            });
+    }
+</script>

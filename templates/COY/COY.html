@@ -1,0 +1,1435 @@
+{% extends "base.html" %}
+
+{% block title %}{{ coy_name }} Dashboard — 15 CESR Ordnance Platform{% endblock %}
+
+{% block page_title %}Welcome, {{ coy_name }}!{% endblock %}
+{% block page_subtitle %}15 CESR {{ coy_name }} Ordnance Control & Armory Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ─── COY STAT CARDS ROW ─── */
+    .coy-stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .coy-stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .coy-stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .coy-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+        border-color: #cbd5e1;
+    }
+
+    .coy-stat-card__info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coy-stat-card__val {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+
+    .coy-stat-card__label {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .coy-stat-card__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .coy-stat-card__icon--blue { background: #eff6ff; color: #1e3a8a; }
+    .coy-stat-card__icon--green { background: #ecfdf5; color: #059669; }
+    .coy-stat-card__icon--amber { background: #fffbeb; color: #b45309; }
+    .coy-stat-card__icon--purple { background: #f3e8ff; color: #7e22ce; }
+
+    /* ─── COY CHARTS SECTION ─── */
+    .coy-charts-row {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+        margin-top: 24px;
+    }
+
+    @media (max-width: 960px) {
+        .coy-charts-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .coy-chart-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coy-chart-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .coy-chart-card__title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .coy-chart-card__body {
+        position: relative;
+        flex: 1;
+        min-height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ─── COY MODAL STYLES ─── */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-box-large {
+        background: #ffffff;
+        width: 100%;
+        max-width: 640px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+
+    .modal-backdrop.active .modal-box-large {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-header__title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-header__close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .modal-header__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .modal-body-grid {
+        padding: 20px 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 18px;
+    }
+
+    .form-group-full {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        font-size: 0.88rem;
+        pointer-events: none;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 8px 12px 8px 34px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.86rem;
+        font-family: inherit;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    .modal-footer {
+        padding: 14px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: #f8fafc;
+    }
+
+    /* AK-47 Watermark Background Graphic for Modal */
+    .modal-ak47-watermark {
+        position: absolute;
+        right: -20px;
+        bottom: 10px;
+        width: 440px;
+        opacity: 0.12;
+        pointer-events: none;
+        z-index: 1;
+        transform: rotate(-10deg);
+        filter: drop-shadow(0 10px 20px rgba(30, 58, 138, 0.4));
+    }
+
+    .modal-ak47-watermark img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* ─── ISSUED WEAPONS TABLE MODAL ─── */
+    .modal-box-xlarge {
+        background: #ffffff;
+        width: 95%;
+        max-width: 1100px;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-backdrop.active .modal-box-xlarge {
+        transform: scale(1) translateY(0);
+    }
+
+    .modal-table-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        flex: 1;
+        max-height: 55vh;
+    }
+
+    .issued-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        text-align: left;
+    }
+
+    .issued-table th {
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 12px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .issued-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .issued-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge--issued {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .status-badge--returned {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+
+    .btn-return-action {
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #eff6ff;
+        color: #1e3a8a;
+        border: 1px solid #bfdbfe;
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-return-action:hover {
+        background: #1e3a8a;
+        color: #ffffff;
+    }
+
+    /* Suggestions Dropdown for Troops Auto-fill */
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+        z-index: 99;
+        max-height: 220px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 4px;
+    }
+
+    .suggestion-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .suggestion-item:hover, .suggestion-item.active {
+        background: #eff6ff;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-army {
+        font-weight: 700;
+        color: #1e3a8a;
+        font-size: 0.88rem;
+    }
+
+    .suggestion-meta {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+</style>
+{% endblock %}
+
+{% block header_actions %}
+<div class="qm-actions" style="margin-top: 0; margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+    <button type="button" class="qm-btn qm-btn--primary" id="openAllotWeaponBtn" style="background-color: #1e3a8a; border-color: #1e3a8a;">
+        <i class="fa-solid fa-plus"></i>
+        <span>Allot Weapon</span>
+    </button>
+
+    <a href="#" class="qm-btn qm-btn--secondary" onclick="openInventoryStockModal(); return false;">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>View Stock</span>
+    </a>
+
+    <button type="button" class="qm-btn qm-btn--secondary" id="openUpdateBiometricBtn" onclick="openUpdateBiometricModal(); return false;" style="background: #ffffff; color: #059669; border: 1.5px solid #059669; font-weight: 700;">
+        <i class="fa-solid fa-fingerprint" style="color: #059669;"></i>
+        <span>Update Biometric</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stat Cards Row (4 Live Stat Cards) -->
+<div class="coy-stats-row">
+    <!-- Card 1: Weapons Held -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyWeaponsHeld">{{ stats.weapons_held if stats else 0 }}</span>
+            <span class="coy-stat-card__label">WEAPONS HELD</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--blue">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+    </div>
+
+    <!-- Card 2: Available -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyAvailableStock">{{ stats.available_weapons if stats else 0 }}</span>
+            <span class="coy-stat-card__label">Available in KOTE</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--green">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+    </div>
+
+    <!-- Card 3: OUT WEAPON -->
+    <div class="coy-stat-card coy-stat-card--clickable" id="coyAllottedCard" style="cursor: pointer;" onclick="openAllottedWeaponsHubModal()" title="Click to view Out Weapons & Duty Location Hub">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyIssuedStock">{{ stats.issued_weapons if stats else 0 }}</span>
+            <span class="coy-stat-card__label">OUT WEAPON</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--amber">
+            <i class="fa-solid fa-person-military-rifle"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: IN KOTE (Returned Weapons Count for Company) -->
+    <div class="coy-stat-card">
+        <div class="coy-stat-card__info">
+            <span class="coy-stat-card__val" id="coyInKote">{{ stats.in_kote if stats else 0 }}</span>
+            <span class="coy-stat-card__label">IN KOTE</span>
+        </div>
+        <div class="coy-stat-card__icon coy-stat-card__icon--purple">
+            <i class="fa-solid fa-right-to-bracket"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section (Bar Chart & Donut Chart) -->
+<div class="coy-charts-row">
+    <!-- Bar Chart: Weapon Count by Type -->
+    <div class="coy-chart-card">
+        <div class="coy-chart-card__header">
+            <div class="coy-chart-card__title">
+                <i class="fa-solid fa-chart-column" style="color: #1e3a8a;"></i>
+                Available Weapons in KOTE
+            </div>
+        </div>
+        <div class="coy-chart-card__body">
+            <canvas id="coyWeaponBarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Donut Chart: Available vs Allotted -->
+    <div class="coy-chart-card">
+        <div class="coy-chart-card__header">
+            <div class="coy-chart-card__title">
+                <i class="fa-solid fa-chart-pie" style="color: #059669;"></i>
+                Status Ratio (Available vs Allotted)
+            </div>
+        </div>
+        <div class="coy-chart-card__body">
+            <canvas id="coyStatusDonutChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Allot Weapon Modal Popup -->
+<div class="modal-backdrop" id="allotWeaponModal">
+    <div class="modal-box-large" style="position: relative; overflow: hidden; background: #ffffff;">
+        
+        <!-- Background AK-47 Watermark Graphic -->
+        <div class="modal-ak47-watermark">
+            <img src="{{ url_for('static', filename='weapons/ak47.png') }}" alt="AK47 Background">
+        </div>
+
+        <div class="modal-header" style="position: relative; z-index: 2;">
+            <div class="modal-header__title" style="font-weight: 800; color: #1e3a8a;">
+                <i class="fa-solid fa-gun" style="color: #1e3a8a;"></i>
+                Allotment Weapon — {{ coy_name }}
+            </div>
+            <button type="button" class="modal-header__close" id="closeAllotModalBtn">&times;</button>
+        </div>
+
+        <form id="allotWeaponForm" style="position: relative; z-index: 2;">
+            <input type="hidden" name="fingerprint_impression" id="allotFingerprintImpression" value="">
+            <div class="modal-body-grid">
+                <!-- 0. Allotment Category: Permanent vs Temporary Transfer on Leave -->
+                <div class="form-group form-group-full" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px;">
+                    <label class="form-label" style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">Allotment Mode & Category <span style="color: #ef4444;">*</span></label>
+                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: #15803d;">
+                            <input type="radio" name="allotment_type" value="Permanent" checked id="typePermanentRadio">
+                            <span>🟢 Permanent Allotment</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; color: #0284c7;">
+                            <input type="radio" name="allotment_type" value="Temporary" id="typeTemporaryRadio">
+                            <span>🔄 Temporary Transfer (Jawan on Leave)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Leave Duration & Permanent Owner Fields (Visible when Temporary is selected) -->
+                <div id="temporaryLeaveFieldsGroup" class="form-group form-group-full" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px;">
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;">
+                        <i class="fa-solid fa-plane-departure"></i> Leave Duration & Permanent Owner Record:
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">Permanent Owner Army No *</label>
+                            <input type="text" class="form-input" name="permanent_army_number" id="allotPermanentArmyNumber" placeholder="Permanent Jawan Army No..." style="font-size: 0.78rem; height: 32px; font-weight: 700;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">Leave Start Date *</label>
+                            <input type="date" class="form-input" name="leave_start_date" id="allotLeaveStartDate" style="font-size: 0.78rem; height: 32px; font-weight: 700;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #1e3a8a; margin-bottom: 2px;">Leave End Date *</label>
+                            <input type="date" class="form-input" name="leave_end_date" id="allotLeaveEndDate" style="font-size: 0.78rem; height: 32px; font-weight: 700;">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #0369a1; margin-top: 6px; font-weight: 600;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> <strong>Automatic Reversion:</strong> Leave end date khatam hote hi, next date se weapon automatically Permanent Owner (Original Jawan) ke paas revert ho jayega.
+                    </div>
+                </div>
+
+                <!-- 1. Weapon Register Number Field -->
+                <div class="form-group form-group-full">
+                    <label class="form-label">Weapon Register Number <span style="color: #ef4444;">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-barcode input-icon" style="color: #1e3a8a;"></i>
+                        <select class="form-select" name="register_number" id="allotRegisterNumber" required style="font-weight: 700; color: #1e3a8a;">
+                            <option value="">-- Choose Registered Weapon --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 2. Types of Weapon Field -->
+                <div class="form-group">
+                    <label class="form-label">Type of Weapon</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-crosshairs input-icon" style="color: #2563eb;"></i>
+                        <input type="text" class="form-input" name="weapon_type" id="allotWeaponType" placeholder="Auto-filled on weapon select" readonly style="background: #f8fafc; font-weight: 700; color: #1e3a8a;">
+                    </div>
+                </div>
+
+                <!-- 3. Butt Number Field -->
+                <div class="form-group">
+                    <label class="form-label">Butt Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-hashtag input-icon" style="color: #0284c7;"></i>
+                        <input type="text" class="form-input" name="butt_number" id="allotButtNumber" placeholder="Auto-filled on weapon select" readonly style="background: #f8fafc; font-weight: 700; color: #0284c7;">
+                    </div>
+                </div>
+
+                <!-- Hidden Form Fields Auto-Filled by Biometric Scan -->
+                <input type="hidden" name="army_number" id="allotArmyNumber" value="">
+                <input type="hidden" name="name" id="allotName" value="">
+                <input type="hidden" name="rank" id="allotRank" value="">
+                <input type="hidden" name="company" id="allotCompany" value="">
+                <input type="hidden" name="section" id="allotSection" value="">
+
+                <!-- 4. Primary Biometric Fingerprint Identification & Scan Box -->
+                <div class="form-group form-group-full" style="margin-top: 6px;">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 800; color: #0f172a; font-size: 0.82rem;"><i class="fa-solid fa-fingerprint" style="color: #059669;"></i> Biometric Identification & Verification <span style="color: #ef4444;">*</span></span>
+                        <span id="allotBiometricBadge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: none;">Connected & Ready</span>
+                    </label>
+                    <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div id="allotFingerprintWrapper" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #3b82f6; background: #eff6ff; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; flex-shrink: 0; cursor: pointer;" title="Touch or Click to Scan Fingerprint">
+                                <i class="fa-solid fa-fingerprint" style="font-size: 1.45rem; color: #2563eb;"></i>
+                            </div>
+                            <div>
+                                <div id="allotBiometricStatusText" style="font-size: 0.88rem; font-weight: 800; color: #0f172a;">Place Soldier's Finger on HID 4500 Optical Sensor</div>
+                                <div id="allotBiometricSubText" style="font-size: 0.74rem; color: #64748b; margin-top: 2px;">Direct Hardware Scan: Automatically identifies soldier and fetches master profile from troops table</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="allotPairUsbBtn" class="qm-btn qm-btn--secondary" style="background: #ffffff; border: 1px solid #1e3a8a; color: #1e3a8a; font-weight: 700; font-size: 0.78rem; padding: 6px 12px; border-radius: 8px; white-space: nowrap;" title="Pair HID 4500 Reader directly via WebUSB">
+                                <i class="fa-solid fa-usb"></i> Pair USB
+                            </button>
+                            <button type="button" id="allotTriggerBioBtn" class="qm-btn qm-btn--primary" style="background: #1e3a8a; border: 1px solid #1e3a8a; color: #ffffff; font-weight: 800; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; white-space: nowrap; box-shadow: 0 2px 4px rgba(30,58,138,0.2);">
+                                <i class="fa-solid fa-fingerprint"></i> Scan Fingerprint
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Auto-Fetched Personnel Profile Card (Readonly) -->
+                <div class="form-group form-group-full" style="margin-top: 4px;">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; color: #0f172a;"><i class="fa-solid fa-id-card-clip" style="color: #1e3a8a;"></i> Auto-Fetched Personnel Record</span>
+                        <span id="allotTroopStatusBadge" style="font-size: 0.72rem; font-weight: 700; color: #64748b;">Waiting for Scan</span>
+                    </label>
+                    <div id="allotSoldierCard" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 14px 16px; transition: all 0.3s ease;">
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;" id="allotSoldierCardGrid">
+                            <div>
+                                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Army Number</div>
+                                <div style="font-size: 0.95rem; font-weight: 800; color: #1e3a8a;" id="allotCardArmyNo">—</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Personnel Name</div>
+                                <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a;" id="allotCardName">—</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Rank</div>
+                                <div style="font-size: 0.90rem; font-weight: 700; color: #0f172a;" id="allotCardRank">—</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Company & Section</div>
+                                <div style="font-size: 0.90rem; font-weight: 700; color: #0f172a;" id="allotCardCompanySec">—</div>
+                            </div>
+                        </div>
+                        <div id="allotCardEmptyNote" style="font-size: 0.78rem; color: #64748b; margin-top: 8px; font-weight: 600; text-align: center;">
+                            <i class="fa-solid fa-hand-pointer"></i> Touch thumb on the scanner above — personnel details will automatically load and verify here.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="qm-btn qm-btn--secondary" id="cancelAllotModalBtn">Cancel</button>
+                <button type="submit" class="qm-btn qm-btn--primary" style="background-color: #1e3a8a; border-color: #1e3a8a; font-weight: 700; gap: 8px;">
+                    <i class="fa-solid fa-check"></i> Allot Weapon
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+<script>
+    /* Chart.js Setup for COY Dashboard */
+    const barLabels = {{ (chart_data.bar_labels if chart_data else []) | tojson }};
+    const barFullNames = {{ (chart_data.bar_full_names if chart_data else []) | tojson }};
+    const barCounts = {{ (chart_data.bar_counts if chart_data else []) | tojson }};
+    const donutCounts = {{ (chart_data.donut_counts if chart_data else [0,0]) | tojson }};
+
+    // Custom Chart.js Plugin to render count values on top of each bar
+    const topBarValuesPlugin = {
+        id: 'topBarValuesPlugin',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                meta.data.forEach((bar, index) => {
+                    const value = dataset.data[index];
+                    if (value !== undefined && value !== null) {
+                        ctx.save();
+                        ctx.fillStyle = '#1e3a8a';
+                        ctx.font = '700 12px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(value, bar.x, bar.y - 4);
+                        ctx.restore();
+                    }
+                });
+            });
+        }
+    };
+
+    // 1. Bar Chart: Stock Count by Weapon Type (Short Labels)
+    const ctxBar = document.getElementById('coyWeaponBarChart').getContext('2d');
+    const coyWeaponBarChart = new Chart(ctxBar, {
+        type: 'bar',
+        plugins: [topBarValuesPlugin],
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: 'Stock Count',
+                data: barCounts,
+                backgroundColor: '#1e3a8a',
+                hoverBackgroundColor: '#2563eb',
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 36
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 22
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            return barFullNames[index] || context[0].label;
+                        },
+                        label: function(context) {
+                            return ` ${context.raw} units available in KOTE`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, font: { family: 'Inter' } },
+                    grid: { color: '#f1f5f9' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Inter', size: 10, weight: '500' } }
+                }
+            }
+        }
+    });
+
+    // 2. Donut Chart: Available vs Allotted Ratio
+    const ctxDonut = document.getElementById('coyStatusDonutChart').getContext('2d');
+    const coyStatusDonutChart = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available in KOTE', 'Allotted Weapon'],
+            datasets: [{
+                data: donutCounts,
+                backgroundColor: ['#059669', '#b45309'],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 16,
+                        font: { family: 'Inter', size: 12, weight: '500' }
+                    }
+                }
+            }
+        }
+    });
+
+    /* Allot Weapon Modal & Troops Auto-fill Logic */
+    const allotModal = document.getElementById('allotWeaponModal');
+    const openAllotBtn = document.getElementById('openAllotWeaponBtn');
+    const closeAllotBtn = document.getElementById('closeAllotModalBtn');
+    const cancelAllotBtn = document.getElementById('cancelAllotModalBtn');
+    const allotForm = document.getElementById('allotWeaponForm');
+
+    const armySearchInput = document.getElementById('allotArmyNumber');
+    const suggestionsBox = document.getElementById('troopsSuggestions');
+    const rankInput = document.getElementById('allotRank');
+    const nameInput = document.getElementById('allotName');
+    const companyInput = document.getElementById('allotCompany');
+    const sectionInput = document.getElementById('allotSection');
+    const registerSelect = document.getElementById('allotRegisterNumber');
+    const weaponTypeInput = document.getElementById('allotWeaponType');
+    const buttNumberInput = document.getElementById('allotButtNumber');
+
+    let availableWeaponsStock = [];
+    let allotBiometricVerified = false;
+
+    // Toggle Temporary Transfer Leave Fields
+    const radioPerm = document.getElementById('typePermanentRadio');
+    const radioTemp = document.getElementById('typeTemporaryRadio');
+    const tempGroup = document.getElementById('temporaryLeaveFieldsGroup');
+
+    if (radioPerm && radioTemp && tempGroup) {
+        radioPerm.addEventListener('change', () => { tempGroup.style.display = 'none'; });
+        radioTemp.addEventListener('change', () => { 
+            tempGroup.style.display = 'block';
+            const permInput = document.getElementById('allotPermanentArmyNumber');
+            const armyInput = document.getElementById('allotArmyNumber');
+            if (permInput && armyInput && armyInput.value && !permInput.value) {
+                permInput.value = armyInput.value;
+            }
+        });
+    }
+
+    let pairedAllotUsbDevice = null;
+    const allotBioBtn = document.getElementById('allotTriggerBioBtn');
+    const allotPairBtn = document.getElementById('allotPairUsbBtn');
+    const allotBioBadge = document.getElementById('allotBiometricBadge');
+    const allotBioText = document.getElementById('allotBiometricStatusText');
+    const allotBioSubText = document.getElementById('allotBiometricSubText');
+    const allotFingerprintWrapper = document.getElementById('allotFingerprintWrapper');
+
+    // Voice Output & Security Alarm Buzzer
+    function speakBiometricVoice(text) {
+        if (!('speechSynthesis' in window)) return;
+        try {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang && v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Zira') || v.name.includes('David')));
+            if (preferredVoice) utterance.voice = preferredVoice;
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            console.log('Speech synthesis notice:', e);
+        }
+    }
+
+    function playSecurityAlarmBuzzer() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = ctx.currentTime;
+            const bursts = [
+                { start: 0.00, dur: 0.22, f1: 880, f2: 420 },
+                { start: 0.26, dur: 0.24, f1: 960, f2: 380 },
+                { start: 0.54, dur: 0.32, f1: 1080, f2: 320 }
+            ];
+            bursts.forEach(b => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(b.f1, now + b.start);
+                osc.frequency.exponentialRampToValueAtTime(b.f2, now + b.start + b.dur);
+                gain.gain.setValueAtTime(0.4, now + b.start);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + b.start + b.dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + b.start);
+                osc.stop(now + b.start + b.dur);
+            });
+        } catch (e) {}
+    }
+
+    // Audio Feedback Beep
+    function playAllotBeepSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        } catch(e) {}
+    }
+
+    // Initialize and activate USB Biometric Hardware (U.are.U 4500 Optical Reader)
+    async function initAndActivateAllotUsbDevice(device) {
+        if (!device) return;
+        pairedAllotUsbDevice = device;
+        try {
+            if (!device.opened) {
+                await device.open();
+            }
+            if (device.configuration === null) {
+                await device.selectConfiguration(1);
+            }
+            try {
+                await device.claimInterface(0);
+            } catch (e) {
+                console.log('USB Interface claim notice:', e.message);
+            }
+
+            // Send optical LED illumination activation request (DigitalPersona Vendor request)
+            if (device.opened) {
+                try {
+                    await device.controlTransferOut({
+                        requestType: 'vendor',
+                        recipient: 'device',
+                        request: 0x01,
+                        value: 0x01,
+                        index: 0
+                    }, new Uint8Array([0x01]));
+                } catch (e) {
+                    console.log('USB control LED transfer notice:', e.message);
+                }
+            }
+        } catch (err) {
+            console.warn('USB Device Activation Notice:', err);
+        }
+
+        if (allotBioBadge) {
+            allotBioBadge.textContent = '🟢 Connected & Ready';
+            allotBioBadge.style.background = '#ecfdf5';
+            allotBioBadge.style.color = '#059669';
+            allotBioBadge.style.borderColor = '#a7f3d0';
+        }
+        if (allotBioSubText) {
+            allotBioSubText.textContent = `HID U.are.U® 4500 Reader (${device.productName || 'Paired & Active'})`;
+        }
+    }
+
+    // Auto-detect Paired Biometric Hardware via WebUSB or Backend Service
+    async function detectAllotBiometricHardware() {
+        if (!allotBioBadge) return;
+
+        let detectedName = null;
+
+        // 1. Check Browser WebUSB API for HID 4500 (VID: 0x05ba)
+        if (navigator.usb) {
+            try {
+                const usbDevices = await navigator.usb.getDevices();
+                const hidDevice = usbDevices.find(d => d.vendorId === 0x05ba || (d.productName && (d.productName.toLowerCase().includes('digitalpersona') || d.productName.toLowerCase().includes('u.are.u') || d.productName.toLowerCase().includes('4500'))));
+                if (hidDevice) {
+                    detectedName = `HID U.are.U® 4500 Reader (${hidDevice.productName || 'VID:05BA'})`;
+                    await initAndActivateAllotUsbDevice(hidDevice);
+                }
+            } catch (e) {
+                console.log('WebUSB check notice:', e);
+            }
+        }
+
+        // 2. Query Server PnP API if not yet paired in browser
+        if (!detectedName) {
+            try {
+                const res = await fetch('/api/detect_biometric_device');
+                const data = await res.json();
+                if (data.success && data.detected) {
+                    if (data.devices && data.devices.length > 0) {
+                        detectedName = data.devices[0].name;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        if (detectedName) {
+            allotBioBadge.textContent = '🟢 Connected & Ready';
+            allotBioBadge.style.background = '#ecfdf5';
+            allotBioBadge.style.color = '#059669';
+            allotBioBadge.style.borderColor = '#a7f3d0';
+            if (allotBioSubText) allotBioSubText.textContent = detectedName;
+        } else {
+            allotBioBadge.textContent = '🟡 Ready / Unpaired';
+            allotBioBadge.style.background = '#fef3c7';
+            allotBioBadge.style.color = '#b45309';
+            allotBioBadge.style.borderColor = '#fde68a';
+            if (allotBioSubText) allotBioSubText.textContent = 'Direct WebUSB Optical Sensor (Click Pair USB)';
+        }
+    }
+
+    // Pair HID 4500 via WebUSB API
+    async function pairAllotUsbDevice() {
+        if (!navigator.usb) {
+            alert('WebUSB is supported in Google Chrome & Microsoft Edge browsers. Please open in Chrome/Edge.');
+            return;
+        }
+
+        try {
+            const device = await navigator.usb.requestDevice({
+                filters: [
+                    { vendorId: 0x05ba },
+                    { vendorId: 0x05ba, productId: 0x000a }
+                ]
+            });
+            if (device) {
+                await initAndActivateAllotUsbDevice(device);
+                alert(`Successfully paired with ${device.productName || 'HID U.are.U® 4500 Fingerprint Reader'}!\nHardware optical sensor is now active.`);
+                detectAllotBiometricHardware();
+            }
+        } catch (err) {
+            if (err.name !== 'NotFoundError') {
+                alert('WebUSB Pairing Note: ' + err.message + '\nEnsure WinUSB driver is assigned via Zadig.');
+            }
+        }
+    }
+
+    async function computeSha256(dataBuffer) {
+        try {
+            const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch(e) {
+            let hash = 0;
+            const bytes = new Uint8Array(dataBuffer);
+            for (let i = 0; i < bytes.length; i++) {
+                hash = ((hash << 5) - hash) + bytes[i];
+                hash |= 0;
+            }
+            return 'SHA256_' + Math.abs(hash).toString(16).padStart(16, '0') + Date.now().toString(16);
+        }
+    }
+
+    // Biometric Real Hardware / WebUSB Fingerprint Capture
+    async function triggerAllotBiometricScan() {
+        if (!allotBioText || !allotBioBadge || !allotFingerprintWrapper) return;
+
+        allotBiometricVerified = false;
+
+        // Auto-prompt WebUSB Pairing if not paired
+        if (!pairedAllotUsbDevice && navigator.usb) {
+            try {
+                const usbDevices = await navigator.usb.getDevices();
+                const hidDevice = usbDevices.find(d => d.vendorId === 0x05ba || (d.productName && (d.productName.toLowerCase().includes('digitalpersona') || d.productName.toLowerCase().includes('u.are.u') || d.productName.toLowerCase().includes('4500'))));
+                if (hidDevice) {
+                    await initAndActivateAllotUsbDevice(hidDevice);
+                } else {
+                    const confirmPair = confirm("HID 4500 Fingerprint Scanner is not paired with this browser session.\n\nClick OK to select and pair your 'U.are.U 4500' USB device now.");
+                    if (confirmPair) {
+                        await pairAllotUsbDevice();
+                    }
+                }
+            } catch(e) {
+                console.log('Auto-pair notice:', e);
+            }
+        }
+
+        allotBioText.innerHTML = '<span style="color: #0284c7; font-weight: 700;"><i class="fa-solid fa-spinner fa-spin"></i> 🔴 Sensor Active: Place & press finger firmly on sensor glass now...</span>';
+        allotBioBadge.textContent = 'Touch Sensor Now...';
+        allotBioBadge.style.background = '#e0f2fe';
+        allotBioBadge.style.color = '#0369a1';
+        allotBioBadge.style.borderColor = '#bae6fd';
+        allotFingerprintWrapper.style.borderColor = '#0284c7';
+        allotFingerprintWrapper.style.background = '#f0f9ff';
+        if (allotBioBtn) {
+            allotBioBtn.disabled = true;
+            allotBioBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Waiting for Finger...';
+        }
+
+        const targetArmyNumber = (document.getElementById('allotArmyNumber')?.value || '').trim();
+
+        let capturedBytesCount = 0;
+        let impressionBase64 = '';
+        let impressionHash = '';
+        let deviceName = 'HID DigitalPersona 4500 Optical Fingerprint Reader';
+        let scanMode = 'HID DigitalPersona Optical Sensor (1:1 / 1:N Biometric Identification)';
+        let isTimeout = false;
+        let isMismatch = false;
+        let errorMessage = '';
+        let returnedArmyNumber = targetArmyNumber;
+        let returnedTroopName = '';
+        let returnedRank = '';
+        let returnedCompany = '';
+        let returnedSection = '';
+
+        try {
+            // Call backend SDK with 8-second wait for finger touch.
+            // If targetArmyNumber is empty, backend automatically performs 1:N Identification!
+            const res = await fetch('/api/hardware_fingerprint_scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    timeout: 8000,
+                    army_number: targetArmyNumber
+                })
+            });
+            const data = await res.json();
+
+            if (data.captured && data.bytes > 0) {
+                capturedBytesCount = data.bytes;
+                impressionBase64 = data.data;
+                impressionHash = data.hash;
+                deviceName = data.device || deviceName;
+                scanMode = data.mode || scanMode;
+                returnedArmyNumber = data.army_number || targetArmyNumber;
+                returnedTroopName = data.troop_name || data.name || 'Personnel';
+                returnedRank = data.rank || data.rank_name || '';
+                returnedCompany = data.company || '';
+                returnedSection = data.section || '';
+
+                if (data.no_enrolled) {
+                    allotBiometricVerified = false;
+                    allotBioText.innerHTML = `<span style="color:#dc2626;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> No Biometric Record Found</span>`;
+                    allotBioBadge.textContent = 'NOT ENROLLED';
+                    allotBioBadge.style.background = '#fffbeb';
+                    allotBioBadge.style.color = '#b45309';
+                    allotBioBadge.style.borderColor = '#fde68a';
+                    alert(`⚠️ NO BIOMETRIC RECORD FOUND\n\n${data.message || 'No thumb impression enrolled for this personnel.'}\n\n👉 Please click "Update Biometric" in the top bar to enroll their thumb first!`);
+                    return;
+                }
+
+                if (data.matched === false || data.verified === false) {
+                    isMismatch = true;
+                    errorMessage = data.message || `Biometric Mismatch! Scanned thumb does not match registered personnel record.`;
+                }
+            } else if (data.timeout) {
+                isTimeout = true;
+                errorMessage = data.message || 'Scan timed out: No finger detected within 8 seconds.';
+            } else {
+                errorMessage = data.message || 'Failed to capture fingerprint from hardware.';
+            }
+        } catch (err) {
+            console.log('Backend hardware scan fetch error:', err);
+        } finally {
+            if (allotBioBtn) {
+                allotBioBtn.disabled = false;
+                allotBioBtn.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Scan Fingerprint';
+            }
+        }
+
+        // 1. MISMATCH CASE
+        if (isMismatch) {
+            allotBiometricVerified = false;
+            allotBioText.innerHTML = `<span style="color:#dc2626;font-weight:700;"><i class="fa-solid fa-ban"></i> ❌ BIOMETRIC MISMATCH / UNRECOGNIZED THUMB</span>`;
+            allotBioBadge.textContent = 'MISMATCH / REJECTED';
+            allotBioBadge.style.background = '#fef2f2';
+            allotBioBadge.style.color = '#dc2626';
+            allotBioBadge.style.borderColor = '#fecaca';
+            allotFingerprintWrapper.style.borderColor = '#dc2626';
+            allotFingerprintWrapper.style.background = '#fef2f2';
+            const icon = allotFingerprintWrapper.querySelector('i');
+            if (icon) icon.style.color = '#dc2626';
+
+            playSecurityAlarmBuzzer();
+            const voiceText = `Sorry, the biometric verification failed! Scanned thumb does not match registered personnel record. Weapon issue is strictly blocked!`;
+            speakBiometricVoice(voiceText);
+
+            alert(
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                `🚨 SECURITY ALERT: BIOMETRIC MISMATCH DETECTED!\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `The scanned thumb impression does NOT match any authorized registered record in the troops table.\n` +
+                `• Result: REJECTED (0% Match)\n\n` +
+                `⚠️ Weapon Issue is strictly blocked!\n` +
+                `Please ensure the registered soldier personally places their thumb on the sensor.\n` +
+                `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+            );
+            return;
+        }
+
+        // 2. NO TOUCH OR TIMEOUT
+        if (capturedBytesCount === 0 || !impressionBase64) {
+            allotBiometricVerified = false;
+            allotBioText.innerHTML = isTimeout
+                ? '<span style="color:#dc2626;font-weight:700;"><i class="fa-solid fa-clock"></i> ⏱️ Scan Timed Out: Place finger on sensor and click Scan</span>'
+                : `<span style="color:#dc2626;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> ${errorMessage || 'No finger detected! Press finger on sensor and click Scan'}</span>`;
+            allotBioBadge.textContent = isTimeout ? 'Timed Out' : 'No Touch Detected';
+            allotBioBadge.style.background = '#fef2f2';
+            allotBioBadge.style.color = '#dc2626';
+            allotBioBadge.style.borderColor = '#fecaca';
+            allotFingerprintWrapper.style.borderColor = '#ef4444';
+            allotFingerprintWrapper.style.background = '#fef2f2';
+            const icon = allotFingerprintWrapper.querySelector('i');
+            if (icon) icon.style.color = '#ef4444';
+
+            if (isTimeout) {
+                alert(
+                    '⏱️ SCAN TIMED OUT (NO FINGER DETECTED)\n\n' +
+                    'The HID DigitalPersona 4500 sensor waited 8 seconds, but no finger was pressed.\n\n' +
+                    '👉 How to Scan:\n' +
+                    '1. Press your finger FIRMLY in the center of the blue optical glass sensor.\n' +
+                    '2. Click "Scan Fingerprint" and keep your finger pressed for 1 second until verified.'
+                );
+            } else {
+                alert(
+                    '❌ FINGERPRINT CAPTURE NOTICE\n\n' +
+                    (errorMessage || 'No finger contact was detected on the optical sensor.') + '\n\n' +
+                    '👉 Please press your finger firmly on the sensor and try again.'
+                );
+            }
+            return;
+        }
+
+        // 3. SUCCESSFUL IDENTIFICATION & AUTO-FILL
+        allotBiometricVerified = true;
+        
+        // Auto-fill hidden form inputs
+        document.getElementById('allotArmyNumber').value = returnedArmyNumber || '';
+        document.getElementById('allotName').value = returnedTroopName || '';
+        document.getElementById('allotRank').value = returnedRank || '';
+        document.getElementById('allotCompany').value = returnedCompany || '';
+        document.getElementById('allotSection').value = returnedSection || '';
+
+        // Auto-populate visible soldier card
+        document.getElementById('allotCardArmyNo').textContent = returnedArmyNumber || '—';
+        document.getElementById('allotCardName').textContent = returnedTroopName || '—';
+        document.getElementById('allotCardRank').textContent = returnedRank || '—';
+        const coySecText = [returnedCompany, returnedSection].filter(Boolean).join(' • ') || '—';
+        document.getElementById('allotCardCompanySec').textContent = coySecText;
+
+        const soldierCard = document.getElementById('allotSoldierCard');
+        if (soldierCard) {
+            soldierCard.style.background = '#f0fdf4';
+            soldierCard.style.borderColor = '#86efac';
+            soldierCard.style.borderStyle = 'solid';
+        }
+        const emptyNote = document.getElementById('allotCardEmptyNote');
+        if (emptyNote) emptyNote.style.display = 'none';
+        const troopBadge = document.getElementById('allotTroopStatusBadge');
+        if (troopBadge) troopBadge.innerHTML = '<span style="color:#15803d;font-weight:800;"><i class="fa-solid fa-circle-check"></i> 100% IDENTIFIED & VERIFIED</span>';
+
+        const verifyLabel = `Biometric Identified: ${returnedArmyNumber} (${returnedTroopName})`;
+        allotBioText.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> ${verifyLabel}`;
+        allotBioBadge.textContent = 'Verified (100%)';
+        allotBioBadge.style.background = '#dcfce7';
+        allotBioBadge.style.color = '#15803d';
+        allotBioBadge.style.borderColor = '#86efac';
+        allotFingerprintWrapper.style.borderColor = '#16a34a';
+        allotFingerprintWrapper.style.background = '#f0fdf4';
+        const icon = allotFingerprintWrapper.querySelector('i');
+        if (icon) icon.style.color = '#16a34a';
+        playAllotBeepSound();
+
+        // Audio Voice: "Biometric matched [Troop Name]"
+        speakBiometricVoice(`Biometric matched ${returnedTroopName}.`);
+
+        alert(
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🛡️ BIOMETRIC IDENTIFICATION SUCCESSFUL\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `• Army Number: ${returnedArmyNumber || 'N/A'}\n` +
+            `• Personnel Name: ${returnedTroopName}${returnedRank ? ' (' + returnedRank + ')' : ''}\n` +
+            `• Company & Section: ${coySecText}\n` +
+            `• Verification Status: ✅ 100% Match Verified against troops Table\n` +
+            `• Hardware Device: ${deviceName}\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `✅ Personnel details auto-fetched and verified! Ready to save weapon allotment.`
+        );
+    }
+
+    if (allotPairBtn) allotPairBtn.addEventListener('click', pairAllotUsbDevice);
+    if (allotBioBtn) allotBioBtn.addEventListener('click', triggerAllotBiometricScan);
+    if (allotFingerprintWrapper) allotFingerprintWrapper.addEventListener('click', triggerAllotBiometricScan);
+
+    async function loadAvailableWeapons() {
+        if (!registerSelect) return;
+        registerSelect.innerHTML = '<option value="">Loading available weapons...</option>';
+        try {
+            const res = await fetch("{{ url_for('coy.available_weapons_route') }}");
+            const data = await res.json();
+            if (data.success && data.stock.length > 0) {
+                availableWeaponsStock = data.stock;
+                registerSelect.innerHTML = '<option value="">-- Choose Registered Weapon --</option>';
+                data.stock.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.register_number;
+                    opt.textContent = item.register_number;
+                    registerSelect.appendChild(opt);
+                });
+            } else {
+                registerSelect.innerHTML = '<option value="">No available weapons in stock</option>';
+            }
+        } catch (err) {
+            console.error('Error loading weapons stock:', err);
+            registerSelect.innerHTML = '<option value="">Error loading weapons stock</option>';
+        }
+    }
+
+    if (registerSelect) {
+        registerSelect.addEventListener('change', function() {
+            const selectedReg = this.value;
+            const item = availableWeaponsStock.find(w => w.register_number === selectedReg);
+            if (item) {
+                if (weaponTypeInput) weaponTypeInput.value = item.type || '';
+                if (buttNumberInput) buttNumberInput.value = item.butt_number || '';
+            } else {
+                if (weaponTypeInput) weaponTypeInput.value = '';
+                if (buttNumberInput) buttNumberInput.value = '';
+            }
+        });
+    }
+
+    function openAllotModal() {
+        if (allotModal) {
+            allotModal.classList.add('active');
+            loadAvailableWeapons();
+            detectAllotBiometricHardware();
+        }
+    }
+
+    function closeAllotModal() {
+        if (allotModal) {
+            allotModal.classList.remove('active');
+            if (allotForm) allotForm.reset();
+            allotBiometricVerified = false;
+            
+            // Reset hidden inputs
+            document.getElementById('allotArmyNumber').value = '';
+            document.getElementById('allotName').value = '';
+            document.getElementById('allotRank').value = '';
+            document.getElementById('allotCompany').value = '';
+            document.getElementById('allotSection').value = '';
+            
+            // Reset visual card
+            document.getElementById('allotCardArmyNo').textContent = '—';
+            document.getElementById('allotCardName').textContent = '—';
+            document.getElementById('allotCardRank').textContent = '—';
+            document.getElementById('allotCardCompanySec').textContent = '—';
+            const soldierCard = document.getElementById('allotSoldierCard');
+            if (soldierCard) {
+                soldierCard.style.background = '#f8fafc';
+                soldierCard.style.borderColor = '#cbd5e1';
+                soldierCard.style.borderStyle = 'dashed';
+            }
+            const emptyNote = document.getElementById('allotCardEmptyNote');
+            if (emptyNote) emptyNote.style.display = 'block';
+            const troopBadge = document.getElementById('allotTroopStatusBadge');
+            if (troopBadge) troopBadge.innerHTML = 'Waiting for Scan';
+
+            if (allotBioBadge) {
+                allotBioBadge.textContent = 'Connected & Ready';
+                allotBioBadge.style.background = '#fef3c7';
+                allotBioBadge.style.color = '#b45309';
+                allotBioBadge.style.borderColor = '#fde68a';
+            }
+            if (allotBioText) allotBioText.textContent = "Place Soldier's Finger on HID 4500 Optical Sensor";
+            if (allotFingerprintWrapper) {
+                allotFingerprintWrapper.style.borderColor = '#3b82f6';
+                allotFingerprintWrapper.style.background = '#eff6ff';
+                const icon = allotFingerprintWrapper.querySelector('i');
+                if (icon) icon.style.color = '#2563eb';
+            }
+        }
+    }
+
+    if (openAllotBtn) {
+        openAllotBtn.addEventListener('click', () => {
+            openAllotModal();
+        });
+    }
+    if (closeAllotBtn) closeAllotBtn.addEventListener('click', closeAllotModal);
+    if (cancelAllotBtn) cancelAllotBtn.addEventListener('click', closeAllotModal);
+
+    if (allotModal) {
+        allotModal.addEventListener('click', (e) => {
+            if (e.target === allotModal) closeAllotModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && allotModal && allotModal.classList.contains('active')) closeAllotModal();
+    });
+
+    /* Form Submit - Allot Weapon API Call */
+    if (allotForm) {
+        allotForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const regNum = registerSelect ? registerSelect.value : '';
+            const armyNum = document.getElementById('allotArmyNumber')?.value || '';
+
+            if (!regNum) {
+                alert('Please select a Register Number for the weapon.');
+                return;
+            }
+            if (!allotBiometricVerified || !armyNum) {
+                alert('Please perform Biometric Fingerprint Scan to identify and verify soldier before completing weapon allotment!');
+                return;
+            }
+
+            const formData = new FormData(allotForm);
+
+            try {
+                const res = await fetch("{{ url_for('coy.allot_weapon_route') }}", {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+
+                    // Update live dashboard counters
+                    const availEl = document.getElementById('coyAvailableStock');
+                    const issuedEl = document.getElementById('coyIssuedStock');
+                    if (availEl && parseInt(availEl.textContent) > 0) {
+                        availEl.textContent = parseInt(availEl.textContent) - 1;
+                    }
+                    if (issuedEl) {
+                        issuedEl.textContent = parseInt(issuedEl.textContent) + 1;
+                    }
+
+                    closeAllotModal();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('An unexpected error occurred: ' + err);
+            }
+        });
+    }
+</script>
+
+{% include 'update_biometric_modal.html' %}
+{% endblock %}

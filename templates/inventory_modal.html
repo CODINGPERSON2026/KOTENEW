@@ -1,0 +1,1405 @@
+<!-- INVENTORY & STOCK BARCODE HUB MODAL -->
+<div class="modal-backdrop" id="inventoryStockModal" style="z-index: 1040;">
+    <div class="modal-box-large" style="max-width: 1280px; width: 96%; border-radius: 12px; background: #ffffff; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4);">
+        
+        <!-- Modal Header -->
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #ffffff; padding: 16px 24px;">
+            <div class="modal-header__title" style="color: #ffffff; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-boxes-stacked" style="color: #3b82f6; font-size: 1.35rem;"></i>
+                <span>Inventory & Stock — Weapon Barcode Generator Hub</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="invStockStatsBadge" style="font-size: 0.82rem; font-weight: 700; background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(147, 197, 253, 0.4); padding: 5px 14px; border-radius: 20px;">
+                    Total Stock: -- | Available: -- | Issued: --
+                </span>
+                <button type="button" class="modal-header__close" id="closeInventoryStockBtn" style="color: #ffffff; font-size: 1.8rem; cursor: pointer; background: transparent; border: none; line-height: 1;">&times;</button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 22px 24px; font-size: 0.9rem; color: #334155; line-height: 1.5; max-height: 84vh; overflow-y: auto;">
+            
+            <!-- Filters & Search Toolbar -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <span><i class="fa-solid fa-filter" style="color: #2563eb;"></i> Filter Inventory Weapons for Barcode Generation</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" id="btnToggleAddWeaponForm" style="background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Add a new weapon to Armory stock">
+                            <i class="fa-solid fa-plus-circle"></i> Add New Weapon
+                        </button>
+                        <button type="button" id="btnPrintAllWeaponsBarcodes" style="background: #059669; color: #ffffff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Print 3x1 inch barcode stickers for all stock weapons at once">
+                            <i class="fa-solid fa-print"></i> Print All Sheet
+                        </button>
+                        <button type="button" id="btnOpenCustomBarcodeModal" style="background: #1e3a8a; color: #ffffff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Custom Barcode
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; align-items: end;">
+                    <!-- Filter 1: Weapon Type -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Type of Weapon</label>
+                        <select id="invFilterWeaponType" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                            <option value="ALL">-- All Types of Weapon --</option>
+                            <option value="5.56mm INSAS">5.56mm INSAS Rifle</option>
+                            <option value="7.62mm AK-47">7.62mm AK-47 Assault Rifle</option>
+                            <option value="9mm Pistol">9mm Pistol Auto</option>
+                            <option value="7.62mm LMG">7.62mm LMG Light Machine Gun</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 2: Weapon Status -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Weapon Status</label>
+                        <select id="invFilterStatus" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                            <option value="ALL">-- All Statuses --</option>
+                            <option value="Issued">🔴 Allotted / Issued</option>
+                            <option value="Available">🟢 Available</option>
+                            <option value="Deposited">📦 Deposited</option>
+                            <option value="Maintenance">🔧 Maintenance</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 3: Butt Number -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Butt Number</label>
+                        <input type="text" id="invFilterButtNo" placeholder="e.g. 14 or 07" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                    </div>
+
+                    <!-- Filter 4: Register Number -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Register Number</label>
+                        <input type="text" id="invFilterRegisterNo" placeholder="e.g. REG-INS-014" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" id="invApplyFilterBtn" style="flex: 1; padding: 7px 12px; background: #2563eb; color: #ffffff; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fa-solid fa-magnifying-glass"></i> Filter
+                        </button>
+                        <button type="button" id="invResetFilterBtn" style="padding: 7px 10px; background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer;" title="Reset Filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Weapon Card Form (Collapsible/Toggleable) -->
+            <div id="addNewWeaponFormCard" style="background: #ffffff; border: 2px solid #2563eb; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; display: none; box-shadow: 0 4px 12px rgba(37,99,235,0.08);">
+                <div style="font-size: 0.86rem; font-weight: 800; color: #1e3a8a; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fa-solid fa-plus-circle" style="color: #2563eb;"></i> Add New Weapon to Armory Inventory</span>
+                    <button type="button" id="btnCloseAddWeaponForm" style="background: transparent; border: none; font-size: 1.2rem; color: #64748b; cursor: pointer;">&times;</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end;">
+                    <!-- Type of Weapon Scroll-down Selection -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Type of Weapon <span style="color: #ef4444;">*</span></label>
+                        <select id="newWeaponTypeSelect" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                            <option value="">-- Scroll & Choose Type of Weapon --</option>
+                            <option value="INSAS 5.56mm">INSAS 5.56mm Assault Rifle</option>
+                            <option value="7.62mm AK-47 Rifle">7.62mm AK-47 Rifle</option>
+                            <option value="9mm CMG Carbine">9mm CMG Carbine Machine Gun</option>
+                            <option value="9mm Pistol Auto">9mm Pistol Auto</option>
+                            <option value="7.62mm LMG">7.62mm LMG Light Machine Gun</option>
+                            <option value="5.56mm LMG">5.56mm LMG Machine Gun</option>
+                            <option value="CUSTOM">+ Enter Custom Weapon Type...</option>
+                        </select>
+                        <input type="text" id="customNewWeaponTypeInput" placeholder="Enter custom weapon name..." style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; margin-top: 6px; display: none;">
+                    </div>
+
+                    <!-- Butt Number -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Butt Number <span style="color: #ef4444;">*</span></label>
+                        <input type="text" id="newWeaponButtNo" placeholder="e.g. BT-201 or 14" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                    </div>
+
+                    <!-- Register Number -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Register Number <span style="color: #ef4444;">*</span></label>
+                        <input type="text" id="newWeaponRegisterNo" placeholder="e.g. REG-INS-014" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; background: #ffffff; color: #0f172a;">
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 8px; grid-column: 1 / -1; justify-content: flex-end; margin-top: 4px;">
+                        <button type="button" id="btnSubmitAddWeaponOnly" style="padding: 7px 14px; background: #1e3a8a; color: #ffffff; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-plus"></i> Add Weapon to Stock
+                        </button>
+                        <button type="button" id="btnSubmitAddWeaponAndBarcode" style="padding: 7px 16px; background: #059669; color: #ffffff; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Save weapon to database and immediately pop up barcode tag">
+                            <i class="fa-solid fa-barcode"></i> Save & Generate Barcode
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Stock Table -->
+            <div style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+                    <thead>
+                        <tr style="background: #0f172a; color: #ffffff; text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <th style="padding: 12px 16px; width: 45px; text-align: center;">#</th>
+                            <th style="padding: 12px 16px;">Type of Weapon</th>
+                            <th style="padding: 12px 16px;">Butt No</th>
+                            <th style="padding: 12px 16px;">Register Number</th>
+                            <th style="padding: 12px 16px;">Stock Status</th>
+                            <th style="padding: 12px 16px; text-align: right; width: 250px;">Barcode Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryStockTableBody">
+                        <tr>
+                            <td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.4rem; color: #2563eb; margin-bottom: 8px;"></i>
+                                <div>Loading inventory & stock weapons...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="background: #f8fafc; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-circle-info" style="color: #2563eb;"></i>
+                <span>Generated barcodes are formatted for instant Google Lens & Handheld USB Laser Scanners.</span>
+            </div>
+            <button type="button" class="qm-btn qm-btn--secondary" id="dismissInventoryStockBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- WEAPON BARCODE PREVIEW MODAL (3" x 1" STICKER - ONLY BARCODE & BUTT NUMBER) -->
+<div class="modal-backdrop" id="weaponBarcodePreviewModal" style="z-index: 1050;">
+    <div class="modal-box-large" style="max-width: 440px; width: 92%;">
+        <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 12px 18px;">
+            <div class="modal-header__title" style="color: #ffffff; font-size: 0.98rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-barcode" style="color: #34d399;"></i>
+                Armory Weapon Barcode Tag (3" × 1" Sticker)
+            </div>
+            <button type="button" class="modal-header__close" id="closeWeaponBarcodeModalBtn" style="color: #ffffff; font-size: 1.5rem; cursor: pointer; background: transparent; border: none;">&times;</button>
+        </div>
+
+        <div style="padding: 24px 18px; text-align: center; background: #f8fafc; display: flex; flex-direction: column; align-items: center; gap: 14px;" id="printableBarcodeTagArea">
+            
+            <div style="font-size: 0.78rem; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-ruler-combined" style="color: #2563eb;"></i> Standard 3 Inches Width × 1 Inch Height Barcode Tag
+            </div>
+
+            <!-- 3in x 1in Thermal Barcode Sticker Container (ONLY BARCODE & BUTT NUMBER) -->
+            <div id="barcodeStickerCard" style="width: 3.0in; height: 1.0in; min-width: 3.0in; min-height: 1.0in; background: #ffffff; border: 1.5px solid #000000; border-radius: 4px; padding: 6px 8px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: Arial, Helvetica, sans-serif; overflow: hidden; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 0 auto;">
+                
+                <!-- 1D Linear Barcode -->
+                <svg id="tagBarcode1D" style="width: 100%; height: 0.58in; display: block;"></svg>
+
+                <!-- ONLY Butt Number underneath barcode -->
+                <div style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 900; color: #000000; letter-spacing: 0.6px; text-align: center; margin-top: 2px; line-height: 1;" id="tagDispButtNo">
+                    BT-201
+                </div>
+
+            </div>
+        </div>
+
+        <div class="modal-footer" style="background: #ffffff; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button type="button" id="btnPrintBarcodeTag" style="padding: 7px 16px; background: #1e3a8a; color: #ffffff; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-print"></i> Print 3"x1" Tag
+            </button>
+            <button type="button" class="qm-btn qm-btn--secondary" id="dismissWeaponBarcodeModalBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- CUSTOM BARCODE GENERATOR INPUT MODAL -->
+<div class="modal-backdrop" id="customBarcodeModal" style="z-index: 1060;">
+    <div class="modal-box-large" style="max-width: 480px; width: 90%;">
+        <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 12px 18px;">
+            <div class="modal-header__title" style="color: #ffffff; font-size: 1rem;">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color: #60a5fa;"></i>
+                Generate Custom Weapon Barcode
+            </div>
+            <button type="button" class="modal-header__close" id="closeCustomBarcodeModalBtn" style="color: #ffffff; font-size: 1.5rem; cursor: pointer; background: transparent; border: none;">&times;</button>
+        </div>
+
+        <div style="padding: 18px 20px; font-size: 0.84rem;">
+            <p style="font-size: 0.78rem; color: #64748b; margin-bottom: 12px;">
+                Enter weapon details manually to generate a scannable 1D Barcode & Google Lens QR code tag:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="display: block; font-size: 0.76rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Type of Weapon <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="customInputWeaponType" placeholder="e.g. 5.56mm INSAS or 7.62mm AK-47" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;" value="5.56mm INSAS">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.76rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Butt Number <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="customInputButtNo" placeholder="e.g. 14" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;" value="14">
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 0.76rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Register Number <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="customInputRegisterNo" placeholder="e.g. REG-INS-014" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;" value="REG-INS-014">
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="background: #f8fafc; padding: 12px 18px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button type="button" id="btnSubmitCustomBarcode" style="padding: 8px 16px; background: #2563eb; color: #ffffff; border: none; border-radius: 6px; font-size: 0.84rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-qrcode"></i> Generate Barcode Tag
+            </button>
+            <button type="button" class="qm-btn qm-btn--secondary" id="dismissCustomBarcodeModalBtn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ALLOTTED WEAPON DETAILS POPUP MODAL -->
+<div class="modal-backdrop" id="allottedWeaponDetailsModal" style="z-index: 1070;">
+    <div class="modal-box" style="max-width: 540px; width: 92%; border-radius: 12px; background: #ffffff; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #ffffff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-person-military-rifle" style="color: #f59e0b;"></i>
+                <span>Allotted Weapon & Duty Location Details</span>
+            </div>
+            <button type="button" onclick="closeAllottedWeaponDetailsModal()" style="background: transparent; border: none; color: #ffffff; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div style="padding: 20px;" id="allottedWeaponDetailsBody">
+            <!-- Dynamically populated via JS -->
+        </div>
+        <div style="background: #f8fafc; padding: 12px 18px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="closeAllottedWeaponDetailsModal()" class="qm-btn qm-btn--secondary" style="padding: 6px 16px; border-radius: 6px; font-weight: 700;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- DEDICATED ALLOTTED WEAPONS & DUTY LOCATION HUB MODAL -->
+<div class="modal-backdrop" id="allottedWeaponsHubModal" style="z-index: 1045;">
+    <div class="modal-box-large" style="max-width: 1050px; width: 95%; border-radius: 12px; background: #ffffff; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4);">
+        
+        <!-- Modal Header -->
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #ffffff; padding: 16px 22px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-weight: 800; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-person-military-rifle" style="color: #f59e0b; font-size: 1.3rem;"></i>
+                <span>Allotted Weapons & Duty Location Hub</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="allottedWeaponsStatsBadge" style="font-size: 0.82rem; font-weight: 700; background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); padding: 4px 12px; border-radius: 20px;">
+                    Total Allotted: -- | Permanent: -- | Temporary: --
+                </span>
+                <button type="button" onclick="closeAllottedWeaponsHubModal()" style="color: #ffffff; font-size: 1.6rem; cursor: pointer; background: transparent; border: none; line-height: 1;">&times;</button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 20px; font-size: 0.86rem; color: #334155; max-height: 80vh; overflow-y: auto;">
+            
+            <!-- Filters Toolbar -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center;">
+                    <!-- Search Bar -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                            <i class="fa-solid fa-magnifying-glass" style="color: #2563eb;"></i> Quick Search Allotted Weapons
+                        </label>
+                        <input type="text" id="allottedSearchInput" onkeyup="filterAllottedWeaponsTable()" placeholder="Search by Army No, Soldier Name, Register No, Butt No or Duty Location..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.84rem; background: #ffffff; color: #0f172a; font-weight: 600;">
+                    </div>
+
+                    <!-- Movement Status Filter (action_type) -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Movement Status</label>
+                        <select id="allottedActionTypeFilter" onchange="loadAllottedWeaponsHubData()" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.84rem; background: #ffffff; color: #0f172a; font-weight: 800;">
+                            <option value="OUT" selected>🔴 Currently OUT on Duty</option>
+                            <option value="ALL">-- All Movement Statuses --</option>
+                            <option value="IN">🟢 Currently IN Armory</option>
+                        </select>
+                    </div>
+
+                    <!-- Allotment Type Filter -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Allotment Category</label>
+                        <select id="allottedTypeFilter" onchange="filterAllottedWeaponsTable()" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.84rem; background: #ffffff; color: #0f172a; font-weight: 600;">
+                            <option value="ALL">-- All Categories --</option>
+                            <option value="Permanent">🟢 Permanent Allotment</option>
+                            <option value="Temporary">✈️ Temporary (Leave Transfer)</option>
+                        </select>
+                    </div>
+
+                    <!-- Duty Location Filter -->
+                    <div>
+                        <label style="display: block; font-size: 0.74rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Duty Location</label>
+                        <select id="allottedDutyFilter" onchange="filterAllottedWeaponsTable()" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.84rem; background: #ffffff; color: #0f172a; font-weight: 600;">
+                            <option value="ALL">-- All Locations --</option>
+                        </select>
+                    </div>
+
+                    <!-- Refresh Button -->
+                    <div>
+                        <button type="button" onclick="loadAllottedWeaponsHubData()" style="padding: 8px 14px; background: #2563eb; color: #ffffff; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;" title="Refresh live data">
+                            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Allotted Weapons Table -->
+            <div style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem;">
+                    <thead>
+                        <tr style="background: #0f172a; color: #ffffff; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <th style="padding: 10px 12px; width: 40px; text-align: center;">#</th>
+                            <th style="padding: 10px 12px;">Weapon Identification</th>
+                            <th style="padding: 10px 12px;">Allotted Jawan / Soldier</th>
+                            <th style="padding: 10px 12px;">Assigned Duty Location</th>
+                            <th style="padding: 10px 12px;">Allotment Mode</th>
+                            <th style="padding: 10px 12px; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allottedWeaponsHubTableBody">
+                        <tr>
+                            <td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: #2563eb; margin-bottom: 8px;"></i>
+                                <div>Loading allotted weapons and duty locations...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="background: #f8fafc; padding: 12px 22px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600;">
+                <i class="fa-solid fa-circle-info" style="color: #2563eb;"></i> Duty Location is automatically populated from <code>issuance_logs</code> using <code>army_number = alloted_to_army_number</code>
+            </div>
+            <button type="button" onclick="closeAllottedWeaponsHubModal()" class="qm-btn qm-btn--secondary" style="padding: 6px 18px; border-radius: 6px; font-weight: 700;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- BARCODE & QR LIBRARIES -->
+<script src="/static/js/JsBarcode.all.min.js" onerror="loadJsBarcodeFallback()"></script>
+<script src="/static/js/qrcode.min.js" onerror="loadQrCodeFallback()"></script>
+
+<script>
+    /* INVENTORY STOCK & BARCODE GENERATOR CONTROLLER */
+    let inventoryStockData = [];
+    let distinctWeaponTypesList = [];
+
+    // Fallbacks if static CDN files not locally cached
+    function loadJsBarcodeFallback() {
+        if (typeof JsBarcode === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
+            document.head.appendChild(script);
+        }
+    }
+    function loadQrCodeFallback() {
+        if (typeof QRCode === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+            document.head.appendChild(script);
+        }
+    }
+
+    // Modal Control Functions
+    function openInventoryStockModal(initialStatus) {
+        const modal = document.getElementById('inventoryStockModal');
+        if (modal) {
+            if (initialStatus) {
+                const statusSelect = document.getElementById('invFilterStatus');
+                if (statusSelect) statusSelect.value = initialStatus;
+            }
+            modal.classList.add('active');
+            loadInventoryStock();
+        }
+    }
+
+    function closeInventoryStockModal() {
+        const modal = document.getElementById('inventoryStockModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    // Load Inventory Stock from Server API
+    async function loadInventoryStock() {
+        const tbody = document.getElementById('inventoryStockTableBody');
+        const wType = document.getElementById('invFilterWeaponType').value;
+        const statusVal = document.getElementById('invFilterStatus') ? document.getElementById('invFilterStatus').value : '';
+        const buttNo = document.getElementById('invFilterButtNo').value.trim();
+        const regNo = document.getElementById('invFilterRegisterNo').value.trim();
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.4rem; color: #2563eb; margin-bottom: 8px;"></i>
+                    <div>Loading inventory weapons stock...</div>
+                </td>
+            </tr>
+        `;
+
+        try {
+            const params = new URLSearchParams();
+            if (wType) params.append('type', wType);
+            if (statusVal) params.append('status', statusVal);
+            if (buttNo) params.append('butt_number', buttNo);
+            if (regNo) params.append('register_number', regNo);
+
+            const res = await fetch(`/api/inventory_stock?${params.toString()}`);
+            const data = await res.json();
+
+            if (data.success && data.stock) {
+                inventoryStockData = data.stock;
+                distinctWeaponTypesList = data.types || [];
+
+                // Populate Weapon Type Dropdown options if first load
+                const dropdown = document.getElementById('invFilterWeaponType');
+                const currVal = dropdown.value;
+                if (distinctWeaponTypesList.length > 0 && dropdown.options.length <= 5) {
+                    dropdown.innerHTML = '<option value="ALL">-- All Types of Weapon --</option>';
+                    distinctWeaponTypesList.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t;
+                        opt.textContent = t;
+                        dropdown.appendChild(opt);
+                    });
+                    dropdown.value = currVal || 'ALL';
+                }
+
+                // Stats badge (Held Strength excludes Deposited weapons)
+                if (data.stats) {
+                    const heldStr = data.stats.held_strength !== undefined ? data.stats.held_strength : data.stats.total;
+                    const depCount = data.stats.deposited || 0;
+                    const badgeEl = document.getElementById('invStockStatsBadge');
+                    if (badgeEl) {
+                        badgeEl.textContent = `Held Strength: ${heldStr} | Available: ${data.stats.available} | Issued: ${data.stats.issued} | Deposited: ${depCount}`;
+                    }
+                }
+
+                renderInventoryTable(inventoryStockData);
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 20px; text-align: center; color: #ef4444;">
+                            Failed to load inventory stock. ${data.message || ''}
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (err) {
+            console.error('Error loading inventory:', err);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="padding: 20px; text-align: center; color: #ef4444;">
+                        Server connection error while loading stock.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Change Weapon Stock Status via API (Available, Issued, Deposited, Maintenance)
+    async function changeWeaponStatus(weaponId, newStatus) {
+        if (!weaponId || !newStatus) return;
+        try {
+            const res = await fetch('/api/update_weapon_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: weaponId, status: newStatus })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Instantly refresh inventory table & stats
+                loadInventoryStock();
+            } else {
+                alert('Error updating status: ' + (data.message || 'Server error'));
+            }
+        } catch (err) {
+            console.error('Error changing weapon status:', err);
+        }
+    }
+
+    // Delete Weapon Record permanently via API
+    async function deleteWeaponRecord(weaponId, regNo) {
+        if (!weaponId) return;
+        const confirmDel = confirm(`Are you sure you want to DELETE weapon record (Reg No: ${regNo || weaponId}) from inventory stock?`);
+        if (!confirmDel) return;
+
+        try {
+            const res = await fetch('/api/delete_inventory_weapon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: weaponId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Instantly refresh inventory table & dashboard stats
+                loadInventoryStock();
+            } else {
+                alert('Error deleting weapon: ' + (data.message || 'Server error'));
+            }
+        } catch (err) {
+            console.error('Error deleting weapon record:', err);
+            alert('Failed to delete weapon: ' + err);
+        }
+    }
+
+    // Render Table Rows with Status Scroll-down Dropdown, Delete Button & Deposit Button
+    function renderInventoryTable(stockList) {
+        const tbody = document.getElementById('inventoryStockTableBody');
+        if (!stockList || stockList.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">
+                        No weapon records matching current filter criteria.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        stockList.forEach((item, idx) => {
+            const rawStatus = (item.weapon_status || 'Available').trim();
+            const lowerStatus = rawStatus.toLowerCase();
+
+            // Status select dropdown option selection
+            const selAvail = lowerStatus === 'available' ? 'selected' : '';
+            const selIssued = (lowerStatus === 'issued' || lowerStatus === 'alloted') ? 'selected' : '';
+            const selDeposited = (lowerStatus === 'deposited' || lowerStatus === 'deposit') ? 'selected' : '';
+            const selMaint = (lowerStatus === 'maintenance' || lowerStatus === 'repair') ? 'selected' : '';
+
+            // Status Badge formatting
+            let statusStyle = 'background: #dcfce7; color: #15803d; border: 1px solid #86efac;';
+            let statusLabelText = '🟢 Available';
+            if (lowerStatus === 'issued' || lowerStatus === 'alloted') {
+                statusStyle = 'background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;';
+                statusLabelText = '🔴 Allotted';
+            } else if (lowerStatus === 'deposited' || lowerStatus === 'deposit') {
+                statusStyle = 'background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;';
+                statusLabelText = '📦 Deposited';
+            } else if (lowerStatus === 'maintenance' || lowerStatus === 'repair') {
+                statusStyle = 'background: #fef3c7; color: #b45309; border: 1px solid #fde68a;';
+                statusLabelText = '🔧 Maintenance';
+            }
+
+            // Sanitize single quotes for inline JS call
+            const escType = (item.type || '').replace(/'/g, "\\'");
+            const escButt = (item.butt_number || '').replace(/'/g, "\\'");
+            const escReg = (item.register_number || '').replace(/'/g, "\\'");
+
+            // Quick Delete button (positioned to the LEFT of Deposit button)
+            const deleteBtnHtml = `<button type="button" onclick="deleteWeaponRecord(${item.id}, '${escReg}')" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 6px; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;" title="Delete weapon record permanently from stock">
+                    <i class="fa-solid fa-trash-can"></i> Delete
+               </button>`;
+
+            // Quick Deposit button (removes from active Held Strength count)
+            const isDeposited = lowerStatus === 'deposited' || lowerStatus === 'deposit';
+            const depositBtnHtml = isDeposited
+                ? `<span style="font-size: 0.72rem; font-weight: 700; color: #0284c7; padding: 3px 6px; background: #e0f2fe; border-radius: 6px;"><i class="fa-solid fa-box-archive"></i> Deposited</span>`
+                : `<button type="button" onclick="changeWeaponStatus(${item.id}, 'Deposited')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 6px; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;" title="Deposit weapon to depot (Removes from active Held Strength)">
+                        <i class="fa-solid fa-box-archive"></i> Deposit
+                   </button>`;
+
+            // Allottee & Leave Transfer status info
+            let allotteeBadgeHtml = '';
+            const isAllottedOrIssued = lowerStatus === 'issued' || lowerStatus === 'alloted' || item.alloted_to_army_number;
+            const jawanName = (item.allottee_rank ? item.allottee_rank + ' ' : '') + (item.allottee_name || '');
+            const dutyLoc = item.duty_location || 'RP';
+
+            if (item.alloted_to_army_number || isAllottedOrIssued) {
+                const itemJsonEsc = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                if (item.allotment_type === 'Temporary') {
+                    allotteeBadgeHtml = `
+                        <div onclick="event.stopPropagation(); openAllottedWeaponDetailsModal(${itemJsonEsc})" 
+                             style="font-size: 0.7rem; color: #0369a1; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 6px; padding: 4px 6px; margin-top: 4px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;"
+                             onmouseover="this.style.borderColor='#0284c7'; this.style.background='#bae6fd';"
+                             onmouseout="this.style.borderColor='#7dd3fc'; this.style.background='#e0f2fe';"
+                             title="Click to view full Allotted Weapon details">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                <span><i class="fa-solid fa-plane-departure"></i> Temp: ${item.alloted_to_army_number} ${jawanName ? '(' + jawanName + ')' : ''}</span>
+                                <span style="font-size: 0.65rem; color: #0284c7;"><i class="fa-solid fa-circle-info"></i> Details</span>
+                            </div>
+                            <div style="font-size: 0.66rem; color: #0284c7; margin-top: 2px;">Perm: ${item.permanent_allottee_army_no || '—'} (Leave: ${item.leave_start_date || ''} to ${item.leave_end_date || ''})</div>
+                            <div style="margin-top: 3px; font-weight: 800; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-location-dot" style="color: #dc2626;"></i> Duty Location: ${dutyLoc}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    allotteeBadgeHtml = `
+                        <div onclick="event.stopPropagation(); openAllottedWeaponDetailsModal(${itemJsonEsc})" 
+                             style="font-size: 0.72rem; color: #1e293b; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 4px 7px; margin-top: 4px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;"
+                             onmouseover="this.style.borderColor='#f59e0b'; this.style.background='#fef3c7';"
+                             onmouseout="this.style.borderColor='#fde68a'; this.style.background='#fffbeb';"
+                             title="Click to view full Allotted Weapon details">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                                <span><i class="fa-solid fa-user-check" style="color: #16a34a;"></i> Owner: <b>${item.alloted_to_army_number || 'Allotted'}</b> ${jawanName ? '(' + jawanName + ')' : ''}</span>
+                                <span style="font-size: 0.68rem; color: #2563eb; text-decoration: underline;"><i class="fa-solid fa-circle-info"></i> Details</span>
+                            </div>
+                            <div style="margin-top: 3px; font-weight: 800; color: #b45309; background: #ffffff; border: 1px solid #fcd34d; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-location-dot" style="color: #dc2626;"></i> Duty Location: ${dutyLoc}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            const rowItemJsonEsc = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            const isClickableRow = isAllottedOrIssued;
+
+            html += `
+                <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s ease; ${isClickableRow ? 'cursor: pointer;' : ''}" 
+                    ${isClickableRow ? `onclick="openAllottedWeaponDetailsModal(${rowItemJsonEsc})"` : ''}
+                    onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 12px 16px; text-align: center; font-weight: 800; color: #64748b;">${idx + 1}</td>
+                    <td style="padding: 12px 16px; font-weight: 800; color: #0f172a; font-size: 0.92rem;">
+                        <i class="fa-solid fa-crosshairs" style="color: #2563eb; margin-right: 6px;"></i>
+                        ${item.type}
+                    </td>
+                    <td style="padding: 12px 16px; font-weight: 800; color: #1e3a8a; font-size: 0.9rem;">
+                        ${item.butt_number}
+                    </td>
+                    <td style="padding: 12px 16px; font-family: monospace; font-size: 0.92rem; font-weight: 800; color: #059669;">
+                        ${item.register_number}
+                        ${allotteeBadgeHtml}
+                    </td>
+                    <td style="padding: 12px 16px;" onclick="event.stopPropagation();">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; padding: 4px 10px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; white-space: nowrap; ${statusStyle}">
+                                ${statusLabelText}
+                            </span>
+                            ${deleteBtnHtml}
+                            ${depositBtnHtml}
+                        </div>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: right;" onclick="event.stopPropagation();">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                            <button type="button" onclick="openWeaponBarcodeModal('${escType}', '${escButt}', '${escReg}')" 
+                                style="background: #0f172a; color: #34d399; border: 1px solid #334155; border-radius: 6px; padding: 5px 10px; font-size: 0.74rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" 
+                                title="Generate Scannable Barcode Tag">
+                                <i class="fa-solid fa-qrcode"></i> Generate Barcode
+                            </button>
+                            <button type="button" onclick="openWeaponBarcodeModal('${escType}', '${escButt}', '${escReg}', true)" 
+                                style="background: #ffffff; color: #1e3a8a; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 8px; font-size: 0.74rem; font-weight: 600; cursor: pointer;" 
+                                title="Print Weapon Tag">
+                                <i class="fa-solid fa-print"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // Open Allotted Weapon Details Popup Modal
+    function openAllottedWeaponDetailsModal(item) {
+        if (!item) return;
+        const modal = document.getElementById('allottedWeaponDetailsModal');
+        const body = document.getElementById('allottedWeaponDetailsBody');
+        if (!modal || !body) return;
+
+        const rankStr = item.allottee_rank ? `${item.allottee_rank} ` : '';
+        const nameStr = item.allottee_name || '';
+        const coyStr = item.allottee_company ? ` (${item.allottee_company})` : '';
+        const fullJawanName = (rankStr + nameStr + coyStr).trim() || 'Troop Details Recorded in DB';
+        const dutyLoc = item.duty_location || 'RP (Regimental Police)';
+
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Weapon Identification Box -->
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 44px; height: 44px; border-radius: 8px; background: #1e3a8a; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                            <i class="fa-solid fa-gun"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.02rem; font-weight: 800; color: #1e3a8a;">${item.type || 'Weapon'}</div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-top: 2px;">
+                                Reg No: <span style="font-family: monospace; color: #059669; font-weight: 800;">${item.register_number}</span> | Butt No: <span style="color: #0284c7; font-weight: 800;">${item.butt_number}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: 800; padding: 3px 8px; border-radius: 6px; font-size: 0.74rem;">
+                        ${item.weapon_status || 'Alloted'}
+                    </span>
+                </div>
+
+                <!-- Duty Location Card (Highlighted) -->
+                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 14px; box-shadow: 0 2px 6px rgba(22,163,74,0.06);">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #166534; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-location-dot" style="color: #dc2626; font-size: 1rem;"></i> Current Assigned Duty Location
+                    </div>
+                    <div style="font-size: 1.1rem; font-weight: 800; color: #15803d; display: flex; align-items: center; gap: 8px;">
+                        <span>${dutyLoc}</span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 6px;">
+                        <i class="fa-solid fa-database" style="color: #2563eb;"></i> Fetched from <code>issuance_logs</code> where <code>army_number = ${item.alloted_to_army_number || 'N/A'}</code>
+                    </div>
+                </div>
+
+                <!-- Allottee Jawan Details Box -->
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #b45309; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-user-shield" style="font-size: 0.95rem;"></i> Allottee Jawan Information
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.84rem;">
+                        <div><strong style="color: #64748b;">Army No:</strong> <br><span style="font-weight: 800; color: #0f172a; font-size: 0.9rem;">${item.alloted_to_army_number || 'N/A'}</span></div>
+                        <div><strong style="color: #64748b;">Soldier Name:</strong> <br><span style="font-weight: 700; color: #0f172a;">${fullJawanName}</span></div>
+                        <div><strong style="color: #64748b;">Allotment Mode:</strong> <br><span style="font-weight: 700; color: #2563eb;">${item.allotment_type || 'Permanent'}</span></div>
+                        <div><strong style="color: #64748b;">Current Status:</strong> <br><span style="font-weight: 700; color: #dc2626;">🔴 Allotted & Handed Over</span></div>
+                    </div>
+                </div>
+
+                ${item.allotment_type === 'Temporary' ? `
+                    <div style="background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 8px; padding: 10px 12px; font-size: 0.78rem; color: #0369a1;">
+                        <strong><i class="fa-solid fa-plane-departure"></i> Temporary Allotment on Leave Transfer:</strong><br>
+                        Permanent Allottee Army No: <b>${item.permanent_allottee_army_no || '—'}</b><br>
+                        Leave Duration: <b>${item.leave_start_date || 'N/A'}</b> to <b>${item.leave_end_date || 'N/A'}</b>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        modal.classList.add('active');
+    }
+
+    function closeAllottedWeaponDetailsModal() {
+        const modal = document.getElementById('allottedWeaponDetailsModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    /* Dedicated Allotted Weapons & Duty Location Hub Controller */
+    let rawAllottedWeaponsData = [];
+
+    async function loadAllottedWeaponsHubData() {
+        const tbody = document.getElementById('allottedWeaponsHubTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="padding: 24px; text-align: center; color: #64748b;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: #2563eb; margin-bottom: 8px;"></i>
+                    <div>Loading allotted weapons and duty locations...</div>
+                </td>
+            </tr>
+        `;
+
+        try {
+            const actionTypeVal = document.getElementById('allottedActionTypeFilter') ? document.getElementById('allottedActionTypeFilter').value : 'OUT';
+            const res = await fetch(`/api/inventory_stock?status=Issued&action_type=${encodeURIComponent(actionTypeVal)}`);
+            const data = await res.json();
+
+            if (data.success && data.stock) {
+                rawAllottedWeaponsData = data.stock;
+                
+                // Populate Duty Location filter dropdown
+                const dutyFilter = document.getElementById('allottedDutyFilter');
+                if (dutyFilter) {
+                    const locationsSet = new Set();
+                    rawAllottedWeaponsData.forEach(item => {
+                        if (item.duty_location) locationsSet.add(item.duty_location);
+                    });
+                    let dutyOpts = '<option value="ALL">-- All Locations --</option>';
+                    locationsSet.forEach(loc => {
+                        dutyOpts += `<option value="${loc}">${loc}</option>`;
+                    });
+                    dutyFilter.innerHTML = dutyOpts;
+                }
+
+                // Stats badge
+                const totalCount = rawAllottedWeaponsData.length;
+                const permCount = rawAllottedWeaponsData.filter(i => i.allotment_type !== 'Temporary').length;
+                const tempCount = rawAllottedWeaponsData.filter(i => i.allotment_type === 'Temporary').length;
+
+                const badge = document.getElementById('allottedWeaponsStatsBadge');
+                if (badge) {
+                    badge.textContent = `Total Allotted: ${totalCount} | Permanent: ${permCount} | Temporary: ${tempCount}`;
+                }
+
+                renderAllottedWeaponsTable(rawAllottedWeaponsData);
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 20px; text-align: center; color: #ef4444; font-weight: 700;">
+                            No allotted weapons found or failed to load data. ${data.message || ''}
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (err) {
+            console.error("Error loading allotted weapons hub data:", err);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="padding: 20px; text-align: center; color: #ef4444; font-weight: 700;">
+                        Network / server connection error while loading allotted weapons.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function renderAllottedWeaponsTable(items) {
+        const tbody = document.getElementById('allottedWeaponsHubTableBody');
+        if (!tbody) return;
+
+        if (!items || items.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="padding: 24px; text-align: center; color: #64748b; font-weight: 700;">
+                        <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #10b981; margin-bottom: 6px;"></i>
+                        <div>No allotted weapons match the specified search/filter criteria.</div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        items.forEach((item, idx) => {
+            const jawanName = (item.allottee_rank ? item.allottee_rank + ' ' : '') + (item.allottee_name || '');
+            const coyStr = item.allottee_company ? ` (${item.allottee_company})` : '';
+            const fullJawan = (jawanName + coyStr).trim() || 'Recorded in DB';
+            const dutyLoc = item.duty_location || 'RP (Regimental Police)';
+            const itemJsonEsc = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+            let categoryBadge = `<span style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 6px; font-size: 0.74rem; font-weight: 800;"><i class="fa-solid fa-circle-check"></i> Permanent Allotment</span>`;
+            if (item.allotment_type === 'Temporary') {
+                categoryBadge = `
+                    <div style="font-size: 0.72rem; color: #0369a1; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 6px; padding: 4px 7px; font-weight: 700;">
+                        <i class="fa-solid fa-plane-departure"></i> Temporary Transfer<br>
+                        <span style="font-size: 0.68rem; color: #0284c7;">Perm Owner: ${item.permanent_allottee_army_no || '—'}</span>
+                    </div>
+                `;
+            }
+
+            html += `
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease; cursor: pointer;" 
+                    onclick="openAllottedWeaponDetailsModal(${itemJsonEsc})"
+                    onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #64748b;">${idx + 1}</td>
+                    
+                    <td style="padding: 10px 12px;">
+                        <div style="font-weight: 800; color: #1e3a8a; font-size: 0.9rem;">
+                            <i class="fa-solid fa-crosshairs" style="color: #2563eb; margin-right: 6px;"></i> ${item.type}
+                        </div>
+                        <div style="font-size: 0.76rem; font-weight: 700; color: #475569; margin-top: 2px;">
+                            Reg No: <span style="font-family: monospace; color: #059669; font-weight: 800;">${item.register_number}</span> | Butt: <span style="color: #0284c7; font-weight: 800;">${item.butt_number}</span>
+                        </div>
+                    </td>
+
+                    <td style="padding: 10px 12px;">
+                        <div style="font-weight: 800; color: #0f172a; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-user-shield" style="color: #16a34a;"></i>
+                            <span>Army No: ${item.alloted_to_army_number || 'N/A'}</span>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 700; color: #475569; margin-top: 2px;">
+                            ${fullJawan}
+                        </div>
+                    </td>
+
+                    <td style="padding: 10px 12px;">
+                        <div style="background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                            <i class="fa-solid fa-location-dot" style="color: #dc2626; font-size: 0.95rem;"></i>
+                            <span style="font-weight: 800; color: #b45309; font-size: 0.86rem;">${dutyLoc}</span>
+                        </div>
+                    </td>
+
+                    <td style="padding: 10px 12px;">
+                        ${categoryBadge}
+                    </td>
+
+                    <td style="padding: 10px 12px; text-align: center;" onclick="event.stopPropagation();">
+                        <button type="button" onclick="openAllottedWeaponDetailsModal(${itemJsonEsc})" 
+                            style="background: #1e3a8a; color: #ffffff; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.76rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px rgba(30,58,138,0.2);" 
+                            title="View Full Details">
+                            <i class="fa-solid fa-circle-info"></i> Details
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function filterAllottedWeaponsTable() {
+        const q = (document.getElementById('allottedSearchInput')?.value || '').toLowerCase().trim();
+        const cat = (document.getElementById('allottedTypeFilter')?.value || 'ALL');
+        const loc = (document.getElementById('allottedDutyFilter')?.value || 'ALL');
+
+        const filtered = rawAllottedWeaponsData.filter(item => {
+            const matchesQ = !q || 
+                (item.alloted_to_army_number || '').toLowerCase().includes(q) ||
+                (item.allottee_name || '').toLowerCase().includes(q) ||
+                (item.allottee_rank || '').toLowerCase().includes(q) ||
+                (item.register_number || '').toLowerCase().includes(q) ||
+                (item.butt_number || '').toLowerCase().includes(q) ||
+                (item.type || '').toLowerCase().includes(q) ||
+                (item.duty_location || '').toLowerCase().includes(q);
+
+            const matchesCat = cat === 'ALL' || (item.allotment_type || 'Permanent') === cat;
+            const matchesLoc = loc === 'ALL' || (item.duty_location || 'RP') === loc;
+
+            return matchesQ && matchesCat && matchesLoc;
+        });
+
+        renderAllottedWeaponsTable(filtered);
+    }
+
+    function openAllottedWeaponsHubModal() {
+        const modal = document.getElementById('allottedWeaponsHubModal');
+        if (modal) {
+            modal.classList.add('active');
+            loadAllottedWeaponsHubData();
+        }
+    }
+
+    function closeAllottedWeaponsHubModal() {
+        const modal = document.getElementById('allottedWeaponsHubModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    // Offline Code128 Barcode SVG Renderer (Zero External Dependency)
+    function renderOfflineCode128Svg(svgElement, barcodeText) {
+        if (!svgElement) return;
+        var strText = String(barcodeText || '1001').trim();
+
+        var patterns = {
+            ' ': '11011001100', '!': '11001101100', '"': '11001100110', '#': '10010011000',
+            '$': '10010001100', '%': '10001001100', '&': '10011001000', "'": '10011000100',
+            '(': '10001100100', ')': '11001001000', '*': '11001000100', '+': '11000100100',
+            ',': '10110011100', '-': '10011011100', '.': '10011001110', '/': '10111001100',
+            '0': '10011101100', '1': '10011100110', '2': '11001110100', '3': '11001110010',
+            '4': '11011100100', '5': '11011011100', '6': '11011001110', '7': '11011101100',
+            '8': '11011100110', '9': '11011011100', 'A': '11010010000', 'B': '11010001000',
+            'C': '11010000100', 'D': '11001010000', 'E': '11001001000', 'F': '11001000100',
+            'G': '11000101000', 'H': '11000100100', 'I': '10110010000', 'J': '10110001000',
+            'K': '10011010000', 'L': '10011001000', 'M': '10011000100', 'N': '10001101000',
+            'O': '10001100100', 'P': '10001011000', 'Q': '10001001100', 'R': '10110000100',
+            'S': '10011000010', 'T': '10001100010', 'U': '11010000110', 'V': '11000100110',
+            'W': '11000010010', 'X': '11000011010', 'Y': '11011000010', 'Z': '11011000100'
+        };
+
+        var startB = '11010010000';
+        var stop = '1100011101011';
+
+        var binary = startB;
+        for (var i = 0; i < strText.length; i++) {
+            var ch = strText[i].toUpperCase();
+            if (patterns[ch]) {
+                binary += patterns[ch];
+            } else {
+                binary += '10011101100';
+            }
+        }
+        binary += stop;
+
+        svgElement.innerHTML = '';
+        var width = 2;
+        var x = 8;
+        for (var b = 0; b < binary.length; b++) {
+            if (binary[b] === '1') {
+                var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x);
+                rect.setAttribute('y', 2);
+                rect.setAttribute('width', width);
+                rect.setAttribute('height', 48);
+                rect.setAttribute('fill', '#000000');
+                svgElement.appendChild(rect);
+            }
+            x += width;
+        }
+        svgElement.setAttribute('viewBox', '0 0 ' + (x + 8) + ' 54');
+    }
+
+    // Open Barcode Modal for specific Weapon (3" x 1" Sticker — ONLY Barcode & Butt Number)
+    function openWeaponBarcodeModal(wType, buttNo, regNo, autoPrint = false) {
+        const buttText = buttNo || regNo || '—';
+        const tagDisp = document.getElementById('tagDispButtNo');
+        if (tagDisp) tagDisp.textContent = buttText;
+
+        const modal = document.getElementById('weaponBarcodePreviewModal');
+        if (modal) modal.classList.add('active');
+
+        // Render 1D Code128 Barcode (100% OFFLINE Compatible)
+        const svgEl = document.getElementById('tagBarcode1D');
+        const codeVal = regNo || buttNo || '1001';
+
+        if (typeof JsBarcode !== 'undefined') {
+            try {
+                JsBarcode("#tagBarcode1D", codeVal, {
+                    format: "CODE128",
+                    lineColor: "#000000",
+                    width: 2,
+                    height: 48,
+                    displayValue: false,
+                    margin: 2
+                });
+            } catch (e) {
+                renderOfflineCode128Svg(svgEl, codeVal);
+            }
+        } else {
+            renderOfflineCode128Svg(svgEl, codeVal);
+        }
+
+        if (autoPrint) {
+            setTimeout(() => {
+                printBarcodeTag();
+            }, 400);
+        }
+    }
+
+    function closeWeaponBarcodeModal() {
+        const modal = document.getElementById('weaponBarcodePreviewModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    // Custom Barcode Modal Functions
+    function openCustomBarcodeModal() {
+        const modal = document.getElementById('customBarcodeModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeCustomBarcodeModal() {
+        const modal = document.getElementById('customBarcodeModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    // Print Barcode Tag Card (Exact 3" x 1" Thermal Sticker Label)
+    function printBarcodeTag() {
+        const cardObj = document.getElementById('barcodeStickerCard');
+        if (!cardObj) return;
+
+        const printWin = window.open('', '_blank', 'width=450,height=300');
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>3x1 Barcode Tag — 15 CESR KOTE</title>
+                <style>
+                    @page {
+                        size: 3in 1in;
+                        margin: 0;
+                    }
+                    html, body {
+                        width: 3in;
+                        height: 1in;
+                        margin: 0;
+                        padding: 0;
+                        background: #ffffff;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-family: Arial, sans-serif;
+                    }
+                    #barcodeStickerCard {
+                        width: 3.0in !important;
+                        height: 1.0in !important;
+                        box-shadow: none !important;
+                        border: 1px solid #000000 !important;
+                        margin: 0 !important;
+                    }
+                </style>
+            </head>
+            <body>
+                ${cardObj.outerHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        window.close();
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWin.document.close();
+    }
+
+    // Batch Print All Stock Weapons 3" x 1" Barcode Sticker Sheet
+    function printAllWeaponsBarcodes() {
+        if (!inventoryStockData || inventoryStockData.length === 0) {
+            alert('No inventory stock weapons available to print!');
+            return;
+        }
+
+        const printWin = window.open('', '_blank', 'width=820,height=900');
+        let stickersHtml = '';
+
+        inventoryStockData.forEach((item, index) => {
+            const buttText = item.butt_number || item.register_number || '—';
+            const svgId = `batch_svg_${index}`;
+
+            stickersHtml += `
+                <div class="batch-sticker-card">
+                    <svg id="${svgId}" class="batch-barcode-svg"></svg>
+                    <div class="batch-butt-no">${buttText}</div>
+                </div>
+            `;
+        });
+
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>All Weapons Barcode Sheet — 15 CESR KOTE</title>
+                <style>
+                    @page {
+                        size: A4 portrait;
+                        margin: 10mm;
+                    }
+                    body {
+                        font-family: Arial, Helvetica, sans-serif;
+                        margin: 0;
+                        padding: 10px;
+                        background: #ffffff;
+                    }
+                    .sheet-header {
+                        text-align: center;
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: #000000;
+                        margin-bottom: 12px;
+                        padding-bottom: 6px;
+                        border-bottom: 2px solid #000000;
+                    }
+                    .sticker-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, 3in);
+                        gap: 10px 14px;
+                        justify-content: center;
+                    }
+                    .batch-sticker-card {
+                        width: 3.0in;
+                        height: 1.0in;
+                        box-sizing: border-box;
+                        border: 1.5px solid #000000;
+                        border-radius: 4px;
+                        padding: 6px 8px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        page-break-inside: avoid;
+                        background: #ffffff;
+                    }
+                    .batch-barcode-svg {
+                        width: 100%;
+                        height: 0.58in;
+                        display: block;
+                    }
+                    .batch-butt-no {
+                        font-family: Arial, sans-serif;
+                        font-size: 13px;
+                        font-weight: 900;
+                        color: #000000;
+                        letter-spacing: 0.6px;
+                        text-align: center;
+                        margin-top: 2px;
+                        line-height: 1;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="sheet-header">15 CESR KOTE — ALL WEAPONS BARCODE BATCH PRINT SHEET</div>
+                <div class="sticker-grid">
+                    ${stickersHtml}
+                </div>
+                <script>
+                    ${renderOfflineCode128Svg.toString()}
+                    
+                    window.onload = function() {
+                        const stockData = ${JSON.stringify(inventoryStockData)};
+                        stockData.forEach((item, index) => {
+                            const codeVal = item.register_number || item.butt_number || '1001';
+                            const svgId = 'batch_svg_' + index;
+                            const svgEl = document.getElementById(svgId);
+                            if (svgEl) {
+                                renderOfflineCode128Svg(svgEl, codeVal);
+                            }
+                        });
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 350);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWin.document.close();
+    }
+
+    // Toggle Add New Weapon Form
+    function toggleAddWeaponForm(show) {
+        const formCard = document.getElementById('addNewWeaponFormCard');
+        if (!formCard) return;
+        if (typeof show === 'boolean') {
+            formCard.style.display = show ? 'block' : 'none';
+        } else {
+            formCard.style.display = (formCard.style.display === 'none' || !formCard.style.display) ? 'block' : 'none';
+        }
+    }
+
+    // Submit Add New Weapon Handler
+    async function submitAddNewInventoryWeapon(autoGenerateBarcode = false) {
+        const typeSelect = document.getElementById('newWeaponTypeSelect');
+        const customTypeInput = document.getElementById('customNewWeaponTypeInput');
+        const buttInput = document.getElementById('newWeaponButtNo');
+        const regInput = document.getElementById('newWeaponRegisterNo');
+
+        let wType = typeSelect ? typeSelect.value.trim() : '';
+        if (wType === 'CUSTOM') {
+            wType = customTypeInput ? customTypeInput.value.trim() : '';
+        }
+        const buttNo = buttInput ? buttInput.value.trim() : '';
+        const regNo = regInput ? regInput.value.trim() : '';
+
+        if (!wType) {
+            alert('Please select or enter Type of Weapon!');
+            if (typeSelect) typeSelect.focus();
+            return;
+        }
+        if (!buttNo) {
+            alert('Please enter Butt Number!');
+            if (buttInput) buttInput.focus();
+            return;
+        }
+        if (!regNo) {
+            alert('Please enter Register Number!');
+            if (regInput) regInput.focus();
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/add_inventory_weapon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    weapon_type: wType,
+                    butt_number: buttNo,
+                    register_number: regNo
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message || `Weapon ${wType} (Butt: ${buttNo}) added successfully!`);
+
+                // Reset form fields
+                if (typeSelect) typeSelect.value = '';
+                if (customTypeInput) { customTypeInput.value = ''; customTypeInput.style.display = 'none'; }
+                if (buttInput) buttInput.value = '';
+                if (regInput) regInput.value = '';
+
+                // Reload inventory stock table & stats
+                loadInventoryStock();
+
+                // Generate Barcode if requested
+                if (autoGenerateBarcode) {
+                    openWeaponBarcodeModal(wType, buttNo, regNo);
+                }
+            } else {
+                alert('Error adding weapon: ' + (data.message || 'Server error'));
+            }
+        } catch (err) {
+            console.error('Error adding weapon:', err);
+            alert('Network / server connection error while adding weapon.');
+        }
+    }
+
+    // Event Listeners Registration
+    document.addEventListener('DOMContentLoaded', () => {
+        const closeStockBtn = document.getElementById('closeInventoryStockBtn');
+        const dismissStockBtn = document.getElementById('dismissInventoryStockBtn');
+        const applyFilterBtn = document.getElementById('invApplyFilterBtn');
+        const resetFilterBtn = document.getElementById('invResetFilterBtn');
+
+        const toggleAddWeaponBtn = document.getElementById('btnToggleAddWeaponForm');
+        const closeAddWeaponFormBtn = document.getElementById('btnCloseAddWeaponForm');
+        const typeSelect = document.getElementById('newWeaponTypeSelect');
+        const customTypeInput = document.getElementById('customNewWeaponTypeInput');
+        const submitAddOnlyBtn = document.getElementById('btnSubmitAddWeaponOnly');
+        const submitAddAndBarcodeBtn = document.getElementById('btnSubmitAddWeaponAndBarcode');
+
+        const openCustomBtn = document.getElementById('btnOpenCustomBarcodeModal');
+        const closeCustomBtn = document.getElementById('closeCustomBarcodeModalBtn');
+        const dismissCustomBtn = document.getElementById('dismissCustomBarcodeModalBtn');
+        const submitCustomBtn = document.getElementById('btnSubmitCustomBarcode');
+        const printAllBtn = document.getElementById('btnPrintAllWeaponsBarcodes');
+
+        const closePreviewBtn = document.getElementById('closeWeaponBarcodeModalBtn');
+        const dismissPreviewBtn = document.getElementById('dismissWeaponBarcodeModalBtn');
+        const printTagBtn = document.getElementById('btnPrintBarcodeTag');
+
+        if (closeStockBtn) closeStockBtn.addEventListener('click', closeInventoryStockModal);
+        if (dismissStockBtn) dismissStockBtn.addEventListener('click', closeInventoryStockModal);
+
+        if (applyFilterBtn) applyFilterBtn.addEventListener('click', loadInventoryStock);
+        if (resetFilterBtn) {
+            resetFilterBtn.addEventListener('click', () => {
+                if (document.getElementById('invFilterWeaponType')) document.getElementById('invFilterWeaponType').value = 'ALL';
+                if (document.getElementById('invFilterStatus')) document.getElementById('invFilterStatus').value = 'ALL';
+                if (document.getElementById('invFilterButtNo')) document.getElementById('invFilterButtNo').value = '';
+                if (document.getElementById('invFilterRegisterNo')) document.getElementById('invFilterRegisterNo').value = '';
+                loadInventoryStock();
+            });
+        }
+
+        // Add Weapon Form listeners
+        if (toggleAddWeaponBtn) toggleAddWeaponBtn.addEventListener('click', () => toggleAddWeaponForm());
+        if (closeAddWeaponFormBtn) closeAddWeaponFormBtn.addEventListener('click', () => toggleAddWeaponForm(false));
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                if (customTypeInput) {
+                    if (this.value === 'CUSTOM') {
+                        customTypeInput.style.display = 'block';
+                        customTypeInput.focus();
+                    } else {
+                        customTypeInput.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        if (submitAddOnlyBtn) submitAddOnlyBtn.addEventListener('click', () => submitAddNewInventoryWeapon(false));
+        if (submitAddAndBarcodeBtn) submitAddAndBarcodeBtn.addEventListener('click', () => submitAddNewInventoryWeapon(true));
+
+        if (printAllBtn) printAllBtn.addEventListener('click', printAllWeaponsBarcodes);
+
+        if (openCustomBtn) openCustomBtn.addEventListener('click', openCustomBarcodeModal);
+        if (closeCustomBtn) closeCustomBtn.addEventListener('click', closeCustomBarcodeModal);
+        if (dismissCustomBtn) dismissCustomBtn.addEventListener('click', closeCustomBarcodeModal);
+
+        if (submitCustomBtn) {
+            submitCustomBtn.addEventListener('click', () => {
+                const wType = document.getElementById('customInputWeaponType').value.trim() || '5.56mm INSAS';
+                const buttNo = document.getElementById('customInputButtNo').value.trim() || '14';
+                const regNo = document.getElementById('customInputRegisterNo').value.trim() || 'REG-INS-014';
+                closeCustomBarcodeModal();
+                openWeaponBarcodeModal(wType, buttNo, regNo);
+            });
+        }
+
+        if (closePreviewBtn) closePreviewBtn.addEventListener('click', closeWeaponBarcodeModal);
+        if (dismissPreviewBtn) dismissPreviewBtn.addEventListener('click', closeWeaponBarcodeModal);
+        if (printTagBtn) printTagBtn.addEventListener('click', printBarcodeTag);
+
+        // Sidebar "Inventory & Stock" Click Handler
+        const sidebarInvLink = document.getElementById('sidebarInventoryLink');
+        if (sidebarInvLink) {
+            sidebarInvLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openInventoryStockModal();
+            });
+        }
+    });
+
+    // Global Expose
+    window.openInventoryStockModal = openInventoryStockModal;
+    window.openWeaponBarcodeModal = openWeaponBarcodeModal;
+    window.openAllottedWeaponDetailsModal = openAllottedWeaponDetailsModal;
+    window.closeAllottedWeaponDetailsModal = closeAllottedWeaponDetailsModal;
+    window.openAllottedWeaponsHubModal = openAllottedWeaponsHubModal;
+    window.closeAllottedWeaponsHubModal = closeAllottedWeaponsHubModal;
+</script>

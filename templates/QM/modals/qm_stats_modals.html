@@ -1,0 +1,305 @@
+<style>
+    /* ─── STATS MODAL SHARED ─── */
+    .sm-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s ease;
+    }
+    .sm-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .sm-box {
+        background: #ffffff;
+        width: 100%;
+        max-width: 420px;
+        border-radius: 18px;
+        box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.22);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.95) translateY(10px);
+        transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+    .sm-backdrop.active .sm-box {
+        transform: scale(1) translateY(0);
+    }
+
+    /* Header */
+    .sm-header {
+        padding: 18px 22px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .sm-header__title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .sm-header__icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .sm-header__close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.2rem;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s;
+        flex-shrink: 0;
+    }
+    .sm-header__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    /* Body */
+    .sm-body {
+        padding: 14px 22px 20px;
+        max-height: 420px;
+        overflow-y: auto;
+    }
+    .sm-body::-webkit-scrollbar { width: 4px; }
+    .sm-body::-webkit-scrollbar-track { background: transparent; }
+    .sm-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+    /* Loading / empty */
+    .sm-loading, .sm-empty {
+        text-align: center;
+        padding: 30px 10px;
+        color: #94a3b8;
+        font-size: 0.88rem;
+        font-weight: 500;
+    }
+    .sm-loading i { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Row list */
+    .sm-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 4px;
+    }
+    .sm-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        transition: background 0.15s;
+    }
+    .sm-row:hover {
+        background: #eff6ff;
+        border-color: #dbeafe;
+    }
+    .sm-row__label {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #334155;
+        flex: 1;
+    }
+    .sm-row__count {
+        font-size: 1rem;
+        font-weight: 800;
+        min-width: 36px;
+        text-align: right;
+    }
+
+    /* Total footer */
+    .sm-footer-total {
+        margin-top: 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #0f172a;
+        background: #f8fafc;
+    }
+    .sm-footer-total__val {
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    /* Stat card clickable cursor */
+    .qm-stat-card--clickable-stats {
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+    }
+    .qm-stat-card--clickable-stats:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.12) !important;
+    }
+</style>
+
+<!-- ─── MODAL 1: TOTAL WEAPONS IN STOCK ─── -->
+<div class="sm-backdrop" id="smTotalModal">
+    <div class="sm-box">
+        <div class="sm-header">
+            <div class="sm-header__title">
+                <div class="sm-header__icon" style="background:#eff6ff; color:#1e3a8a;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                Total Weapons in Stock
+            </div>
+            <button class="sm-header__close" onclick="closeSM('smTotalModal')">&times;</button>
+        </div>
+        <div class="sm-body" id="smTotalBody">
+            <div class="sm-loading"><i class="fa-solid fa-spinner"></i>&nbsp; Loading…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── MODAL 2: AVAILABLE IN ARMORY ─── -->
+<div class="sm-backdrop" id="smAvailableModal">
+    <div class="sm-box">
+        <div class="sm-header">
+            <div class="sm-header__title">
+                <div class="sm-header__icon" style="background:#f0fdf4; color:#059669;">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                Available in Armory
+            </div>
+            <button class="sm-header__close" onclick="closeSM('smAvailableModal')">&times;</button>
+        </div>
+        <div class="sm-body" id="smAvailableBody">
+            <div class="sm-loading"><i class="fa-solid fa-spinner"></i>&nbsp; Loading…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── MODAL 3: ASSIGNED TO COMPANY ─── -->
+<div class="sm-backdrop" id="smAssignedModal">
+    <div class="sm-box">
+        <div class="sm-header">
+            <div class="sm-header__title">
+                <div class="sm-header__icon" style="background:#e0f2fe; color:#0369a1;">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                Assigned to Company
+            </div>
+            <button class="sm-header__close" onclick="closeSM('smAssignedModal')">&times;</button>
+        </div>
+        <div class="sm-body" id="smAssignedBody">
+            <div class="sm-loading"><i class="fa-solid fa-spinner"></i>&nbsp; Loading…</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ─── STATS MODAL ENGINE ─── */
+
+    const smCountColors = {
+        total:    '#1e3a8a',
+        available:'#059669',
+        assigned: '#0369a1'
+    };
+
+    function openSM(modalId, apiUrl, bodyId, countColor) {
+        const backdrop = document.getElementById(modalId);
+        const body     = document.getElementById(bodyId);
+        backdrop.classList.add('active');
+        body.innerHTML = '<div class="sm-loading"><i class="fa-solid fa-spinner"></i>&nbsp; Loading…</div>';
+
+        // Close on backdrop click
+        backdrop.addEventListener('click', function onBd(e) {
+            if (e.target === backdrop) { closeSM(modalId); backdrop.removeEventListener('click', onBd); }
+        });
+
+        fetch(apiUrl)
+            .then(r => r.json())
+            .then(data => renderSMBody(body, data, countColor))
+            .catch(() => { body.innerHTML = '<div class="sm-empty">Failed to load data.</div>'; });
+    }
+
+    function closeSM(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    function renderSMBody(body, data, countColor) {
+        if (!data.success || !data.rows || !data.rows.length) {
+            body.innerHTML = '<div class="sm-empty"><i class="fa-solid fa-box-open"></i><br>No data found.</div>';
+            return;
+        }
+        const total = data.rows.reduce((s, r) => s + r.count, 0);
+        const list  = data.rows.map(r => `
+            <div class="sm-row">
+                <span class="sm-row__label">${r.label}</span>
+                <span class="sm-row__count" style="color:${countColor};">${r.count}</span>
+            </div>`).join('');
+
+        body.innerHTML = `
+            <div class="sm-list">${list}</div>
+            <div class="sm-footer-total">
+                <span>Total</span>
+                <span class="sm-footer-total__val" style="color:${countColor};">${total}</span>
+            </div>`;
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            ['smTotalModal','smAvailableModal','smAssignedModal']
+                .forEach(id => closeSM(id));
+        }
+    });
+
+    /* Wire up stat cards */
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const cardTotal = document.getElementById('statTotalWeapons')?.closest('.qm-stat-card');
+        if (cardTotal) {
+            cardTotal.classList.add('qm-stat-card--clickable-stats');
+            cardTotal.title = 'Click to view breakdown';
+            cardTotal.addEventListener('click', () =>
+                openSM('smTotalModal', '/api/qm/stats/total', 'smTotalBody', smCountColors.total));
+        }
+
+        const cardAvail = document.getElementById('statAvailableWeapons')?.closest('.qm-stat-card');
+        if (cardAvail) {
+            cardAvail.classList.add('qm-stat-card--clickable-stats');
+            cardAvail.title = 'Click to view breakdown';
+            cardAvail.addEventListener('click', () =>
+                openSM('smAvailableModal', '/api/qm/stats/available', 'smAvailableBody', smCountColors.available));
+        }
+
+        const cardAssigned = document.getElementById('statAssignedWeapons')?.closest('.qm-stat-card');
+        if (cardAssigned) {
+            cardAssigned.classList.add('qm-stat-card--clickable-stats');
+            cardAssigned.title = 'Click to view breakdown';
+            cardAssigned.addEventListener('click', () =>
+                openSM('smAssignedModal', '/api/qm/stats/assigned', 'smAssignedBody', smCountColors.assigned));
+        }
+    });
+</script>

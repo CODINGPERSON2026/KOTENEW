@@ -1,0 +1,1279 @@
+{% extends "base.html" %}
+
+{% block title %}Issue Weapons — QM | 15 CESR Ordnance Platform{% endblock %}
+
+{% block page_title %}Issue Weapons{% endblock %}
+{% block page_subtitle %}Select an available weapon from armory stock to issue to a Company{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* ─── PAGE TOOLBAR ─── */
+    .issue-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+
+    .issue-toolbar__left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+
+    .search-box {
+        position: relative;
+        flex: 1;
+        max-width: 360px;
+    }
+
+    .search-box__icon {
+        position: absolute;
+        left: 13px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.85rem;
+        pointer-events: none;
+    }
+
+    .search-box__input {
+        width: 100%;
+        padding: 9px 14px 9px 38px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .search-box__input:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    /* Type filter pills */
+    .filter-pills {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .filter-pill:hover {
+        border-color: #1e3a8a;
+        color: #1e3a8a;
+        background: #eff6ff;
+    }
+
+    .filter-pill.active {
+        background: #1e3a8a;
+        border-color: #1e3a8a;
+        color: #ffffff;
+    }
+
+    /* ─── STATS STRIP ─── */
+    .issue-stats-strip {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+
+    .issue-stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #334155;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .issue-stat-chip i {
+        font-size: 0.9rem;
+    }
+
+    .issue-stat-chip--green i { color: #059669; }
+    .issue-stat-chip--blue  i { color: #1e3a8a; }
+    .issue-stat-chip--amber i { color: #b45309; }
+
+    .issue-stat-chip__val {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* ─── TABLE CARD ─── */
+    .weapons-table-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+        overflow: hidden;
+    }
+
+    .weapons-table-card__header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .weapons-table-card__title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .weapons-table-card__count {
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: #eff6ff;
+        color: #1e3a8a;
+    }
+
+    /* ─── TABLE ─── */
+    .weapons-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.855rem;
+    }
+
+    .weapons-table thead th {
+        padding: 11px 16px;
+        text-align: left;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .weapons-table tbody tr {
+        transition: background 0.15s ease;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .weapons-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .weapons-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .weapons-table tbody td {
+        padding: 12px 16px;
+        color: #334155;
+        vertical-align: middle;
+    }
+
+    /* Weapon name cell with thumbnail */
+    .weapon-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .weapon-thumb {
+        width: 44px;
+        height: 32px;
+        object-fit: contain;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 2px;
+        flex-shrink: 0;
+    }
+
+    .weapon-name-cell__name {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+
+    /* Status badge */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.74rem;
+        font-weight: 700;
+    }
+
+    .badge--green {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    /* S_No chip */
+    .sno-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+    }
+
+    /* Select Button per row */
+    .btn-select-row {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        font-size: 0.8rem;
+        font-weight: 700;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-select-row:hover {
+        border-color: #1e3a8a;
+        color: #1e3a8a;
+        background: #eff6ff;
+    }
+
+    .weapon-row.selected-row {
+        background: #f0f7ff !important;
+    }
+
+    .weapon-row.selected-row .btn-select-row {
+        background: #1e3a8a;
+        border-color: #1e3a8a;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25);
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 14px;
+        display: block;
+    }
+
+    .empty-state p {
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    /* Hidden rows (filter) */
+    .weapons-table tbody tr.hidden-row {
+        display: none;
+    }
+
+    /* ─── ISSUE MODAL ─── */
+    .issue-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .issue-modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .issue-modal-box {
+        background: #ffffff;
+        width: 100%;
+        max-width: 520px;
+        border-radius: 18px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        border: 1px solid #e2e8f0;
+        transform: scale(0.94) translateY(12px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+
+    .issue-modal-backdrop.active .issue-modal-box {
+        transform: scale(1) translateY(0);
+    }
+
+    .issue-modal-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .issue-modal-header__title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .issue-modal-header__close {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.2rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .issue-modal-header__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .issue-modal-body {
+        padding: 22px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* Weapon info banner inside modal */
+    .weapon-info-banner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        background: #f0f9ff;
+        border-radius: 12px;
+        border: 1px solid #bae6fd;
+    }
+
+    .weapon-info-banner__img {
+        width: 64px;
+        height: 44px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        padding: 3px;
+    }
+
+    .weapon-info-banner__details {
+        flex: 1;
+    }
+
+    .weapon-info-banner__name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .weapon-info-banner__meta {
+        font-size: 0.78rem;
+        color: #475569;
+        margin-top: 3px;
+    }
+
+    /* Form fields in modal */
+    .modal-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .modal-form-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .modal-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .modal-input-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        font-size: 0.85rem;
+        pointer-events: none;
+    }
+
+    .modal-input {
+        width: 100%;
+        padding: 9px 14px 9px 36px;
+        border-radius: 9px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .modal-input:focus {
+        border-color: #1e3a8a;
+        box-shadow: 0 0 0 3px rgba(30,58,138,0.1);
+    }
+
+    .modal-input.is-valid {
+        border-color: #10b981;
+    }
+
+    .modal-input.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    }
+
+    /* Troop preview card */
+    .troop-preview {
+        padding: 12px 14px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .troop-preview.visible {
+        display: flex;
+    }
+
+    .troop-preview__name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #065f46;
+    }
+
+    .troop-preview__meta {
+        font-size: 0.78rem;
+        color: #047857;
+    }
+
+    .issue-modal-footer {
+        padding: 16px 24px 20px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .btn-cancel-issue {
+        padding: 9px 20px;
+        border-radius: 9px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel-issue:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+
+    .btn-confirm-issue {
+        padding: 9px 22px;
+        border-radius: 9px;
+        border: none;
+        background: #1e3a8a;
+        color: #ffffff;
+        font-size: 0.875rem;
+        font-weight: 700;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .btn-confirm-issue:hover:not(:disabled) {
+        background: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(30,58,138,0.25);
+    }
+
+    .btn-confirm-issue:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ─── TOAST ─── */
+    .toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 9999;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+        pointer-events: none;
+    }
+
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .toast--success { background: #059669; }
+    .toast--error   { background: #dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Toolbar: Search + Filters -->
+<div class="issue-toolbar">
+    <div class="issue-toolbar__left">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-box__icon"></i>
+            <input type="text" class="search-box__input" id="weaponSearchInput" placeholder="Search by butt no., register no. or type…" autocomplete="off">
+        </div>
+    </div>
+
+    <!-- Bulk Issue Button -->
+    <button type="button" class="qm-btn qm-btn--primary" id="openBulkIssueBtn" style="display:flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;border:1px solid #0f172a;background:#0f172a;color:#fff;font-size:0.875rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;">
+        <i class="fa-solid fa-layer-group"></i>
+        Bulk Issue
+    </button>
+
+    <!-- Filter pills by weapon type -->
+    <div class="filter-pills" id="filterPillsContainer">
+        <span class="filter-pill active" data-type="all">All</span>
+        {% set seen = [] %}
+        {% for w in available_weapons %}
+            {% if w.type not in seen %}
+                {% if seen.append(w.type) %}{% endif %}
+                <span class="filter-pill" data-type="{{ w.type }}">
+                    {{ w.type | replace('AK-47 / AK Series Rifle', 'AK47')
+                              | replace('9mm CMG Carbine Machine Gun', 'CMG')
+                              | replace('INSAS 5.56mm Assault Rifle', 'INSAS')
+                              | replace('INSAS 5.56mm Light Machine Gun', 'INSAS LMG')
+                              | replace('7.62mm Light Machine Gun (LMG)', 'LMG 7.62')
+                              | replace('9mm Service Pistol', 'Pistol') }}
+                </span>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Stats Strip -->
+<div class="issue-stats-strip">
+    <div class="issue-stat-chip issue-stat-chip--green">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>Available</span>
+        <span class="issue-stat-chip__val" id="availableCount">{{ available_weapons | length }}</span>
+    </div>
+    <div class="issue-stat-chip issue-stat-chip--blue">
+        <i class="fa-solid fa-filter"></i>
+        <span>Showing</span>
+        <span class="issue-stat-chip__val" id="visibleCount">{{ available_weapons | length }}</span>
+    </div>
+</div>
+
+<!-- Weapons Table -->
+<div class="weapons-table-card">
+    <div class="weapons-table-card__header">
+        <div class="weapons-table-card__title">
+            <i class="fa-solid fa-boxes-stacked" style="color:#1e3a8a;"></i>
+            Available Weapons in Armory
+        </div>
+        <span class="weapons-table-card__count" id="tableCountBadge">{{ available_weapons | length }} weapons</span>
+    </div>
+
+    {% if available_weapons %}
+    <table class="weapons-table" id="weaponsTable">
+        <thead>
+            <tr>
+                <th style="width: 45px; text-align: center;">
+                    <input type="checkbox" id="selectAllWeaponsCheckbox" title="Select / Deselect All Visible Weapons" style="width: 17px; height: 17px; cursor: pointer; accent-color: #1e3a8a;">
+                </th>
+                <th>S.No</th>
+                <th>Weapon Type</th>
+                <th>Butt No.</th>
+                <th>Register No.</th>
+                <th>Status</th>
+                <th style="text-align: center;">Select Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for w in available_weapons %}
+            <tr class="weapon-row"
+                data-type="{{ w.type }}"
+                data-butt="{{ w.butt_number | lower }}"
+                data-reg="{{ w.register_number | lower }}"
+                data-weapon-id="{{ w.id }}"
+                data-weapon-type="{{ w.type }}"
+                data-butt-number="{{ w.butt_number }}"
+                data-register-number="{{ w.register_number }}"
+                data-image="{{ url_for('static', filename='weapons/' + (w.image_path or 'ak47.png')) }}">
+                <td style="text-align: center;">
+                    <input type="checkbox" class="row-select-checkbox" data-weapon-id="{{ w.id }}" style="width: 17px; height: 17px; cursor: pointer; accent-color: #1e3a8a;">
+                </td>
+                <td><span class="sno-chip">{{ w.s_no if w.s_no else loop.index }}</span></td>
+                <td>
+                    <div class="weapon-name-cell">
+                        <img src="{{ url_for('static', filename='weapons/' + (w.image_path or 'ak47.png')) }}"
+                             alt="{{ w.type }}" class="weapon-thumb">
+                        <span class="weapon-name-cell__name">{{ w.type }}</span>
+                    </div>
+                </td>
+                <td><strong>{{ w.butt_number }}</strong></td>
+                <td style="color:#475569; font-family: monospace; font-size:0.83rem;">{{ w.register_number }}</td>
+                <td>
+                    <span class="badge badge--green">
+                        <i class="fa-solid fa-circle" style="font-size:0.5rem;"></i>
+                        Available
+                    </span>
+                </td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn-select-row" data-weapon-id="{{ w.id }}">
+                        <i class="fa-regular fa-square" style="font-size: 0.95rem;"></i>
+                        <span>Select</span>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="fa-solid fa-box-open"></i>
+        <p>No weapons currently available in armory stock.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Floating Multi-Selection Action Bar -->
+<div id="selectionActionBar" style="position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(100px); opacity: 0; pointer-events: none; z-index: 1000; background: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 50px; box-shadow: 0 20px 40px rgba(15,23,42,0.35); border: 1.5px solid #334155; display: flex; align-items: center; gap: 18px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #2563eb; color: #ffffff; font-size: 0.82rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; font-family: monospace;" id="selectedCountChip">0</span>
+        <span style="font-size: 0.88rem; font-weight: 700; color: #f8fafc;" id="selectedTextLabel">Weapons Selected</span>
+    </div>
+    <div style="height: 20px; width: 1px; background: #334155;"></div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" id="btnAssignSelectedToCompany" style="padding: 8px 20px; background: #2563eb; color: #ffffff; border: none; border-radius: 20px; font-size: 0.84rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background 0.2s;">
+            <i class="fa-solid fa-building"></i> Assign Selected to Company
+        </button>
+        <button type="button" id="btnClearAllSelections" style="padding: 8px 14px; background: transparent; color: #94a3b8; border: 1px solid #475569; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            Deselect All
+        </button>
+    </div>
+</div>
+
+<!-- ─── ISSUE CONFIRMATION MODAL ─── -->
+<div class="issue-modal-backdrop" id="issueConfirmModal">
+    <div class="issue-modal-box">
+        <div class="issue-modal-header">
+            <div class="issue-modal-header__title">
+                <i class="fa-solid fa-hand-holding-hand" style="color:#1e3a8a;"></i>
+                Issue Weapon
+            </div>
+            <button type="button" class="issue-modal-header__close" id="closeIssueModalBtn">&times;</button>
+        </div>
+
+        <div class="issue-modal-body">
+            <!-- Weapon info banner -->
+            <div class="weapon-info-banner">
+                <img src="" alt="Weapon" class="weapon-info-banner__img" id="modalWeaponImg">
+                <div class="weapon-info-banner__details">
+                    <div class="weapon-info-banner__name" id="modalWeaponName">—</div>
+                    <div class="weapon-info-banner__meta" id="modalWeaponMeta">—</div>
+                </div>
+            </div>
+
+            <!-- Company Select -->
+            <div class="modal-form-group">
+                <label class="modal-form-label">Assign to Company</label>
+                <div class="modal-input-wrapper">
+                    <i class="fa-solid fa-building modal-input-icon"></i>
+                    <select class="modal-input" id="companySelect"
+                            style="cursor: pointer; appearance: auto; -webkit-appearance: auto;">
+                        <option value="">Select Company…</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="issue-modal-footer">
+            <button type="button" class="btn-cancel-issue" id="cancelIssueBtn">Cancel</button>
+            <button type="button" class="btn-confirm-issue" id="confirmIssueBtn" disabled>
+                <i class="fa-solid fa-check"></i>
+                Confirm Issue
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toastNotif"></div>
+
+<!-- ─── BULK ISSUE MODAL ─── -->
+<div class="issue-modal-backdrop" id="bulkIssueModal">
+    <div class="issue-modal-box" style="max-width:480px;">
+        <div class="issue-modal-header">
+            <div class="issue-modal-header__title">
+                <i class="fa-solid fa-layer-group" style="color:#1e3a8a;"></i>
+                Bulk Issue Weapons
+            </div>
+            <button type="button" class="issue-modal-header__close" id="closeBulkModalBtn">&times;</button>
+        </div>
+
+        <div class="issue-modal-body">
+
+            <!-- Weapon Type Select -->
+            <div class="modal-form-group">
+                <label class="modal-form-label">Select Weapon Type</label>
+                <div class="modal-input-wrapper">
+                    <i class="fa-solid fa-crosshairs modal-input-icon"></i>
+                    <select class="modal-input" id="bulkWeaponSelect"
+                            style="cursor:pointer;appearance:auto;-webkit-appearance:auto;">
+                        <option value="">Select Weapon Type…</option>
+                        {% for wt in weapon_types %}
+                        <option value="{{ wt.name }}" data-count="{{ wt.available_count }}">{{ wt.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Available count badge -->
+            <div id="bulkAvailableBanner" style="display:none;padding:10px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:0.85rem;color:#0369a1;font-weight:600;display:none;align-items:center;gap:8px;">
+                <i class="fa-solid fa-circle-check" style="color:#0284c7;"></i>
+                <span id="bulkAvailableText">— available</span>
+            </div>
+
+            <!-- Company Select -->
+            <div class="modal-form-group">
+                <label class="modal-form-label">Assign to Company</label>
+                <div class="modal-input-wrapper">
+                    <i class="fa-solid fa-building modal-input-icon"></i>
+                    <select class="modal-input" id="bulkCompanySelect"
+                            style="cursor:pointer;appearance:auto;-webkit-appearance:auto;">
+                        <option value="">Select Company…</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Issue Count -->
+            <div class="modal-form-group">
+                <label class="modal-form-label">Issue Count</label>
+                <div class="modal-input-wrapper">
+                    <i class="fa-solid fa-hashtag modal-input-icon"></i>
+                    <input type="number" class="modal-input" id="bulkCountInput"
+                           min="1" placeholder="e.g. 5" autocomplete="off">
+                </div>
+                <div id="bulkCountError" style="font-size:0.78rem;color:#ef4444;font-weight:600;margin-top:4px;display:none;"></div>
+            </div>
+        </div>
+
+        <div class="issue-modal-footer">
+            <button type="button" class="btn-cancel-issue" id="cancelBulkBtn">Cancel</button>
+            <button type="button" class="btn-confirm-issue" id="confirmBulkBtn" disabled>
+                <i class="fa-solid fa-layer-group"></i>
+                Bulk Issue
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    /* ─── FILTER PILLS ─── */
+    const pills = document.querySelectorAll('.filter-pill');
+    const rows  = document.querySelectorAll('.weapon-row');
+    const searchInput  = document.getElementById('weaponSearchInput');
+    const visibleCount = document.getElementById('visibleCount');
+    const tableCountBadge = document.getElementById('tableCountBadge');
+
+    let activeType = 'all';
+    let searchQuery = '';
+
+    function applyFilters() {
+        let count = 0;
+        rows.forEach(row => {
+            const type  = row.getAttribute('data-type');
+            const butt  = row.getAttribute('data-butt');
+            const reg   = row.getAttribute('data-reg');
+            const typeMatch   = activeType === 'all' || type === activeType;
+            const searchMatch = !searchQuery ||
+                butt.includes(searchQuery) ||
+                reg.includes(searchQuery) ||
+                type.toLowerCase().includes(searchQuery);
+
+            if (typeMatch && searchMatch) {
+                row.classList.remove('hidden-row');
+                count++;
+            } else {
+                row.classList.add('hidden-row');
+            }
+        });
+        visibleCount.textContent = count;
+        tableCountBadge.textContent = count + ' weapon' + (count !== 1 ? 's' : '');
+    }
+
+    pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            pills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            activeType = pill.getAttribute('data-type');
+            applyFilters();
+        });
+    });
+
+    searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value.trim().toLowerCase();
+        applyFilters();
+    });
+
+    /* ─── MULTI SELECTION SYSTEM ─── */
+    const selectedWeaponIds = new Set();
+    const selectAllCheckbox = document.getElementById('selectAllWeaponsCheckbox');
+    const selectionActionBar = document.getElementById('selectionActionBar');
+    const selectedCountChip = document.getElementById('selectedCountChip');
+    const selectedTextLabel = document.getElementById('selectedTextLabel');
+    const btnAssignSelected = document.getElementById('btnAssignSelectedToCompany');
+    const btnClearSelected  = document.getElementById('btnClearAllSelections');
+
+    const modal      = document.getElementById('issueConfirmModal');
+    const closeBtn   = document.getElementById('closeIssueModalBtn');
+    const cancelBtn  = document.getElementById('cancelIssueBtn');
+    const confirmBtn = document.getElementById('confirmIssueBtn');
+    const companySelect = document.getElementById('companySelect');
+
+    /* Load companies from API on page load */
+    async function loadCompanies() {
+        try {
+            const res  = await fetch('/api/qm/companies');
+            const data = await res.json();
+            if (data.success && data.companies.length) {
+                companySelect.innerHTML = '<option value="">Select Company…</option>';
+                data.companies.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    companySelect.appendChild(opt);
+                });
+            } else {
+                companySelect.innerHTML = '<option value="">No companies found</option>';
+            }
+        } catch (err) {
+            console.error('Failed to load companies:', err);
+        }
+    }
+    loadCompanies();
+
+    /* Enable confirm only when a company is selected */
+    companySelect.addEventListener('change', () => {
+        confirmBtn.disabled = !companySelect.value;
+    });
+
+    function updateSelectionUI() {
+        const count = selectedWeaponIds.size;
+        
+        if (count > 0) {
+            selectedCountChip.textContent = count;
+            selectedTextLabel.textContent = count === 1 ? 'Weapon Selected' : 'Weapons Selected';
+            selectionActionBar.style.opacity = '1';
+            selectionActionBar.style.pointerEvents = 'auto';
+            selectionActionBar.style.transform = 'translateX(-50%) translateY(0)';
+        } else {
+            selectionActionBar.style.opacity = '0';
+            selectionActionBar.style.pointerEvents = 'none';
+            selectionActionBar.style.transform = 'translateX(-50%) translateY(100px)';
+        }
+
+        const visibleRows = Array.from(document.querySelectorAll('.weapon-row')).filter(r => !r.classList.contains('hidden-row'));
+        if (visibleRows.length > 0 && selectAllCheckbox) {
+            const allSelected = visibleRows.every(r => selectedWeaponIds.has(r.getAttribute('data-weapon-id')));
+            selectAllCheckbox.checked = allSelected && count > 0;
+        }
+    }
+
+    function toggleWeaponSelectionById(weaponId, forceState = null) {
+        const row = document.querySelector(`.weapon-row[data-weapon-id="${weaponId}"]`);
+        if (!row) return;
+
+        const btn = row.querySelector('.btn-select-row');
+        const chk = row.querySelector('.row-select-checkbox');
+
+        const isCurrentlySelected = selectedWeaponIds.has(weaponId);
+        const newState = (forceState !== null) ? forceState : !isCurrentlySelected;
+
+        if (newState) {
+            selectedWeaponIds.add(weaponId);
+            row.classList.add('selected-row');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-square-check"></i> <span>Selected</span>';
+            if (chk) chk.checked = true;
+        } else {
+            selectedWeaponIds.delete(weaponId);
+            row.classList.remove('selected-row');
+            if (btn) btn.innerHTML = '<i class="fa-regular fa-square"></i> <span>Select</span>';
+            if (chk) chk.checked = false;
+        }
+    }
+
+    document.querySelectorAll('.weapon-row').forEach(row => {
+        const weaponId = row.getAttribute('data-weapon-id');
+        const btn = row.querySelector('.btn-select-row');
+        const chk = row.querySelector('.row-select-checkbox');
+
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleWeaponSelectionById(weaponId);
+                updateSelectionUI();
+            });
+        }
+
+        if (chk) {
+            chk.addEventListener('change', (e) => {
+                e.stopPropagation();
+                toggleWeaponSelectionById(weaponId, chk.checked);
+                updateSelectionUI();
+            });
+        }
+
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('input')) return;
+            toggleWeaponSelectionById(weaponId);
+            updateSelectionUI();
+        });
+    });
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', () => {
+            const isChecked = selectAllCheckbox.checked;
+            const visibleRows = Array.from(document.querySelectorAll('.weapon-row')).filter(r => !r.classList.contains('hidden-row'));
+            visibleRows.forEach(row => {
+                const weaponId = row.getAttribute('data-weapon-id');
+                toggleWeaponSelectionById(weaponId, isChecked);
+            });
+            updateSelectionUI();
+        });
+    }
+
+    if (btnClearSelected) {
+        btnClearSelected.addEventListener('click', () => {
+            selectedWeaponIds.clear();
+            document.querySelectorAll('.weapon-row').forEach(row => {
+                const weaponId = row.getAttribute('data-weapon-id');
+                toggleWeaponSelectionById(weaponId, false);
+            });
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateSelectionUI();
+        });
+    }
+
+    if (btnAssignSelected) {
+        btnAssignSelected.addEventListener('click', () => {
+            if (selectedWeaponIds.size === 0) return;
+            openBatchIssueModal();
+        });
+    }
+
+    function openBatchIssueModal() {
+        const ids = Array.from(selectedWeaponIds);
+        const firstRow = document.querySelector(`.weapon-row[data-weapon-id="${ids[0]}"]`);
+        const wImg = firstRow ? firstRow.getAttribute('data-image') : '';
+
+        const buttNums = [];
+        ids.forEach(id => {
+            const r = document.querySelector(`.weapon-row[data-weapon-id="${id}"]`);
+            if (r) buttNums.push(r.getAttribute('data-butt-number'));
+        });
+
+        document.getElementById('modalWeaponImg').src = wImg;
+        document.getElementById('modalWeaponName').textContent = `Assigning ${ids.length} Selected Weapon(s)`;
+        document.getElementById('modalWeaponMeta').textContent = 'Butt Numbers: ' + buttNums.join(', ');
+
+        companySelect.value = '';
+        confirmBtn.disabled = true;
+
+        modal.classList.add('active');
+        setTimeout(() => companySelect.focus(), 260);
+    }
+
+    function closeIssueModal() {
+        modal.classList.remove('active');
+    }
+
+    closeBtn.addEventListener('click', closeIssueModal);
+    cancelBtn.addEventListener('click', closeIssueModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeIssueModal(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) closeIssueModal();
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+        const company = companySelect.value.trim();
+        const ids = Array.from(selectedWeaponIds);
+        if (!company || ids.length === 0) return;
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Assigning…';
+
+        try {
+            const res = await fetch('/qm/assign_company', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    company: company,
+                    weapon_ids: ids
+                })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeIssueModal();
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showToast(data.message || 'Failed to assign company.', 'error');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm Issue';
+            }
+        } catch (err) {
+            showToast('Unexpected error: ' + err, 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm Issue';
+        }
+    });
+
+    /* ─── TOAST ─── */
+    function showToast(msg, type) {
+        const t = document.getElementById('toastNotif');
+        t.textContent = '';
+        const icon = document.createElement('i');
+        icon.className = type === 'success'
+            ? 'fa-solid fa-circle-check'
+            : 'fa-solid fa-circle-exclamation';
+        t.appendChild(icon);
+        t.appendChild(document.createTextNode(' ' + msg));
+        t.className = 'toast toast--' + type + ' show';
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    /* ─── BULK ISSUE MODAL ─── */
+    const bulkModal       = document.getElementById('bulkIssueModal');
+    const openBulkBtn     = document.getElementById('openBulkIssueBtn');
+    const closeBulkBtn    = document.getElementById('closeBulkModalBtn');
+    const cancelBulkBtn   = document.getElementById('cancelBulkBtn');
+    const confirmBulkBtn  = document.getElementById('confirmBulkBtn');
+    const bulkWeaponSel   = document.getElementById('bulkWeaponSelect');
+    const bulkCompanySel  = document.getElementById('bulkCompanySelect');
+    const bulkCountInput  = document.getElementById('bulkCountInput');
+    const bulkCountError  = document.getElementById('bulkCountError');
+    const bulkAvailBanner = document.getElementById('bulkAvailableBanner');
+    const bulkAvailText   = document.getElementById('bulkAvailableText');
+
+    let bulkMaxCount = 0;  // available count for selected weapon type
+
+    /* Load companies into bulk dropdown (reuse same API) */
+    async function loadBulkCompanies() {
+        try {
+            const res  = await fetch('/api/qm/companies');
+            const data = await res.json();
+            if (data.success && data.companies.length) {
+                bulkCompanySel.innerHTML = '<option value="">Select Company\u2026</option>';
+                data.companies.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    bulkCompanySel.appendChild(opt);
+                });
+            }
+        } catch (err) { console.error('Bulk companies load error:', err); }
+    }
+
+    function openBulkModal() {
+        /* Reset state */
+        bulkWeaponSel.value  = '';
+        bulkCompanySel.value = '';
+        bulkCountInput.value = '';
+        bulkMaxCount = 0;
+        bulkAvailBanner.style.display = 'none';
+        bulkCountError.style.display  = 'none';
+        bulkCountInput.classList.remove('is-invalid', 'is-valid');
+        confirmBulkBtn.disabled = true;
+        bulkModal.classList.add('active');
+        loadBulkCompanies();
+    }
+
+    function closeBulkModal() { bulkModal.classList.remove('active'); }
+
+    openBulkBtn.addEventListener('click', openBulkModal);
+    closeBulkBtn.addEventListener('click', closeBulkModal);
+    cancelBulkBtn.addEventListener('click', closeBulkModal);
+    bulkModal.addEventListener('click', e => { if (e.target === bulkModal) closeBulkModal(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && bulkModal.classList.contains('active')) closeBulkModal();
+    });
+
+    /* Show available count when weapon type changes */
+    bulkWeaponSel.addEventListener('change', () => {
+        const selected = bulkWeaponSel.options[bulkWeaponSel.selectedIndex];
+        bulkMaxCount = parseInt(selected.getAttribute('data-count') || 0);
+        if (bulkMaxCount > 0) {
+            bulkAvailText.textContent = bulkMaxCount + ' weapon(s) available';
+            bulkAvailBanner.style.display = 'flex';
+        } else {
+            bulkAvailBanner.style.display = 'none';
+        }
+        bulkCountInput.value = '';
+        bulkCountError.style.display = 'none';
+        bulkCountInput.classList.remove('is-invalid', 'is-valid');
+        validateBulk();
+    });
+
+    /* Validate count in real-time */
+    function validateBulk() {
+        const wt      = bulkWeaponSel.value.trim();
+        const company = bulkCompanySel.value.trim();
+        const cnt     = parseInt(bulkCountInput.value) || 0;
+        let valid = true;
+
+        if (cnt <= 0 && bulkCountInput.value !== '') {
+            bulkCountError.textContent = 'Count must be greater than 0.';
+            bulkCountError.style.display = 'block';
+            bulkCountInput.classList.add('is-invalid');
+            bulkCountInput.classList.remove('is-valid');
+            valid = false;
+        } else if (bulkMaxCount > 0 && cnt > bulkMaxCount) {
+            bulkCountError.textContent = `Cannot exceed available count of ${bulkMaxCount}.`;
+            bulkCountError.style.display = 'block';
+            bulkCountInput.classList.add('is-invalid');
+            bulkCountInput.classList.remove('is-valid');
+            valid = false;
+        } else if (cnt > 0) {
+            bulkCountError.style.display = 'none';
+            bulkCountInput.classList.remove('is-invalid');
+            bulkCountInput.classList.add('is-valid');
+        } else {
+            bulkCountError.style.display = 'none';
+            bulkCountInput.classList.remove('is-invalid', 'is-valid');
+        }
+
+        confirmBulkBtn.disabled = !(wt && company && cnt > 0 && valid);
+    }
+
+    bulkCompanySel.addEventListener('change', validateBulk);
+    bulkCountInput.addEventListener('input',  validateBulk);
+
+    /* Submit bulk assign */
+    confirmBulkBtn.addEventListener('click', async () => {
+        const weaponType = bulkWeaponSel.value.trim();
+        const company    = bulkCompanySel.value.trim();
+        const count      = parseInt(bulkCountInput.value) || 0;
+
+        if (!weaponType || !company || count <= 0) return;
+
+        confirmBulkBtn.disabled = true;
+        confirmBulkBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing\u2026';
+
+        try {
+            const formData = new FormData();
+            formData.append('weapon_type', weaponType);
+            formData.append('company', company);
+            formData.append('count', count);
+
+            const res  = await fetch('/qm/bulk_assign_company', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                closeBulkModal();
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showToast(data.message || 'Bulk issue failed.', 'error');
+                confirmBulkBtn.disabled = false;
+                confirmBulkBtn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Bulk Issue';
+            }
+        } catch (err) {
+            showToast('Unexpected error: ' + err, 'error');
+            confirmBulkBtn.disabled = false;
+            confirmBulkBtn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Bulk Issue';
+        }
+    });
+</script>
+{% endblock %}
+
